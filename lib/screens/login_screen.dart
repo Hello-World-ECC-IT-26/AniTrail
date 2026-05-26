@@ -1,0 +1,199 @@
+import 'package:AniTrail/providers/auth_provider.dart';
+import 'package:AniTrail/screens/success_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:AniTrail/widgets/auth_logo.dart';
+import '../constants/app_constans.dart';
+import '../styles/app_styles.dart';
+import '../widgets/app_buttons.dart';
+import '../widgets/custom_text_field.dart';
+
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) return 'メールアドレスを入力してください';
+    final emailRegex = RegExp(r'^[\w\-.]+@([\w\-]+\.)+[\w\-]{2,4}$');
+    if (!emailRegex.hasMatch(value)) return 'メールアドレス形式で入力してください';
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) return 'パスワードを入力してください';
+    if (value.length < AppConstants.passwordMinLength) {
+      return '※半角英数字8文字以上で入力してください';
+    }
+    return null;
+  }
+
+  // ── Login ─────────────────────────────────────────────
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+    final auth = context.read<AuthProvider>();
+    await auth.login(
+      email: _emailController.text,
+      password: _passwordController.text,
+    );
+
+    if (!mounted) return;
+    if (auth.status == AuthStatus.success) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppConstants.routeSuccessLogin,
+        (route) => false,
+      );
+    } else if (auth.status == AuthStatus.error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(auth.errorMessage ?? 'ログインに失敗しました'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isLoading = context.watch<AuthProvider>().isLoading;
+
+    return Scaffold(
+      backgroundColor: AppColors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                const SizedBox(height: 60),
+
+                // ── Logo ───────────────────────────────────
+                const AuthLogo(),
+
+                const SizedBox(height: 32),
+
+                // ── Email Field ────────────────────────────
+                CustomTextField(
+                  label: 'メールアドレス',
+                  hintText: 'helloworld114@gmail.com',
+                  prefixIcon: Icons.email_outlined,
+                  controller: _emailController,
+                  validator: _validateEmail,
+                  keyboardType: TextInputType.emailAddress,
+                ),
+
+                const SizedBox(height: 16),
+
+                // ── Password Field ─────────────────────────
+                CustomTextField(
+                  label: 'パスワード',
+                  hintText: '●●●●●●●●',
+                  prefixIcon: Icons.lock_outline,
+                  controller: _passwordController,
+                  isPassword: true,
+                  validator: _validatePassword,
+                ),
+
+                const SizedBox(height: 24),
+
+                // ── Login Button ───────────────────────────
+                PrimaryButton(
+                  label: 'ログイン',
+                  onPressed: isLoading ? null : _handleLogin,
+                  isLoading: isLoading,
+                ),
+
+                const SizedBox(height: 8),
+
+                // ── Forgot Password ────────────────────────
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: AppLinkText(
+                    prefixText: 'パスワードをお忘れの方は',
+                    linkText: 'こちら',
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        AppConstants.routeForgotPassword,
+                      );
+                    },
+                  ),
+                ),
+
+                // ── Divider ────────────────────────────────
+                const Divider(thickness: 1, color: Color(0xFFEEEEEE)),
+
+                const SizedBox(height: 16),
+
+                // ── Register Button ────────────────────────
+                SecondaryButton(
+                  label: '新規登録',
+                  onPressed: isLoading
+                      ? null
+                      : () => Navigator.pushNamed(
+                          context,
+                          AppConstants.routeRegister,
+                        ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // ── Google Button ──────────────────────────
+                GoogleButton(
+                  onPressed: isLoading
+                      ? null
+                      : () async {
+                          final success = await context
+                              .read<AuthProvider>()
+                              .loginWithGoogle();
+
+                          if (!context.mounted) return;
+
+                          if (success) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const SuccessScreen(
+                                  type: SuccessType.login,
+                                ),
+                              ),
+                            );
+                          } else {
+                            final err = context
+                                .read<AuthProvider>()
+                                .errorMessage;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(err ?? 'Googleログインに失敗しました'),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+                          }
+                        },
+                ),
+
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

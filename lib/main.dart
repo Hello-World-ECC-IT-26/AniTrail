@@ -1,19 +1,68 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
+import 'constants/app_constans.dart';
+import 'providers/auth_provider.dart';
+import 'screens/login_screen.dart';
+import 'screens/register_screen.dart';
+import 'screens/otp_screen.dart';
+import 'screens/success_screen.dart';
+import 'screens/forgot_password_screen.dart';
+import 'screens/password_change_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
-  runApp(const MainApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(fileName: '.env');
+
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+  );
+
+  runApp(const MyApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
+    return MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => AuthProvider())],
+      child: MaterialApp(
+        title: AppConstants.appName,
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1976D2)),
+          useMaterial3: true,
         ),
+        initialRoute: AppConstants.routeLogin,
+        routes: {
+          // ── Auth ──────────────────────────────────────
+          AppConstants.routeLogin: (_) => const LoginScreen(),
+          AppConstants.routeRegister: (_) => const RegisterScreen(),
+          AppConstants.routeOtp: (context) => OtpScreen(
+            email: ModalRoute.of(context)!.settings.arguments as String,
+          ),
+
+          // ── Password ──────────────────────────────────
+          AppConstants.routeForgotPassword: (_) => const ForgotPasswordScreen(),
+          AppConstants.routePasswordChange: (_) => const PasswordChangeScreen(),
+
+          // ── Success ───────────────────────────────────
+          AppConstants.routeSuccessRegister: (_) =>
+              const SuccessScreen(type: SuccessType.register),
+          AppConstants.routeSuccessLogin: (_) =>
+              const SuccessScreen(type: SuccessType.login),
+          AppConstants.routeSuccessPassword: (_) =>
+              const SuccessScreen(type: SuccessType.password),
+
+          // ── Home（仮） ───────────────────────────────────
+          AppConstants.routeHome: (_) =>
+              const Scaffold(body: Center(child: Text('Home Screen'))),
+        },
       ),
     );
   }
