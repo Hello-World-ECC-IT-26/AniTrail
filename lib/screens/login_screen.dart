@@ -81,11 +81,9 @@ class _LoginScreenState extends State<LoginScreen> {
             key: _formKey,
             child: Column(
               children: [
-                const SizedBox(height: 60),
-
                 // ── Logo ───────────────────────────────────
+                const SizedBox(height: 100),
                 const AuthLogo(),
-
                 const SizedBox(height: 32),
 
                 // ── Email Field ────────────────────────────
@@ -113,33 +111,35 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 24),
 
                 // ── Login Button ───────────────────────────
+                SizedBox(height: 100),
                 PrimaryButton(
                   label: 'ログイン',
                   onPressed: isLoading ? null : _handleLogin,
                   isLoading: isLoading,
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 20),
 
                 // ── Forgot Password ────────────────────────
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: AppLinkText(
-                    prefixText: 'パスワードをお忘れの方は',
-                    linkText: 'こちら',
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        AppConstants.routeForgotPassword,
-                      );
-                    },
-                  ),
+                AppLinkText(
+                  prefixText: 'パスワードをお忘れの方は',
+                  linkText: 'こちら',
+                  onTap: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppConstants.routeForgotPassword,
+                    );
+                  },
                 ),
 
-                // ── Divider ────────────────────────────────
-                const Divider(thickness: 1, color: Color(0xFFEEEEEE)),
+                const SizedBox(height: 20),
 
-                const SizedBox(height: 16),
+                // ── Divider ────────────────────────────────
+                const Divider(
+                  thickness: 1,
+                  color: Color.fromARGB(255, 102, 102, 102),
+                ),
+                const SizedBox(height: 20),
 
                 // ── Register Button ────────────────────────
                 SecondaryButton(

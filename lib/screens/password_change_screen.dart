@@ -68,6 +68,7 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
+        toolbarHeight: 80,
         backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
@@ -91,8 +92,6 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
             key: _formKey,
             child: Column(
               children: [
-                const SizedBox(height: 32),
-
                 // ── Logo ───────────────────────────────────
                 const AuthLogo(),
 
@@ -123,6 +122,7 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
                 const SizedBox(height: 48),
 
                 // ── Submit Button ──────────────────────────
+                SizedBox(height: 400),
                 PrimaryButton(label: '登録', onPressed: _handleSubmit),
 
                 const SizedBox(height: 40),

@@ -57,7 +57,7 @@ class AuthProvider extends ChangeNotifier {
       _setSuccess();
     } catch (e) {
       debugPrint('Login error: $e');
-      _setError(e.toString());
+      _setError('メールアドレスまたはパスワードが正しくありません');
     }
   }
 

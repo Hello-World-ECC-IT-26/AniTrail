@@ -89,6 +89,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
+        toolbarHeight: 80,
         backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
@@ -112,7 +113,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             key: _formKey,
             child: Column(
               children: [
-                const SizedBox(height: 32),
                 // ── Logo ───────────────────────────────────
                 const AuthLogo(),
 

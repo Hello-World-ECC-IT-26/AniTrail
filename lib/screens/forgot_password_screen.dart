@@ -61,6 +61,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
+        toolbarHeight: 100,
         backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
@@ -68,7 +69,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'アカウント新規登録',
+          'パスワード変更',
           style: TextStyle(
             color: Colors.black,
             fontSize: 16,
@@ -84,8 +85,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             key: _formKey,
             child: Column(
               children: [
-                const SizedBox(height: 32),
-
                 // ── Logo ───────────────────────────────────
                 const AuthLogo(),
 
@@ -104,6 +103,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 const SizedBox(height: 48),
 
                 // ── Next Button ────────────────────────────
+                SizedBox(height: 420),
                 PrimaryButton(label: '送信', onPressed: _handleNext),
 
                 const SizedBox(height: 40),
