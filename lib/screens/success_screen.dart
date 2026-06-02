@@ -89,31 +89,32 @@ class SuccessScreen extends StatelessWidget {
             ),
           ),
 
-          // ── 下部の白いセクション ────────────────────────
           Expanded(
             flex: 3,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // ── 完了メッセージ ──────────────────────
-                  Text(message, style: AppTextStyles.successMessage),
-                  const SizedBox(height: 40),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        message,
+                        style: AppTextStyles.successMessage,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
 
-                  // ── アクションボタン ────────────────────
                   PrimaryButton(
                     label: buttonLabel,
                     onPressed: () {
                       if (type == SuccessType.password) {
-                        // パスワード変更後はログイン画面へ戻る
                         Navigator.pushNamedAndRemoveUntil(
                           context,
                           AppConstants.routeLogin,
                           (route) => false,
                         );
                       } else {
-                        // 登録・ログイン後はホーム画面へ進む
                         Navigator.pushNamedAndRemoveUntil(
                           context,
                           AppConstants.routeHome,
@@ -122,6 +123,8 @@ class SuccessScreen extends StatelessWidget {
                       }
                     },
                   ),
+
+                  const SizedBox(height: 40),
                 ],
               ),
             ),

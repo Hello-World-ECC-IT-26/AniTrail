@@ -75,17 +75,15 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Form(
             key: _formKey,
             child: Column(
               children: [
-                const SizedBox(height: 60),
-
                 // ── Logo ───────────────────────────────────
+                const SizedBox(height: 100),
                 const AuthLogo(),
-
                 const SizedBox(height: 32),
 
                 // ── Email Field ────────────────────────────
@@ -110,36 +108,37 @@ class _LoginScreenState extends State<LoginScreen> {
                   validator: _validatePassword,
                 ),
 
-                const SizedBox(height: 24),
+                // ── Push button to bottom ──────────────────
+                const Spacer(),
 
-                // ── Login Button ───────────────────────────
                 PrimaryButton(
                   label: 'ログイン',
                   onPressed: isLoading ? null : _handleLogin,
                   isLoading: isLoading,
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 20),
 
                 // ── Forgot Password ────────────────────────
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: AppLinkText(
-                    prefixText: 'パスワードをお忘れの方は',
-                    linkText: 'こちら',
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        AppConstants.routeForgotPassword,
-                      );
-                    },
-                  ),
+                AppLinkText(
+                  prefixText: 'パスワードをお忘れの方は',
+                  linkText: 'こちら',
+                  onTap: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppConstants.routeForgotPassword,
+                    );
+                  },
                 ),
 
-                // ── Divider ────────────────────────────────
-                const Divider(thickness: 1, color: Color(0xFFEEEEEE)),
+                const SizedBox(height: 20),
 
-                const SizedBox(height: 16),
+                // ── Divider ────────────────────────────────
+                const Divider(
+                  thickness: 1,
+                  color: Color.fromARGB(255, 102, 102, 102),
+                ),
+                const SizedBox(height: 20),
 
                 // ── Register Button ────────────────────────
                 SecondaryButton(

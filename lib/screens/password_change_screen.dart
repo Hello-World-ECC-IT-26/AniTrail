@@ -35,6 +35,7 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
   }
 
   String? _validateConfirm(String? value) {
+    if (value == null || value.isEmpty) return 'パスワードを再入力してください';
     if (value != _passwordController.text) return '※上記と同じパスワードを入力してください';
     return null;
   }
@@ -65,9 +66,12 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<AuthProvider>().isLoading;
+
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
+        toolbarHeight: 80,
         backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
@@ -85,14 +89,12 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Form(
             key: _formKey,
             child: Column(
               children: [
-                const SizedBox(height: 32),
-
                 // ── Logo ───────────────────────────────────
                 const AuthLogo(),
 
@@ -120,10 +122,15 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
                   validator: _validateConfirm,
                 ),
 
-                const SizedBox(height: 48),
+                // ── Push button to bottom ──────────────────
+                const Spacer(),
 
                 // ── Submit Button ──────────────────────────
-                PrimaryButton(label: '登録', onPressed: _handleSubmit),
+                PrimaryButton(
+                  label: '登録',
+                  onPressed: isLoading ? null : _handleSubmit,
+                  isLoading: isLoading,
+                ),
 
                 const SizedBox(height: 40),
               ],

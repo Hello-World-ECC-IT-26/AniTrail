@@ -40,7 +40,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (!mounted) return;
 
     if (auth.status == AuthStatus.success) {
-      // OTP 画面へ（forgotPassword 用途）
       Navigator.pushNamed(
         context,
         AppConstants.routeOtp,
@@ -58,9 +57,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<AuthProvider>().isLoading;
+
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
+        toolbarHeight: 100,
         backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
@@ -68,7 +70,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'アカウント新規登録',
+          'パスワード変更',
           style: TextStyle(
             color: Colors.black,
             fontSize: 16,
@@ -78,14 +80,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Form(
             key: _formKey,
             child: Column(
               children: [
-                const SizedBox(height: 32),
-
                 // ── Logo ───────────────────────────────────
                 const AuthLogo(),
 
@@ -101,10 +101,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   keyboardType: TextInputType.emailAddress,
                 ),
 
-                const SizedBox(height: 48),
+                // ── Push button to bottom ──────────────────
+                const Spacer(),
 
                 // ── Next Button ────────────────────────────
-                PrimaryButton(label: '送信', onPressed: _handleNext),
+                PrimaryButton(
+                  label: '送信',
+                  onPressed: isLoading ? null : _handleNext,
+                  isLoading: isLoading,
+                ),
 
                 const SizedBox(height: 40),
               ],

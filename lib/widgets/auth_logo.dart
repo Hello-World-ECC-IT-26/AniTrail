@@ -17,7 +17,7 @@ class AuthLogo extends StatelessWidget {
         child: Image.asset(
           'assets/images/logo.png',
           fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => const Center(
+          errorBuilder: (context, error, stackTrace) => const Center(
             child: Text(
               'ロゴ',
               style: TextStyle(color: Colors.grey, fontSize: 16),

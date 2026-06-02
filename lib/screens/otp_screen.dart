@@ -166,13 +166,21 @@ class _OtpScreenState extends State<OtpScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
+        toolbarHeight: 80,
         backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('OTP認証'),
+        title: const Text(
+          'メールアドレス認証',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         centerTitle: true,
       ),
       body: Padding(
@@ -230,7 +238,7 @@ class _OtpScreenState extends State<OtpScreen> {
             GestureDetector(
               onTap: _handleResend,
               child: Text(
-                _canResend ? 'OTPを再送信' : 'あと $_seconds 秒で再送信できます',
+                _canResend ? 'コードを再送信' : 'あと $_seconds 秒で再送信できます',
                 style: TextStyle(
                   color: _canResend ? AppColors.primary : Colors.grey,
                   decoration: TextDecoration.underline,
