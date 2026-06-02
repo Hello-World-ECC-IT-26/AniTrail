@@ -12,6 +12,8 @@
 .swiftpm/
 .env
 .env.*
+.vscode/
+.github/
 migrate_working_dir/
 
 # IntelliJ related
