@@ -107,7 +107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Form(
             key: _formKey,
@@ -162,7 +162,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   validator: _validateConfirm,
                 ),
 
-                const SizedBox(height: 48),
+                // ── Push button to bottom ──────────────────
+                const Spacer(),
 
                 // ── Register Button ────────────────────────
                 PrimaryButton(label: '新規登録', onPressed: _handleRegister),

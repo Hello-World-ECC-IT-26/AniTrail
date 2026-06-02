@@ -40,7 +40,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (!mounted) return;
 
     if (auth.status == AuthStatus.success) {
-      // OTP 画面へ（forgotPassword 用途）
       Navigator.pushNamed(
         context,
         AppConstants.routeOtp,
@@ -58,6 +57,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<AuthProvider>().isLoading;
+
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
@@ -79,7 +80,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Form(
             key: _formKey,
@@ -100,11 +101,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   keyboardType: TextInputType.emailAddress,
                 ),
 
-                const SizedBox(height: 48),
+                // ── Push button to bottom ──────────────────
+                const Spacer(),
 
                 // ── Next Button ────────────────────────────
-                SizedBox(height: 420),
-                PrimaryButton(label: '送信', onPressed: _handleNext),
+                PrimaryButton(
+                  label: '送信',
+                  onPressed: isLoading ? null : _handleNext,
+                  isLoading: isLoading,
+                ),
 
                 const SizedBox(height: 40),
               ],

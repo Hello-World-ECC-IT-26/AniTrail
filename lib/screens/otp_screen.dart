@@ -173,7 +173,14 @@ class _OtpScreenState extends State<OtpScreen> {
           icon: const Icon(Icons.arrow_back_ios, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('OTP認証'),
+        title: const Text(
+          'メールアドレス認証',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         centerTitle: true,
       ),
       body: Padding(

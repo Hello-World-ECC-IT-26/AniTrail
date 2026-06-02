@@ -75,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Form(
             key: _formKey,
@@ -108,10 +108,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   validator: _validatePassword,
                 ),
 
-                const SizedBox(height: 24),
+                // ── Push button to bottom ──────────────────
+                const Spacer(),
 
-                // ── Login Button ───────────────────────────
-                SizedBox(height: 100),
                 PrimaryButton(
                   label: 'ログイン',
                   onPressed: isLoading ? null : _handleLogin,
