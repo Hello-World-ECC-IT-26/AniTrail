@@ -11,7 +11,7 @@ class AppConstants {
   static const String routeSuccessRegister = '/success-register';
   static const String routeSuccessLogin = '/success-login';
   static const String routeSuccessPassword = '/success-password';
-  static const String routeHome = '/home';
+  static const String routeHomeScreen = '/home-screen';
 
   // ── Validation ────────────────────────────────────────
   static const int passwordMinLength = 8;
