@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:AniTrail/widgets/search_results.dart';
 import 'package:AniTrail/widgets/search_overlay.dart';
 import 'package:AniTrail/widgets/app_bar.dart';
+import 'package:AniTrail/widgets/main_buttom_nav.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -52,6 +53,10 @@ class _SearchScreenState extends State<SearchScreen> {
 
       // アプリバー
       appBar: const AniTrailAppBar(showBack: true),
+
+      bottomNavigationBar: MainBottomNav(
+        onTap: (index) => Navigator.pop(context, index),
+      ),
 
       body: Column(
         children: [
