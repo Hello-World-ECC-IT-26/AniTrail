@@ -2,11 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:AniTrail/providers/auth_provider.dart';
-import '../constants/app_constans.dart';
-import '../styles/app_styles.dart';
-import '../styles/app_text.dart';
-import '../widgets/app_buttons.dart';
+import '../providers/auth_provider.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_text.dart';
+import '../../../core/widgets/app_buttons.dart';
 
 class OtpScreen extends StatefulWidget {
   final String email;

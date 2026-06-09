@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-import 'constants/app_constans.dart';
-import 'providers/auth_provider.dart';
-import 'screens/login_screen.dart';
-import 'screens/register_screen.dart';
-import 'screens/otp_screen.dart';
-import 'screens/success_screen.dart';
-import 'screens/forgot_password_screen.dart';
-import 'screens/password_change_screen.dart';
-import 'screens/home_screen.dart';
+import 'core/constants/app_constants.dart';
+import 'features/auth/providers/auth_provider.dart';
+import 'features/auth/screens/login_screen.dart';
+import 'features/auth/screens/register_screen.dart';
+import 'features/auth/screens/otp_screen.dart';
+import 'features/auth/screens/success_screen.dart';
+import 'features/auth/screens/forgot_password_screen.dart';
+import 'features/auth/screens/password_change_screen.dart';
+import 'features/home/screens/home_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {

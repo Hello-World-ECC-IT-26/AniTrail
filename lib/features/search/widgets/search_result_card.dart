@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:AniTrail/styles/app_styles.dart';
+import '../../../core/styles/app_styles.dart';
 
 /// 表示内容: サムネイル画像 / アニメタイトル / 場所名 / 住所 / 詳細ボタン
 class SearchResultCard extends StatelessWidget {

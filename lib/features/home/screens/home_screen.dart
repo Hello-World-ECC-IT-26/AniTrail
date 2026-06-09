@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import '../widgets/event_section.dart';
 import '../widgets/user_section.dart';
 import '../widgets/stamp_card_section.dart';
-import '../widgets/main_buttom_nav.dart';
-import '../widgets/app_bar.dart';
-import '../screens/map_screen.dart';
-import '../screens/stamp_screen.dart';
-import 'search_screen.dart';
+import '../../../core/widgets/main_buttom_nav.dart';
+import '../../../core/widgets/app_bar.dart';
+import '../../map/screens/map_screen.dart';
+import '../../stamp/screens/stamp_screen.dart';
+import '../../search/screens/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

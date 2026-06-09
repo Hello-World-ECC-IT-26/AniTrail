@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
-import '../services/auth_Service.dart';
+import '../services/auth_service.dart';
 
 enum AuthStatus { idle, loading, success, error }
 

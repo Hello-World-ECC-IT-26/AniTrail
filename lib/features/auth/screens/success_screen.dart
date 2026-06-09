@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../constants/app_constans.dart';
-import '../styles/app_styles.dart';
-import '../styles/app_text.dart';
-import '../widgets/app_buttons.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_text.dart';
+import '../../../core/widgets/app_buttons.dart';
 
 enum SuccessType { register, login, password }
 

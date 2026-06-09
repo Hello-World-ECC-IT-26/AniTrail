@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:AniTrail/widgets/search_result_card.dart';
-import 'package:AniTrail/styles/app_styles.dart';
+import 'search_result_card.dart';
+import '../../../core/styles/app_styles.dart';
 
 class SearchResults extends StatelessWidget {
   final String query;

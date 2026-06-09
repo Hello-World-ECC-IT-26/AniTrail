@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../styles/app_styles.dart';
+import '../../../core/styles/app_styles.dart';
 
 class StampCardSection extends StatefulWidget {
   final List<Map<String, String>> cards;

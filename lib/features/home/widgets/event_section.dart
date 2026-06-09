@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../styles/app_styles.dart';
+import '../../../core/styles/app_styles.dart';
 
 class EventSection extends StatelessWidget {
   const EventSection({super.key});
