@@ -117,7 +117,7 @@ class SuccessScreen extends StatelessWidget {
                       } else {
                         Navigator.pushNamedAndRemoveUntil(
                           context,
-                          AppConstants.routeHome,
+                          AppConstants.routeHomeScreen,
                           (route) => false,
                         );
                       }

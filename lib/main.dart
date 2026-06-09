@@ -9,6 +9,7 @@ import 'screens/otp_screen.dart';
 import 'screens/success_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/password_change_screen.dart';
+import 'screens/home_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
@@ -60,8 +61,7 @@ class MyApp extends StatelessWidget {
               const SuccessScreen(type: SuccessType.password),
 
           // ── Home（仮） ───────────────────────────────────
-          AppConstants.routeHome: (_) =>
-              const Scaffold(body: Center(child: Text('Home Screen'))),
+          AppConstants.routeHomeScreen: (_) => const HomeScreen(),
         },
       ),
     );
