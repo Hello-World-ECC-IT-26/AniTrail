@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../styles/app_styles.dart';
+import 'app_styles.dart';
 
 class AppInputBorder {
   static const UnderlineInputBorder enabled = UnderlineInputBorder(

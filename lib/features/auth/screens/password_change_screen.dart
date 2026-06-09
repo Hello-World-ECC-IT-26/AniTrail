@@ -1,11 +1,11 @@
-import 'package:AniTrail/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:AniTrail/widgets/auth_logo.dart';
-import '../constants/app_constans.dart';
-import '../styles/app_styles.dart';
-import '../widgets/app_buttons.dart';
-import '../widgets/custom_text_field.dart';
+import '../providers/auth_provider.dart';
+import '../widgets/auth_logo.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../core/styles/app_styles.dart';
+import '../../../core/widgets/app_buttons.dart';
+import '../../../core/widgets/custom_text_field.dart';
 
 class PasswordChangeScreen extends StatefulWidget {
   const PasswordChangeScreen({super.key});

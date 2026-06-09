@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:AniTrail/widgets/search_results.dart';
-import 'package:AniTrail/widgets/search_overlay.dart';
-import 'package:AniTrail/widgets/app_bar.dart';
-import 'package:AniTrail/widgets/main_buttom_nav.dart';
+import '../widgets/search_results.dart';
+import '../widgets/search_overlay.dart';
+import '../../../core/widgets/app_bar.dart';
+import '../../../core/widgets/main_buttom_nav.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});

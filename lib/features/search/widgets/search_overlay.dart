@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../styles/app_styles.dart';
+import '../../../core/styles/app_styles.dart';
 
 /// 検索バーフォーカス中に表示されるオーバーレイ
 /// 動作:
