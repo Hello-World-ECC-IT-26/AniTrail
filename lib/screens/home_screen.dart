@@ -35,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _pages = [
       const MapScreen(),
-      _HomeBody(stampCards: _stampCards),
+      _HomeBody(stampCards: _stampCards, onSearchTap: _onSearchTap),
       const StampScreen(),
     ];
   }
@@ -43,6 +43,17 @@ class _HomeScreenState extends State<HomeScreen> {
   // ボトムナビゲーションタップ時の処理
   void _onNavTap(int index) {
     setState(() => _currentIndex = index);
+  }
+
+  // 検索画面へ遷移し、戻り値でタブを切り替える
+  Future<void> _onSearchTap() async {
+    final index = await Navigator.push<int>(
+      context,
+      MaterialPageRoute(builder: (_) => const SearchScreen()),
+    );
+    if (index != null) {
+      setState(() => _currentIndex = index);
+    }
   }
 
   @override
@@ -62,8 +73,9 @@ class _HomeScreenState extends State<HomeScreen> {
 // ホーム画面のメインコンテンツ
 class _HomeBody extends StatelessWidget {
   final List<Map<String, String>> stampCards;
+  final VoidCallback onSearchTap;
 
-  const _HomeBody({required this.stampCards});
+  const _HomeBody({required this.stampCards, required this.onSearchTap});
 
   @override
   Widget build(BuildContext context) {
@@ -75,10 +87,7 @@ class _HomeBody extends StatelessWidget {
 
           // 検索バー（タップで検索画面へ遷移）*search_screen.dart*
           GestureDetector(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SearchScreen()),
-            ),
+            onTap: onSearchTap,
             child: const AbsorbPointer(child: _SearchBar()),
           ),
 
