@@ -11,16 +11,7 @@ class AniTrailAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: AppColors.primary,
       elevation: 0,
-
-      leading: showBack
-          ? IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            )
-          : null,
-
+      automaticallyImplyLeading: false,
       title: const Text(
         'AniTrail',
         style: TextStyle(
