@@ -52,7 +52,7 @@ class _SearchScreenState extends State<SearchScreen> {
       backgroundColor: Colors.white,
 
       // アプリバー
-      appBar: const AniTrailAppBar(showBack: true),
+      appBar: const AniTrailAppBar(),
 
       bottomNavigationBar: MainBottomNav(
         onTap: (index) => Navigator.pop(context, index),
