@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
-import '../widgets/auth_logo.dart';
+
 import '../../../core/constants/app_constants.dart';
 import '../../../core/styles/app_styles.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/custom_text_field.dart';
+import '../providers/auth_provider.dart';
+import '../widgets/auth_logo.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -94,7 +95,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 // ── Email Field ────────────────────────────
                 CustomTextField(
                   label: 'メールアドレス',
-                  hintText: 'helloworld@gmail.com',
+                  hintText: 'hello@example.com',
                   prefixIcon: Icons.email_outlined,
                   controller: _emailController,
                   validator: _validateEmail,

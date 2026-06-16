@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../widgets/event_section.dart';
 import '../widgets/user_section.dart';
 import '../widgets/stamp_card_section.dart';
 import '../../../core/widgets/main_buttom_nav.dart';
 import '../../../core/widgets/app_bar.dart';
+import '../../../features/auth/providers/auth_provider.dart';
 import '../../map/screens/map_screen.dart';
 import '../../stamp/screens/stamp_screen.dart';
 import '../../search/screens/search_screen.dart';
@@ -60,7 +62,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: const AniTrailAppBar(),
+      appBar: AniTrailAppBar(
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: () => context.read<AuthProvider>().logout(),
+          ),
+        ],
+      ),
       body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: MainBottomNav(
         currentIndex: _currentIndex,
