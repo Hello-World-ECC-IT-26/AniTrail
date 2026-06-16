@@ -53,7 +53,7 @@ class SearchResultCard extends StatelessWidget {
 
                 // 聖地を見るボタン
                 ElevatedButton(
-                  onPressed: onViewSpots ?? () {},
+                  onPressed: onViewSpots,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
@@ -171,16 +171,6 @@ class SearchResultCard extends StatelessWidget {
   // ── スタンプサムネイル（最大4枚） ──────────────────────
   List<Widget> _buildSpotThumbnails() {
     const maxCount = 4;
-
-    Widget defaultThumbnail() {
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.asset('assets/images/place_sample.jpg', fit: BoxFit.cover),
-          Container(color: Colors.white.withValues(alpha: 0.3)),
-        ],
-      );
-    }
 
     return List.generate(maxCount, (index) {
       final hasImage = index < spotImages.length;

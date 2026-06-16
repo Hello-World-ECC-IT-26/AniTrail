@@ -3,9 +3,9 @@ import 'search_result_card.dart';
 
 class SearchResults extends StatelessWidget {
   final String query;
+  final void Function(String title, int spotCount)? onViewSpots;
 
-  const SearchResults({super.key, required this.query});
-
+  const SearchResults({super.key, required this.query, this.onViewSpots});
   @override
   Widget build(BuildContext context) {
     // ダミーの件数（実装時はSupabaseから取得した件数を使用）
@@ -34,7 +34,7 @@ class SearchResults extends StatelessWidget {
             title: '君の名は。',
             spotCount: 10,
             onViewSpots: () {
-              // TODO: anime_spot_list_screenへ遷移
+              onViewSpots?.call('君の名は。', 10);
             },
           ),
         );
