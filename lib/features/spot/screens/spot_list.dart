@@ -2,6 +2,7 @@ import 'package:AniTrail/features/home/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import '../../../core/styles/app_styles.dart';
 import '../../../core/widgets/main_buttom_nav.dart';
+import '../../shiori/screens/shiori_list.dart';
 
 class SpotList extends StatefulWidget {
   final String animeTitle;
@@ -71,12 +72,12 @@ class _SpotListState extends State<SpotList> {
               children: [
                 ElevatedButton.icon(
                   onPressed: () {
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder: (_) => ShioriListScreen(spots: _spots),
-                    //   ),
-                    // );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ShioriListScreen(spots: _spots),
+                      ),
+                    );
                   },
 
                   style: ElevatedButton.styleFrom(
@@ -313,7 +314,7 @@ class _SpotListState extends State<SpotList> {
                       label: const Text(
                         '追加',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                         ),
