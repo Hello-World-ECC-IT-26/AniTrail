@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/styles/app_styles.dart';
 
-/// 検索バーフォーカス中に表示されるオーバーレイ
-/// 動作:
-/// - query が空 → 検索履歴を表示
-/// - query に文字あり → 予測ワードを表示（マッチ部分を青くハイライト）
 class SearchOverlay extends StatefulWidget {
   /// 現在の検索クエリ
   final String query;
