@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/search_results.dart';
 import '../widgets/search_overlay.dart';
+import '../../spot/screens/spot_list.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/main_buttom_nav.dart';
 
@@ -117,7 +118,20 @@ class _SearchScreenState extends State<SearchScreen> {
                     onDeleteHistory: (index) {},
                   )
                 : query.isNotEmpty
-                ? SearchResults(query: query)
+                ? SearchResults(
+                    query: query,
+                    onViewSpots: (animeTitle, spotCount) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SpotList(
+                            animeTitle: animeTitle,
+                            spotCount: spotCount,
+                          ),
+                        ),
+                      );
+                    },
+                  )
                 : const SizedBox(),
           ),
         ],

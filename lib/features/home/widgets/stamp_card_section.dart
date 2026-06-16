@@ -4,6 +4,7 @@ import '../../../core/styles/app_styles.dart';
 class StampCardSection extends StatefulWidget {
   final List<Map<String, String>> cards;
   const StampCardSection({super.key, required this.cards});
+
   @override
   State<StampCardSection> createState() => _StampCardSectionState();
 }
@@ -20,66 +21,81 @@ class _StampCardSectionState extends State<StampCardSection> {
         const SizedBox(height: 20),
 
         // セクションタイトル
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: const Text(
-            '作成したスタンプカード',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+        const Center(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              '作成した旅のしおり',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
             ),
           ),
         ),
 
         const SizedBox(height: 10),
-        // カードリスト
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
+
+        // カードリスト（デッキ風に重なって表示）
+        Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: widget.cards.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
-          itemBuilder: (context, index) {
-            final card = widget.cards[index];
-            final isExpanded = _expandedIndex == index;
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // カード1枚の高さ
+              const double cardHeight = 130;
+              // 閉じているカードが下から見える幅
+              const double peekHeight = 100.0;
+              // 展開中のカードの追加高さ（サムネイル + ボタン）
+              const double expandedExtra = 120.0;
 
-            // インデックスに応じて青の濃さを変える
-            final colors = [
-              const Color(0xFFDCEEFD),
-              const Color(0xFFB3D9F8),
-              const Color(0xFF89C4F4),
-              const Color(0xFF5AAEE8),
-              const Color(0xFF2196F3),
-            ];
-            final bgColor = colors[index % colors.length];
-            final isDark = index >= 4;
-            final textColor = isDark ? Colors.white : Colors.black87;
+              // Stack全体の高さを計算
+              final expandedIndex = _expandedIndex;
+              double totalHeight =
+                  cardHeight +
+                  (widget.cards.length - 1) * peekHeight +
+                  (expandedIndex != null ? expandedExtra : 0);
 
-            // 収集済みスタンプ数（ダミー）
-            final collectedList = [1, 0, 3, 0, 5];
-            final collected = index < collectedList.length
-                ? collectedList[index]
-                : 0;
+              return SizedBox(
+                height: totalHeight,
+                child: Stack(
+                  children: List.generate(widget.cards.length, (index) {
+                    final card = widget.cards[index];
+                    final isExpanded = _expandedIndex == index;
 
-            return _StampCard(
-              title: card['title']!,
-              date: card['date']!,
-              bgColor: bgColor,
-              textColor: textColor,
-              isExpanded: isExpanded,
-              collectedStamps: collected,
-              totalStamps: 9,
-              onTap: () {
-                setState(() {
-                  // 同じカードをタップしたら閉じる、別のカードなら開く
-                  _expandedIndex = isExpanded ? null : index;
-                });
-              },
-            );
-          },
+                    // 展開中カードより後ろのカードは下にずらす
+                    double topOffset = index * peekHeight;
+                    if (expandedIndex != null && index > expandedIndex) {
+                      topOffset += expandedExtra;
+                    }
+
+                    return Positioned(
+                      top: topOffset,
+                      left: 0,
+                      right: 0,
+                      child: _ShioriCard(
+                        title: card['title']!,
+                        spotCount:
+                            int.tryParse(card['spotCount'] ?? '10') ?? 10,
+                        bannerImage: card['bannerImage'],
+                        isExpanded: isExpanded,
+                        spotImages: const [],
+                        onTap: () {
+                          setState(() {
+                            _expandedIndex = isExpanded ? null : index;
+                          });
+                        },
+                        onViewDetail: () {
+                          // TODO: しおり詳細画面へ遷移
+                        },
+                      ),
+                    );
+                  }),
+                ),
+              );
+            },
+          ),
         ),
 
         const SizedBox(height: 24),
@@ -88,80 +104,130 @@ class _StampCardSectionState extends State<StampCardSection> {
   }
 }
 
-/// 個別スタンプカードWidget（アコーディオン）
-class _StampCard extends StatelessWidget {
+/// 個別しおりカード（アコーディオン）
+class _ShioriCard extends StatelessWidget {
   final String title;
-  final String date;
-  final Color bgColor;
-  final Color textColor;
+  final int spotCount;
+  final String? bannerImage;
   final bool isExpanded;
-  final int collectedStamps;
-  final int totalStamps;
+  final List<String> spotImages;
   final VoidCallback onTap;
+  final VoidCallback onViewDetail;
 
-  const _StampCard({
+  const _ShioriCard({
     required this.title,
-    required this.date,
-    required this.bgColor,
-    required this.textColor,
+    required this.spotCount,
+    this.bannerImage,
     required this.isExpanded,
-    required this.collectedStamps,
-    required this.totalStamps,
+    required this.spotImages,
     required this.onTap,
+    required this.onViewDetail,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeInOut,
+      child: Container(
         decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(14),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: bgColor.withOpacity(0.45),
-              blurRadius: 8,
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Column(
           children: [
-            // ヘッダー（タイトル / 日付 / 矢印アイコン）
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // ── バナー部分（常に表示） ────────────────
+            _buildBanner(),
+
+            // ── 展開時: サムネイル + 詳細ボタン ────────
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 280),
+              crossFadeState: isExpanded
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+              firstChild: const SizedBox(width: double.infinity, height: 0),
+              secondChild: _buildExpandedContent(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── バナー（画像 + タイトル + 聖地数 + 矢印） ──────────
+  Widget _buildBanner() {
+    return ClipRRect(
+      borderRadius: BorderRadius.only(
+        topLeft: const Radius.circular(16),
+        topRight: const Radius.circular(16),
+        bottomLeft: Radius.circular(isExpanded ? 0 : 16),
+        bottomRight: Radius.circular(isExpanded ? 0 : 16),
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        height: 130,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // バナー画像
+            bannerImage != null
+                ? Image.asset(bannerImage!, fit: BoxFit.cover)
+                : Image.asset(
+                    'assets/images/place_sample.jpg',
+                    fit: BoxFit.cover,
+                    alignment: Alignment.center, // 画像の中央を表示
+                    errorBuilder: (_, __, ___) =>
+                        Container(color: AppColors.primary),
+                  ),
+
+            // グラデーションオーバーレイ
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [Colors.black54, Colors.transparent],
+                ),
+              ),
+            ),
+
+            // タイトルと聖地数（左側）
+            Positioned(
+              left: 16,
+              top: 0,
+              bottom: 0,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
-                      fontSize: 14,
+                    style: const TextStyle(
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: textColor,
+                      color: Colors.white,
                     ),
                   ),
+                  const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text(
-                        date,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: textColor,
-                        ),
+                      const Icon(
+                        Icons.location_on_outlined,
+                        color: Colors.white70,
+                        size: 13,
                       ),
-                      const SizedBox(width: 6),
-                      AnimatedRotation(
-                        turns: isExpanded ? 0.5 : 0,
-                        duration: const Duration(milliseconds: 280),
-                        child: Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          color: textColor,
-                          size: 20,
+                      const SizedBox(width: 3),
+                      Text(
+                        '聖地 $spotCount箇所',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white70,
                         ),
                       ),
                     ],
@@ -170,14 +236,19 @@ class _StampCard extends StatelessWidget {
               ),
             ),
 
-            // スタンプグリッド（開いている時のみ表示）
-            AnimatedCrossFade(
-              duration: const Duration(milliseconds: 280),
-              crossFadeState: isExpanded
-                  ? CrossFadeState.showSecond
-                  : CrossFadeState.showFirst,
-              firstChild: const SizedBox(width: double.infinity, height: 0),
-              secondChild: _buildGrid(),
+            // 矢印アイコン（右上）
+            Positioned(
+              top: 10,
+              right: 12,
+              child: AnimatedRotation(
+                turns: isExpanded ? 0.5 : 0,
+                duration: const Duration(milliseconds: 280),
+                child: const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
             ),
           ],
         ),
@@ -185,55 +256,63 @@ class _StampCard extends StatelessWidget {
     );
   }
 
-  // スタンプグリッド（3列 × n行）
-  Widget _buildGrid() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-          childAspectRatio: 1,
-        ),
-        itemCount: totalStamps,
-        itemBuilder: (context, index) {
-          final hasStamp = index < collectedStamps;
-          return _buildCell(hasStamp);
-        },
-      ),
-    );
-  }
-
-  // 1マスのスタンプセル（スタンプ済み or 空）
-  Widget _buildCell(bool hasStamp) {
+  // ── 展開コンテンツ（サムネイル + 詳細ボタン） ───────────
+  Widget _buildExpandedContent() {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 3,
-            offset: const Offset(0, 1),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(16),
+          bottomRight: Radius.circular(16),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      child: Row(
+        children: [
+          // スポットサムネイル（最大4枚）
+          ...List.generate(4, (index) {
+            final hasImage = index < spotImages.length;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: SizedBox(
+                  width: 52,
+                  height: 52,
+                  child: hasImage
+                      ? Image.asset(
+                          spotImages[index],
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              Container(color: Colors.grey.shade300),
+                        )
+                      : Container(color: Colors.grey.shade300),
+                ),
+              ),
+            );
+          }),
+
+          const Spacer(),
+
+          // 詳細を見るボタン
+          ElevatedButton(
+            onPressed: onViewDetail,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              '詳細を見る',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),
-      child: hasStamp
-          ? Padding(
-              padding: const EdgeInsets.all(6),
-              child: Image.asset(
-                'assets/images/stamp_sample.png',
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => Center(
-                  child: Icon(Icons.pets, color: AppColors.primary, size: 28),
-                ),
-              ),
-            )
-          : const SizedBox(),
     );
   }
 }
