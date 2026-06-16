@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
-import '../widgets/auth_logo.dart';
+
 import '../../../core/constants/app_constants.dart';
 import '../../../core/styles/app_styles.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/custom_text_field.dart';
+import '../providers/auth_provider.dart';
+import '../widgets/auth_logo.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -97,7 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'アカウント新規登録',
+          '新規登録',
           style: TextStyle(
             color: Colors.black,
             fontSize: 16,
@@ -120,7 +121,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // ── Username Field ─────────────────────────
                 CustomTextField(
                   label: 'ユーザー名',
-                  hintText: 'スタンプ太郎',
+                  hintText: 'アニトレ',
                   prefixIcon: Icons.person_outline,
                   controller: _usernameController,
                   validator: _validateUsername,
@@ -131,7 +132,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // ── Email Field ────────────────────────────
                 CustomTextField(
                   label: 'メールアドレス',
-                  hintText: 'helloworld@gmail.com',
+                  hintText: 'hello@example.com',
                   prefixIcon: Icons.email_outlined,
                   controller: _emailController,
                   validator: _validateEmail,
@@ -143,7 +144,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // ── Password Field ─────────────────────────
                 CustomTextField(
                   label: 'パスワード',
-                  hintText: 'helloworld315',
+                  hintText: '●●●●●●●●',
                   prefixIcon: Icons.lock_outline,
                   controller: _passwordController,
                   isPassword: true,

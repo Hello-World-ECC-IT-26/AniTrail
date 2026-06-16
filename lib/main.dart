@@ -25,6 +25,16 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final isAuthenticated = context.watch<AuthProvider>().isAuthenticated;
+    return isAuthenticated ? const HomeScreen() : const LoginScreen();
+  }
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -39,7 +49,7 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1976D2)),
           useMaterial3: true,
         ),
-        initialRoute: AppConstants.routeLogin,
+        home: const AuthWrapper(),
         routes: {
           // ── Auth ──────────────────────────────────────
           AppConstants.routeLogin: (_) => const LoginScreen(),

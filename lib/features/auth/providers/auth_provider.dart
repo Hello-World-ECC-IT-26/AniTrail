@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -17,13 +18,30 @@ class AuthProvider extends ChangeNotifier {
   String? _pendingEmail;
   OtpPurpose _otpPurpose = OtpPurpose.register;
 
+  StreamSubscription<AuthState>? _authSubscription;
+
   AuthStatus get status => _status;
   String? get errorMessage => _errorMessage;
   bool get isLoading => _status == AuthStatus.loading;
   String? get pendingEmail => _pendingEmail;
   OtpPurpose get otpPurpose => _otpPurpose;
+  bool get isAuthenticated =>
+      Supabase.instance.client.auth.currentSession != null;
 
   final AuthService authService = AuthService();
+
+  AuthProvider() {
+    _authSubscription =
+        Supabase.instance.client.auth.onAuthStateChange.listen((_) {
+      notifyListeners();
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
 
   void _setLoading() {
     _status = AuthStatus.loading;
@@ -47,6 +65,17 @@ class AuthProvider extends ChangeNotifier {
     _status = AuthStatus.idle;
     _errorMessage = null;
     notifyListeners();
+  }
+
+  //ログアウト
+  Future<void> logout() async {
+    _setLoading();
+    try {
+      await authService.signOut();
+      _setSuccess();
+    } catch (e) {
+      _setError('ログアウトに失敗しました');
+    }
   }
 
   //ログイン
