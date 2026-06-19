@@ -14,6 +14,7 @@
 .env.*
 .vscode/
 .github/
+.claude/
 migrate_working_dir/
 
 # IntelliJ related
