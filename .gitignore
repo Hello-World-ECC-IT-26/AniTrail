@@ -91,3 +91,28 @@ lib/generated_plugin_registrant.dart
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 
 # End of https://www.toptal.com/developers/gitignore/api/flutter
+
+# pubspec.lock is auto-generated
+pubspec.lock
+
+# Generated config files
+**/ios/Flutter/*.xcconfig
+**/macos/Flutter/*.xcconfig
+
+# Generated/build artifacts
+**/.dart_tool/
+**/build/
+**/dist/
+
+# devtools
+devtools_options.yaml
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
+
+# lock files
+**/skills-lock.json
+**/Podfile.lock

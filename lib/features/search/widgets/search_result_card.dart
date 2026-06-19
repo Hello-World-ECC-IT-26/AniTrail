@@ -1,13 +1,19 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../core/styles/app_styles.dart';
 
 class SearchResultCard extends StatelessWidget {
   final String title;
+
+  /// アニメのキービジュアル URL（横画像）。null の場合はプレースホルダー表示
   final String? bannerImage;
   final int spotCount;
 
-  /// 聖地のサムネイル画像リスト（最大4枚）
+  /// 聖地のサムネイル画像 URL リスト（最大4枚）
   final List<String> spotImages;
+
+  /// 画像リクエストに付与する HTTP ヘッダ（認証など）
+  final Map<String, String> httpHeaders;
 
   /// 「聖地を見る」ボタンタップ時のコールバック
   final VoidCallback? onViewSpots;
@@ -18,6 +24,7 @@ class SearchResultCard extends StatelessWidget {
     this.bannerImage,
     this.spotCount = 10,
     this.spotImages = const [],
+    this.httpHeaders = const {},
     this.onViewSpots,
   });
 
@@ -29,7 +36,7 @@ class SearchResultCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -38,20 +45,13 @@ class SearchResultCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── バナー画像（上部・タイトルオーバーレイ付き） ──
           _buildBanner(),
-
-          // ── 下部エリア（スタンプ + ボタン） ────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
             child: Row(
               children: [
-                // スタンプサムネイル（最大4枚）
                 ..._buildSpotThumbnails(),
-
                 const Spacer(),
-
-                // 聖地を見るボタン
                 ElevatedButton(
                   onPressed: onViewSpots,
                   style: ElevatedButton.styleFrom(
@@ -79,7 +79,6 @@ class SearchResultCard extends StatelessWidget {
     );
   }
 
-  // ── バナー画像（タイトル・聖地数オーバーレイ付き） ──────
   Widget _buildBanner() {
     return ClipRRect(
       borderRadius: const BorderRadius.only(
@@ -92,30 +91,17 @@ class SearchResultCard extends StatelessWidget {
             width: double.infinity,
             height: 140,
             child: bannerImage != null
-                ? Image.asset(bannerImage!, fit: BoxFit.cover)
-                : Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Image.asset(
-                        'assets/images/place_sample.jpg',
-                        fit: BoxFit.cover,
-                        alignment: const Alignment(0, -0.8),
-                        errorBuilder: (_, __, ___) => Container(
-                          color: Colors.grey.shade300,
-                          child: Icon(
-                            Icons.image_outlined,
-                            color: Colors.grey.shade400,
-                            size: 40,
-                          ),
-                        ),
-                      ),
-
-                      // Overlay
-                      Container(color: Colors.white.withValues(alpha: 0.2)),
-                    ],
-                  ),
+                ? CachedNetworkImage(
+                    imageUrl: bannerImage!,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: 140,
+                    placeholder: (_, _) =>
+                        Container(color: Colors.grey.shade200),
+                    errorWidget: (_, _, _) => _placeholderBanner(),
+                  )
+                : _placeholderBanner(),
           ),
-
           // グラデーションオーバーレイ
           Positioned.fill(
             child: Container(
@@ -128,7 +114,6 @@ class SearchResultCard extends StatelessWidget {
               ),
             ),
           ),
-
           // アニメタイトル（左下）
           Positioned(
             left: 12,
@@ -143,7 +128,6 @@ class SearchResultCard extends StatelessWidget {
               ),
             ),
           ),
-
           // 聖地数（左下）
           Positioned(
             left: 12,
@@ -168,12 +152,18 @@ class SearchResultCard extends StatelessWidget {
     );
   }
 
-  // ── スタンプサムネイル（最大4枚） ──────────────────────
+  Widget _placeholderBanner() {
+    return Container(
+      color: Colors.grey.shade300,
+      child: Icon(Icons.image_outlined, color: Colors.grey.shade400, size: 40),
+    );
+  }
+
   List<Widget> _buildSpotThumbnails() {
     const maxCount = 4;
 
     return List.generate(maxCount, (index) {
-      final hasImage = index < spotImages.length;
+      final url = index < spotImages.length ? spotImages[index] : null;
 
       return Padding(
         padding: const EdgeInsets.only(right: 6),
@@ -182,15 +172,16 @@ class SearchResultCard extends StatelessWidget {
           child: SizedBox(
             width: 44,
             height: 44,
-            child: hasImage
-                ? Image.asset(
-                    spotImages[index],
+            child: url != null
+                ? CachedNetworkImage(
+                    imageUrl: url,
+                    httpHeaders: httpHeaders,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        //// 画像読み込み失敗時の背景
+                    placeholder: (_, _) =>
+                        Container(color: Colors.grey.shade200),
+                    errorWidget: (_, _, _) =>
                         Container(color: Colors.grey.shade300),
                   )
-                // 画像がない場合のグレー背景
                 : Container(color: Colors.grey.shade300),
           ),
         ),

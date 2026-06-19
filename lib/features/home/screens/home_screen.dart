@@ -61,15 +61,18 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: _currentIndex != 0,
       backgroundColor: Colors.white,
-      appBar: AniTrailAppBar(
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () => context.read<AuthProvider>().logout(),
-          ),
-        ],
-      ),
+      appBar: _currentIndex == 0
+          ? null
+          : AniTrailAppBar(
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.logout, color: Colors.white),
+                  onPressed: () => context.read<AuthProvider>().logout(),
+                ),
+              ],
+            ),
       body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: MainBottomNav(
         currentIndex: _currentIndex,
