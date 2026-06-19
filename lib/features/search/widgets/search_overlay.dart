@@ -24,7 +24,7 @@ class SearchOverlay extends StatefulWidget {
 
 class _SearchOverlayState extends State<SearchOverlay> {
   // 検索履歴（ダミーデータ。実装時はローカルストレージから取得）
-  List<String> _history = ['呪術廻戦', '名探偵コナン', '鬼滅の刃'];
+  final List<String> _history = [];
 
   // 予測ワード候補（ダミーデータ。実装時はSupabaseから取得）
   final List<Map<String, dynamic>> _suggestions = [
@@ -90,7 +90,7 @@ class _SearchOverlayState extends State<SearchOverlay> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: _history.length,
-      separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
+      separatorBuilder: (_, _) => const Divider(height: 1, indent: 16),
       itemBuilder: (context, index) {
         final text = _history[index];
         return ListTile(
@@ -123,7 +123,7 @@ class _SearchOverlayState extends State<SearchOverlay> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: _suggestions.length,
-      separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
+      separatorBuilder: (_, _) => const Divider(height: 1, indent: 16),
       itemBuilder: (context, index) {
         final s = _suggestions[index];
         final text = s['text'] as String;
