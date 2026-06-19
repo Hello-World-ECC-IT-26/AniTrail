@@ -107,9 +107,14 @@ class SearchResultCard extends StatelessWidget {
             child: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black54],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  stops: [0, 0.55, 1],
+                  colors: [
+                    Color(0xB34A76E8),
+                    Color(0x80745FC6),
+                    Color(0x33745FC6),
+                  ],
                 ),
               ),
             ),
@@ -117,9 +122,12 @@ class SearchResultCard extends StatelessWidget {
           // アニメタイトル（左下）
           Positioned(
             left: 12,
+            right: 12,
             bottom: 28,
             child: Text(
               title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontSize: 30,
                 fontWeight: FontWeight.bold,

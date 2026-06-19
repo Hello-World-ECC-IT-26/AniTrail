@@ -6,6 +6,7 @@ class AuthService {
   /// メールアドレス＋パスワードでログイン
   Future<void> login({required String email, required String password}) async {
     await supabase.auth.signInWithPassword(email: email, password: password);
+    await ensureProfile();
   }
 
   /// 新規登録（メール認証OTPが送信される）
@@ -24,6 +25,20 @@ class AuthService {
     required OtpType type,
   }) async {
     await supabase.auth.verifyOTP(email: email, token: token, type: type);
+    if (type == OtpType.signup) await ensureProfile();
+  }
+
+  /// stamp_cards など、profiles.user_id を参照する機能の前提行を保証する。
+  Future<void> ensureProfile() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+    final metadataName = user.userMetadata?['username'];
+    await supabase.from('profiles').upsert({
+      'user_id': user.id,
+      'username': metadataName is String && metadataName.isNotEmpty
+          ? metadataName
+          : null,
+    }, onConflict: 'user_id');
   }
 
   /// パスワードリセット用OTPをメール送信

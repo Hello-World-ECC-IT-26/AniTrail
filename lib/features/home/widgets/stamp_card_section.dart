@@ -1,17 +1,50 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/styles/app_styles.dart';
+import '../../map/models/anime_spot.dart';
+import '../../map/services/spot_api.dart';
+import '../../shiori/screens/shiori_detail.dart';
 
 class StampCardSection extends StatefulWidget {
-  final List<Map<String, String>> cards;
-  const StampCardSection({super.key, required this.cards});
+  const StampCardSection({super.key});
 
   @override
   State<StampCardSection> createState() => _StampCardSectionState();
 }
 
 class _StampCardSectionState extends State<StampCardSection> {
+  final SpotApi _api = SpotApi();
+
+  List<StampCard> _cards = [];
+  bool _loading = true;
+
   // 開いているカードのindex（nullなら全部閉じ）
   int? _expandedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final cards = await _api.fetchStampCards();
+      if (mounted)
+        setState(() {
+          _cards = cards;
+          _loading = false;
+        });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Map<String, String> get _authHeaders {
+    final token = Supabase.instance.client.auth.currentSession?.accessToken;
+    return token != null ? {'Authorization': 'Bearer $token'} : {};
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,8 +52,6 @@ class _StampCardSectionState extends State<StampCardSection> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 20),
-
-        // セクションタイトル
         const Center(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
@@ -35,68 +66,82 @@ class _StampCardSectionState extends State<StampCardSection> {
             ),
           ),
         ),
-
         const SizedBox(height: 10),
 
-        // カードリスト（デッキ風に重なって表示）
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // カード1枚の高さ
-              const double cardHeight = 130;
-              // 閉じているカードが下から見える幅
-              const double peekHeight = 100.0;
-              // 展開中のカードの追加高さ（サムネイル + ボタン）
-              const double expandedExtra = 120.0;
+        if (_loading)
+          const Padding(
+            padding: EdgeInsets.all(32),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (_cards.isEmpty)
+          Padding(
+            padding: const EdgeInsets.all(32),
+            child: Center(
+              child: Text(
+                'まだ旅のしおりがありません',
+                style: TextStyle(color: Colors.grey.shade500),
+              ),
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                const double cardHeight = 130;
+                const double peekHeight = 100.0;
+                const double expandedExtra = 120.0;
 
-              // Stack全体の高さを計算
-              final expandedIndex = _expandedIndex;
-              double totalHeight =
-                  cardHeight +
-                  (widget.cards.length - 1) * peekHeight +
-                  (expandedIndex != null ? expandedExtra : 0);
+                final expandedIndex = _expandedIndex;
+                double totalHeight =
+                    cardHeight +
+                    (_cards.length - 1) * peekHeight +
+                    (expandedIndex != null ? expandedExtra : 0);
 
-              return SizedBox(
-                height: totalHeight,
-                child: Stack(
-                  children: List.generate(widget.cards.length, (index) {
-                    final card = widget.cards[index];
-                    final isExpanded = _expandedIndex == index;
+                return SizedBox(
+                  height: totalHeight,
+                  child: Stack(
+                    children: List.generate(_cards.length, (index) {
+                      final card = _cards[index];
+                      final isExpanded = _expandedIndex == index;
 
-                    // 展開中カードより後ろのカードは下にずらす
-                    double topOffset = index * peekHeight;
-                    if (expandedIndex != null && index > expandedIndex) {
-                      topOffset += expandedExtra;
-                    }
+                      double topOffset = index * peekHeight;
+                      if (expandedIndex != null && index > expandedIndex) {
+                        topOffset += expandedExtra;
+                      }
 
-                    return Positioned(
-                      top: topOffset,
-                      left: 0,
-                      right: 0,
-                      child: _ShioriCard(
-                        title: card['title']!,
-                        spotCount:
-                            int.tryParse(card['spotCount'] ?? '10') ?? 10,
-                        bannerImage: card['bannerImage'],
-                        isExpanded: isExpanded,
-                        spotImages: const [],
-                        onTap: () {
-                          setState(() {
-                            _expandedIndex = isExpanded ? null : index;
-                          });
-                        },
-                        onViewDetail: () {
-                          // TODO: しおり詳細画面へ遷移
-                        },
-                      ),
-                    );
-                  }),
-                ),
-              );
-            },
+                      return Positioned(
+                        top: topOffset,
+                        left: 0,
+                        right: 0,
+                        child: _ShioriCard(
+                          title: card.title,
+                          spotCount: card.spotCount,
+                          spotImages: card.spotImageUrls,
+                          authHeaders: _authHeaders,
+                          isExpanded: isExpanded,
+                          onTap: () {
+                            setState(() {
+                              _expandedIndex = isExpanded ? null : index;
+                            });
+                          },
+                          onViewDetail: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    ShioriDetailScreen(cardId: card.cardId),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    }),
+                  ),
+                );
+              },
+            ),
           ),
-        ),
 
         const SizedBox(height: 24),
       ],
@@ -108,18 +153,18 @@ class _StampCardSectionState extends State<StampCardSection> {
 class _ShioriCard extends StatelessWidget {
   final String title;
   final int spotCount;
-  final String? bannerImage;
-  final bool isExpanded;
   final List<String> spotImages;
+  final Map<String, String> authHeaders;
+  final bool isExpanded;
   final VoidCallback onTap;
   final VoidCallback onViewDetail;
 
   const _ShioriCard({
     required this.title,
     required this.spotCount,
-    this.bannerImage,
-    required this.isExpanded,
     required this.spotImages,
+    required this.authHeaders,
+    required this.isExpanded,
     required this.onTap,
     required this.onViewDetail,
   });
@@ -134,7 +179,7 @@ class _ShioriCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -142,10 +187,7 @@ class _ShioriCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            // ── バナー部分（常に表示） ────────────────
             _buildBanner(),
-
-            // ── 展開時: サムネイル + 詳細ボタン ────────
             AnimatedCrossFade(
               duration: const Duration(milliseconds: 280),
               crossFadeState: isExpanded
@@ -160,8 +202,8 @@ class _ShioriCard extends StatelessWidget {
     );
   }
 
-  // ── バナー（画像 + タイトル + 聖地数 + 矢印） ──────────
   Widget _buildBanner() {
+    final bannerUrl = spotImages.isNotEmpty ? spotImages.first : null;
     return ClipRRect(
       borderRadius: BorderRadius.only(
         topLeft: const Radius.circular(16),
@@ -175,18 +217,15 @@ class _ShioriCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // バナー画像
-            bannerImage != null
-                ? Image.asset(bannerImage!, fit: BoxFit.cover)
-                : Image.asset(
-                    'assets/images/place_sample.jpg',
+            bannerUrl != null
+                ? CachedNetworkImage(
+                    imageUrl: bannerUrl,
+                    httpHeaders: authHeaders,
                     fit: BoxFit.cover,
-                    alignment: Alignment.center, // 画像の中央を表示
-                    errorBuilder: (_, __, ___) =>
+                    errorWidget: (_, _, _) =>
                         Container(color: AppColors.primary),
-                  ),
-
-            // グラデーションオーバーレイ
+                  )
+                : Container(color: AppColors.primary),
             Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
@@ -196,8 +235,6 @@ class _ShioriCard extends StatelessWidget {
                 ),
               ),
             ),
-
-            // タイトルと聖地数（左側）
             Positioned(
               left: 16,
               top: 0,
@@ -235,8 +272,6 @@ class _ShioriCard extends StatelessWidget {
                 ],
               ),
             ),
-
-            // 矢印アイコン（右上）
             Positioned(
               top: 10,
               right: 12,
@@ -256,7 +291,6 @@ class _ShioriCard extends StatelessWidget {
     );
   }
 
-  // ── 展開コンテンツ（サムネイル + 詳細ボタン） ───────────
   Widget _buildExpandedContent() {
     return Container(
       decoration: const BoxDecoration(
@@ -269,7 +303,6 @@ class _ShioriCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
       child: Row(
         children: [
-          // スポットサムネイル（最大4枚）
           ...List.generate(4, (index) {
             final hasImage = index < spotImages.length;
             return Padding(
@@ -280,10 +313,11 @@ class _ShioriCard extends StatelessWidget {
                   width: 52,
                   height: 52,
                   child: hasImage
-                      ? Image.asset(
-                          spotImages[index],
+                      ? CachedNetworkImage(
+                          imageUrl: spotImages[index],
+                          httpHeaders: authHeaders,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
+                          errorWidget: (_, _, _) =>
                               Container(color: Colors.grey.shade300),
                         )
                       : Container(color: Colors.grey.shade300),
@@ -291,10 +325,7 @@ class _ShioriCard extends StatelessWidget {
               ),
             );
           }),
-
           const Spacer(),
-
-          // 詳細を見るボタン
           ElevatedButton(
             onPressed: onViewDetail,
             style: ElevatedButton.styleFrom(

@@ -31,8 +31,16 @@ class AuthProvider extends ChangeNotifier {
   final AuthService authService = AuthService();
 
   AuthProvider() {
-    _authSubscription =
-        Supabase.instance.client.auth.onAuthStateChange.listen((_) {
+    if (isAuthenticated) {
+      unawaited(
+        authService.ensureProfile().catchError((error) {
+          debugPrint('Profile initialization failed: $error');
+        }),
+      );
+    }
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
+      _,
+    ) {
       notifyListeners();
     });
   }
@@ -209,6 +217,7 @@ class AuthProvider extends ChangeNotifier {
         idToken: idToken,
         accessToken: accessToken,
       );
+      await authService.ensureProfile();
 
       _setSuccess();
 
