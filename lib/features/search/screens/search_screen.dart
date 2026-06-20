@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/search_results.dart';
 import '../widgets/search_overlay.dart';
 import '../../spot/screens/spot_list.dart';
@@ -13,11 +14,14 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
+  static const _historyKey = 'search_history';
+
   final controller = TextEditingController();
   final focusNode = FocusNode();
 
   bool isFocused = false;
   String query = '';
+  List<String> history = [];
 
   @override
   void initState() {
@@ -25,7 +29,11 @@ class _SearchScreenState extends State<SearchScreen> {
 
     // フォーカス状態監視（検索バーが選択されているか）
     focusNode.addListener(() {
-      setState(() => isFocused = focusNode.hasFocus);
+      if (mounted) setState(() => isFocused = focusNode.hasFocus);
+    });
+    _loadHistory();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) focusNode.requestFocus();
     });
   }
 
@@ -37,9 +45,33 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
+  Future<void> _loadHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() => history = prefs.getStringList(_historyKey) ?? []);
+  }
+
+  Future<void> _saveHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_historyKey, history.take(20).toList());
+  }
+
+  void _addHistory(String value) {
+    final q = value.trim();
+    if (q.isEmpty) return;
+    setState(() => history = [q, ...history.where((item) => item != q)]);
+    _saveHistory();
+  }
+
+  void _deleteHistory(String value) {
+    setState(() => history.remove(value));
+    _saveHistory();
+  }
+
   void _onSelect(String value) {
     controller.text = value;
     focusNode.unfocus();
+    _addHistory(value);
 
     setState(() {
       query = value;
@@ -73,9 +105,12 @@ class _SearchScreenState extends State<SearchScreen> {
 
               // 検索確定時
               onSubmitted: (v) {
+                final submitted = v.trim();
+                if (submitted.isEmpty) return;
                 focusNode.unfocus();
+                _addHistory(submitted);
                 setState(() {
-                  query = v;
+                  query = submitted;
                   isFocused = false;
                 });
               },
@@ -114,23 +149,27 @@ class _SearchScreenState extends State<SearchScreen> {
             child: isFocused
                 ? SearchOverlay(
                     query: query,
+                    history: history,
                     onSelect: _onSelect,
-                    onDeleteHistory: (index) {},
+                    onDeleteHistory: _deleteHistory,
                   )
                 : query.isNotEmpty
                 ? SearchResults(
                     query: query,
-                    onViewSpots: (animeTitle, spotCount) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => SpotList(
-                            animeTitle: animeTitle,
-                            spotCount: spotCount,
-                          ),
-                        ),
-                      );
-                    },
+                    onViewSpots:
+                        (animeId, animeTitle, spotCount, keyVisualUrl) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => SpotList(
+                                animeId: animeId,
+                                animeTitle: animeTitle,
+                                spotCount: spotCount,
+                                bannerImageUrl: keyVisualUrl,
+                              ),
+                            ),
+                          );
+                        },
                   )
                 : const SizedBox(),
           ),

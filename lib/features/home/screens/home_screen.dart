@@ -11,23 +11,17 @@ import '../../stamp/screens/stamp_screen.dart';
 import '../../search/screens/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.initialIndex = 1})
+    : assert(initialIndex >= 0 && initialIndex <= 2);
+
+  final int initialIndex;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 1;
-
-  // スタンプカードのダミーデータ
-  final List<Map<String, String>> _stampCards = [
-    {'title': 'しおりのタイトル', 'date': '4月1日'},
-    {'title': 'しおりのタイトル', 'date': '5月12日'},
-    {'title': 'しおりのタイトル', 'date': '8月22日'},
-    {'title': 'しおりのタイトル', 'date': '10月1日'},
-    {'title': 'しおりのタイトル', 'date': '12月29日'},
-  ];
+  late int _currentIndex;
 
   // 各タブの画面リスト
   late final List<Widget> _pages;
@@ -35,9 +29,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
     _pages = [
       const MapScreen(),
-      _HomeBody(stampCards: _stampCards, onSearchTap: _onSearchTap),
+      _HomeBody(onSearchTap: _onSearchTap),
       const StampScreen(),
     ];
   }
@@ -84,10 +79,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
 // ホーム画面のメインコンテンツ
 class _HomeBody extends StatelessWidget {
-  final List<Map<String, String>> stampCards;
   final VoidCallback onSearchTap;
 
-  const _HomeBody({required this.stampCards, required this.onSearchTap});
+  const _HomeBody({required this.onSearchTap});
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +101,7 @@ class _HomeBody extends StatelessWidget {
           const EventSection(),
 
           // スタンプカード一覧 *stamp_card_section*
-          StampCardSection(cards: stampCards),
+          const StampCardSection(),
 
           const SizedBox(height: 24),
         ],
