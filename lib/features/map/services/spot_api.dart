@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/anime_spot.dart';
@@ -14,6 +16,14 @@ class SpotApi {
   final http.Client _client;
   static final Map<String, ({DateTime cachedAt, Future<List<Spot>> request})>
   _spotsCache = {};
+  static final Map<String, StampCard> _stampCardSnapshots = {};
+  static final Map<String, ({DateTime cachedAt, Future<StampCard> request})>
+  _stampCardRequests = {};
+
+  String _stampCardCacheKey(String cardId) {
+    final userId = Supabase.instance.client.auth.currentUser?.id ?? 'anonymous';
+    return '$userId:$cardId';
+  }
 
   String get _baseUrl {
     final url = dotenv.env['API_BASE_URL'];
@@ -167,8 +177,47 @@ class SpotApi {
         .toList();
   }
 
+  /// 保存済みの詳細があれば即時に返す。通信は行わない。
+  Future<StampCard?> readCachedStampCard(String cardId) async {
+    final key = _stampCardCacheKey(cardId);
+    final memory = _stampCardSnapshots[key];
+    if (memory != null) return memory;
+
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('stamp_card_detail:$key');
+    if (raw == null) return null;
+    try {
+      final json = jsonDecode(raw) as Map<String, dynamic>;
+      final card = StampCard.fromJson(json, baseUrl: _baseUrl);
+      _stampCardSnapshots[key] = card;
+      return card;
+    } catch (_) {
+      await prefs.remove('stamp_card_detail:$key');
+      return null;
+    }
+  }
+
   /// 指定したしおりと、選択順を保った行き先一覧を取得する。
   Future<StampCard> fetchStampCard(String cardId) async {
+    final key = _stampCardCacheKey(cardId);
+    final cachedRequest = _stampCardRequests[key];
+    if (cachedRequest != null &&
+        DateTime.now().difference(cachedRequest.cachedAt) <
+            const Duration(minutes: 5)) {
+      return cachedRequest.request;
+    }
+
+    final request = _fetchStampCard(cardId, key);
+    _stampCardRequests[key] = (cachedAt: DateTime.now(), request: request);
+    try {
+      return await request;
+    } catch (_) {
+      _stampCardRequests.remove(key);
+      rethrow;
+    }
+  }
+
+  Future<StampCard> _fetchStampCard(String cardId, String cacheKey) async {
     final token = _accessToken;
     final res = await _client.get(
       Uri.parse('$_baseUrl/stamp-cards/$cardId'),
@@ -180,7 +229,60 @@ class SpotApi {
     final body = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
     final data = body['data'] as Map<String, dynamic>?;
     if (data == null) throw Exception('しおりが見つかりません');
-    return StampCard.fromJson(data, baseUrl: _baseUrl);
+    final card = StampCard.fromJson(data, baseUrl: _baseUrl);
+    _stampCardSnapshots[cacheKey] = card;
+    final prefs = await SharedPreferences.getInstance();
+    unawaited(prefs.setString('stamp_card_detail:$cacheKey', jsonEncode(data)));
+    return card;
+  }
+
+  /// ホーム表示中に詳細を先読みする。
+  Future<void> prefetchStampCards(Iterable<String> cardIds) async {
+    await Future.wait(
+      cardIds.map((id) async {
+        try {
+          await fetchStampCard(id);
+        } catch (_) {
+          // 先読み失敗は、詳細画面の通常リトライに委ねる。
+        }
+      }),
+    );
+  }
+
+  Future<void> updateStampCardTitle(String cardId, String title) async {
+    final token = _accessToken;
+    final res = await _client.patch(
+      Uri.parse('$_baseUrl/stamp-cards/$cardId'),
+      headers: {
+        if (token != null) 'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'title': title}),
+    );
+    if (res.statusCode != 200) {
+      throw Exception('しおりの編集に失敗しました (${res.statusCode})');
+    }
+    await _clearStampCardCache(cardId);
+  }
+
+  Future<void> deleteStampCard(String cardId) async {
+    final token = _accessToken;
+    final res = await _client.delete(
+      Uri.parse('$_baseUrl/stamp-cards/$cardId'),
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
+    );
+    if (res.statusCode != 200) {
+      throw Exception('しおりの削除に失敗しました (${res.statusCode})');
+    }
+    await _clearStampCardCache(cardId);
+  }
+
+  Future<void> _clearStampCardCache(String cardId) async {
+    final key = _stampCardCacheKey(cardId);
+    _stampCardSnapshots.remove(key);
+    _stampCardRequests.remove(key);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('stamp_card_detail:$key');
   }
 
   /// 指定しおり（カード）でスタンプ取得済みの spot_id 集合を返す。

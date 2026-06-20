@@ -154,6 +154,7 @@ class StampCard {
   final String cardId;
   final String title;
   final int spotCount;
+  final bool? complete;
   final List<String> spotImageUrls;
   final List<String> keyVisualUrls;
   final List<Spot> spots;
@@ -163,11 +164,23 @@ class StampCard {
     required this.cardId,
     required this.title,
     required this.spotCount,
+    this.complete,
     this.spotImageUrls = const [],
     this.keyVisualUrls = const [],
     this.spots = const [],
     this.createdAt,
   });
+
+  StampCard copyWith({String? title, bool? complete}) => StampCard(
+    cardId: cardId,
+    title: title ?? this.title,
+    spotCount: spotCount,
+    complete: complete ?? this.complete,
+    spotImageUrls: spotImageUrls,
+    keyVisualUrls: keyVisualUrls,
+    spots: spots,
+    createdAt: createdAt,
+  );
 
   factory StampCard.fromJson(Map<String, dynamic> json, {String? baseUrl}) {
     final t = json['title'] as String?;
@@ -175,6 +188,7 @@ class StampCard {
       cardId: json['card_id'] as String,
       title: (t != null && t.isNotEmpty) ? t : 'しおりタイトル',
       spotCount: (json['spot_count'] as num?)?.toInt() ?? 0,
+      complete: json['complete'] as bool?,
       spotImageUrls: ((json['spot_image_urls'] as List?) ?? [])
           .map((e) => e as String?)
           .whereType<String>()

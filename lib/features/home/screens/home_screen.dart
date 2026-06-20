@@ -11,14 +11,17 @@ import '../../stamp/screens/stamp_screen.dart';
 import '../../search/screens/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.initialIndex = 1})
+    : assert(initialIndex >= 0 && initialIndex <= 2);
+
+  final int initialIndex;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 1;
+  late int _currentIndex;
 
   // 各タブの画面リスト
   late final List<Widget> _pages;
@@ -26,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
     _pages = [
       const MapScreen(),
       _HomeBody(onSearchTap: _onSearchTap),

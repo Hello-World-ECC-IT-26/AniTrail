@@ -390,9 +390,12 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
 
       bottomNavigationBar: MainBottomNav(
         onTap: (index) {
-          Navigator.pushReplacement(
+          Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (_) => const HomeScreen()),
+            MaterialPageRoute(
+              builder: (_) => HomeScreen(initialIndex: index),
+            ),
+            (route) => false,
           );
         },
       ),
