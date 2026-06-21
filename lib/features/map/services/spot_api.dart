@@ -25,6 +25,11 @@ class SpotApi {
     return '$userId:$cardId';
   }
 
+  String get _stampCardListCacheKey {
+    final userId = Supabase.instance.client.auth.currentUser?.id ?? 'anonymous';
+    return 'stamp_card_list:$userId';
+  }
+
   String get _baseUrl {
     final url = dotenv.env['API_BASE_URL'];
     if (url == null || url.isEmpty) {
@@ -157,6 +162,7 @@ class SpotApi {
     }
     final body = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
     final data = body['data'] as Map<String, dynamic>?;
+    await _clearStampCardListCache();
     return data?['card_id'] as String?;
   }
 
@@ -172,9 +178,27 @@ class SpotApi {
     }
     final body = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
     final list = (body['data'] as List? ?? []);
+    final prefs = await SharedPreferences.getInstance();
+    unawaited(prefs.setString(_stampCardListCacheKey, jsonEncode(list)));
     return list
         .map((e) => StampCard.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  /// 起動時表示用の保存済みしおり一覧。通信は行わない。
+  Future<List<StampCard>> readCachedStampCards() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_stampCardListCacheKey);
+    if (raw == null) return [];
+    try {
+      final list = jsonDecode(raw) as List<dynamic>;
+      return list
+          .map((item) => StampCard.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      await prefs.remove(_stampCardListCacheKey);
+      return [];
+    }
   }
 
   /// 保存済みの詳細があれば即時に返す。通信は行わない。
@@ -283,6 +307,12 @@ class SpotApi {
     _stampCardRequests.remove(key);
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('stamp_card_detail:$key');
+    await prefs.remove(_stampCardListCacheKey);
+  }
+
+  Future<void> _clearStampCardListCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_stampCardListCacheKey);
   }
 
   /// 指定しおり（カード）でスタンプ取得済みの spot_id 集合を返す。

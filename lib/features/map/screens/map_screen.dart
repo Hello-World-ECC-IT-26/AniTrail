@@ -7,6 +7,8 @@ import '../models/anime_spot.dart';
 import '../widgets/map_results_sheet.dart';
 import '../widgets/map_search_bar.dart';
 import '../widgets/map_search_panel.dart';
+import '../widgets/map_shiori_sheet.dart';
+import '../../spot/screens/spot_detail.dart';
 import 'map_location_mixin.dart';
 import 'map_search_mixin.dart';
 
@@ -22,6 +24,10 @@ class _MapScreenState extends State<MapScreen>
   // 現在のシート占有率（0.0〜1.0）。MapResultsSheet の initialChildSize と揃える。
   double _sheetSize = 0.55;
 
+  // しおり一覧シートの表示状態
+  bool _shioriVisible = false;
+  bool _shioriDetailVisible = false;
+
   @override
   double get currentLat => currentLatLng.latitude;
 
@@ -36,16 +42,18 @@ class _MapScreenState extends State<MapScreen>
 
     final screenH = MediaQuery.of(context).size.height;
     final safeTop = MediaQuery.of(context).padding.top;
-    final topPx = safeTop + 80.0;                  // 検索バー下端
+    final topPx = safeTop + 80.0; // 検索バー下端
     final bottomPx = resultsVisible
-        ? screenH * (1 - _sheetSize)               // シート上端
-        : screenH;                                 // シートなしなら画面下端
+        ? screenH *
+              (1 - _sheetSize) // シート上端
+        : screenH; // シートなしなら画面下端
     final visibleCenterY = (topPx + bottomPx) / 2;
     final screenCenterY = screenH / 2;
     final offsetPx = visibleCenterY - screenCenterY;
 
     // ズームレベルと緯度から 1px あたりの緯度を計算
-    final metersPerPx = 156543.03392 *
+    final metersPerPx =
+        156543.03392 *
         math.cos(target.latitude * math.pi / 180) /
         math.pow(2, currentZoom);
     final latPerPx = metersPerPx / 111320; // 緯度1度 ≒ 111320m
@@ -78,42 +86,97 @@ class _MapScreenState extends State<MapScreen>
     pinSpot(spot);
   }
 
+  void _openShioriSpotDetail(Spot spot) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SpotDetailScreen(
+          spot: spot,
+          animeTitle: spot.animeTitle ?? '',
+          keyVisualUrl: spot.keyVisualUrl,
+          showShioriActions: false,
+        ),
+      ),
+    );
+  }
+
+  Set<Marker> _buildMarkers() {
+    final markers = <Marker>{};
+    // 単一ピン（検索結果の聖地詳細）
+    final single = pinnedSpot;
+    if (single?.latitude != null && single?.longitude != null) {
+      markers.add(
+        Marker(
+          markerId: const MarkerId('pinned'),
+          position: LatLng(single!.latitude!, single.longitude!),
+        ),
+      );
+    }
+    // 複数ピン（しおりの聖地）
+    for (final spot in pinnedSpots) {
+      if (spot.latitude == null || spot.longitude == null) continue;
+      markers.add(
+        Marker(
+          markerId: MarkerId('shiori_${spot.spotId}'),
+          position: LatLng(spot.latitude!, spot.longitude!),
+          infoWindow: InfoWindow(title: spot.name),
+          onTap: () => _openShioriSpotDetail(spot),
+        ),
+      );
+    }
+    return markers;
+  }
+
   void _onCloseSearch() {
-    closeSearch();   // resultsVisible = false に
-    clearPin();      // ピン解除 → 現在地へ再センタリング（シートなしの中央）
+    closeSearch(); // resultsVisible = false に
+    clearPin(); // ピン解除 → 現在地へ再センタリング（シートなしの中央）
+  }
+
+  void _openMapSearch() {
+    clearSpotPins();
+    setState(() {
+      _shioriVisible = false;
+      _shioriDetailVisible = false;
+    });
+    openSearch();
+  }
+
+  void _toggleShiori() {
+    final visible = !_shioriVisible;
+    if (!visible) clearSpotPins();
+    setState(() {
+      _shioriVisible = visible;
+      if (!visible) _shioriDetailVisible = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final overlayActive = searchVisible || resultsVisible;
+    final mapGesturesEnabled = _shioriVisible && _shioriDetailVisible;
 
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(viewInsets: EdgeInsets.zero),
       child: GestureDetector(
-        onScaleStart: overlayActive ? null : onScaleStart,
-        onScaleUpdate: overlayActive ? null : onScaleUpdate,
+        onScaleStart: overlayActive || mapGesturesEnabled ? null : onScaleStart,
+        onScaleUpdate: overlayActive || mapGesturesEnabled
+            ? null
+            : onScaleUpdate,
         child: Stack(
           children: [
             GoogleMap(
               initialCameraPosition: MapLocationMixin.initialPosition,
-              // センタリングは recenterCamera で手動制御するため padding は使わない
               padding: EdgeInsets.zero,
               myLocationEnabled: locationGranted,
               myLocationButtonEnabled: false,
               mapToolbarEnabled: false,
               zoomControlsEnabled: false,
-              scrollGesturesEnabled: false,
+              scrollGesturesEnabled: mapGesturesEnabled,
               rotateGesturesEnabled: false,
               tiltGesturesEnabled: false,
-              zoomGesturesEnabled: false,
-              markers: pinnedSpot != null && pinnedSpot!.latitude != null
-                  ? {
-                      Marker(
-                        markerId: const MarkerId('pinned'),
-                        position: LatLng(pinnedSpot!.latitude!, pinnedSpot!.longitude!),
-                      ),
-                    }
-                  : {},
+              zoomGesturesEnabled: mapGesturesEnabled,
+              markers: _buildMarkers(),
+              onCameraMove: (position) => currentZoom = position.zoom,
               onMapCreated: (controller) {
                 mapController = controller;
                 if (hasFix) {
@@ -129,10 +192,26 @@ class _MapScreenState extends State<MapScreen>
             if (!searchVisible)
               MapSearchBar(
                 query: displayQuery,
-                onTap: openSearch,
-                onShioriTap: () {},
+                onTap: _openMapSearch,
+                onShioriTap: _toggleShiori,
                 showShiori: !resultsVisible,
                 onBack: resultsVisible ? _onCloseSearch : null,
+              ),
+
+            if (_shioriVisible && !searchVisible && !resultsVisible)
+              MapShioriSheet(
+                onClose: () {
+                  clearSpotPins();
+                  setState(() {
+                    _shioriVisible = false;
+                    _shioriDetailVisible = false;
+                  });
+                },
+                onShowSpots: showSpotPins,
+                onClearSpots: clearSpotPins,
+                onDetailVisibilityChanged: (visible) {
+                  setState(() => _shioriDetailVisible = visible);
+                },
               ),
 
             if (searchVisible)
