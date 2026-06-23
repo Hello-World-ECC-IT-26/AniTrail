@@ -1,6 +1,9 @@
 import 'package:AniTrail/features/coupon/screens/coupon_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_text.dart';
+import '../../../core/styles/app_dimens.dart';
 import '../widgets/event_section.dart';
 import '../widgets/user_section.dart';
 import '../widgets/stamp_card_section.dart';
@@ -12,13 +15,17 @@ import '../../stamp/screens/stamp_screen.dart';
 import '../../search/screens/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.initialIndex = 1})
+    : assert(initialIndex >= 0 && initialIndex <= 2);
+
+  final int initialIndex;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+<<<<<<< HEAD
   int _currentIndex = 0;
 
   // スタンプカードのダミーデータ
@@ -29,6 +36,9 @@ class _HomeScreenState extends State<HomeScreen> {
     {'title': 'しおりのタイトル', 'date': '10月1日'},
     {'title': 'しおりのタイトル', 'date': '12月29日'},
   ];
+=======
+  late int _currentIndex;
+>>>>>>> 96a751cfc876f6f3e1418e26a981850b939dbba1
 
   // 各タブの画面リスト
   late final List<Widget> _pages;
@@ -36,9 +46,15 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
     _pages = [
+<<<<<<< HEAD
       _HomeBody(stampCards: _stampCards, onSearchTap: _onSearchTap),
       const MapScreen(),
+=======
+      const MapScreen(),
+      _HomeBody(onSearchTap: _onSearchTap),
+>>>>>>> 96a751cfc876f6f3e1418e26a981850b939dbba1
       const StampScreen(),
       const CouponScreen(),
     ];
@@ -65,6 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+<<<<<<< HEAD
       backgroundColor: Colors.white,
       appBar: AniTrailAppBar(
         actions: [
@@ -79,6 +96,21 @@ class _HomeScreenState extends State<HomeScreen> {
         children: _pages,
       ),
 
+=======
+      resizeToAvoidBottomInset: _currentIndex != 0,
+      backgroundColor: AppColors.background,
+      appBar: _currentIndex == 0
+          ? null
+          : AniTrailAppBar(
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.logout, color: AppColors.white),
+                  onPressed: () => context.read<AuthProvider>().logout(),
+                ),
+              ],
+            ),
+      body: IndexedStack(index: _currentIndex, children: _pages),
+>>>>>>> 96a751cfc876f6f3e1418e26a981850b939dbba1
       bottomNavigationBar: MainBottomNav(
         currentIndex: _currentIndex,
         onTap: _onNavTap,
@@ -89,10 +121,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
 // ホーム画面のメインコンテンツ
 class _HomeBody extends StatelessWidget {
-  final List<Map<String, String>> stampCards;
   final VoidCallback onSearchTap;
 
-  const _HomeBody({required this.stampCards, required this.onSearchTap});
+  const _HomeBody({required this.onSearchTap});
 
   @override
   Widget build(BuildContext context) {
@@ -112,9 +143,9 @@ class _HomeBody extends StatelessWidget {
           const EventSection(),
 
           // スタンプカード一覧 *stamp_card_section*
-          StampCardSection(cards: stampCards),
+          const StampCardSection(),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xxl),
         ],
       ),
     );
@@ -129,10 +160,12 @@ class _SearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      color: AppColors.background,
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.md),
       child: Container(
         height: 40,
+<<<<<<< HEAD
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
@@ -143,14 +176,19 @@ class _SearchBar extends StatelessWidget {
               offset: const Offset(0, 2),
             ),
           ],
+=======
+        decoration: const BoxDecoration(
+          color: AppColors.surfaceMuted,
+          borderRadius: AppRadius.brSm,
+>>>>>>> 96a751cfc876f6f3e1418e26a981850b939dbba1
         ),
-        child: Row(
+        child: const Row(
           children: [
-            const SizedBox(width: 12),
-            Text('検索', style: TextStyle(color: Colors.grey.shade500)),
-            const Spacer(),
-            Icon(Icons.search, color: Colors.grey.shade500),
-            const SizedBox(width: 12),
+            SizedBox(width: AppSpacing.md),
+            Text('検索', style: AppTextStyles.hint),
+            Spacer(),
+            Icon(Icons.search, color: AppColors.iconMuted),
+            SizedBox(width: AppSpacing.md),
           ],
         ),
       ),

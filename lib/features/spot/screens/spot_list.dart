@@ -1,19 +1,33 @@
 import 'package:AniTrail/features/home/screens/home_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_text.dart';
+import '../../../core/styles/app_dimens.dart';
+import '../../../core/widgets/app_buttons.dart';
+import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/main_buttom_nav.dart';
+import '../../map/models/anime_spot.dart';
+import '../../map/services/spot_api.dart';
+import '../../shiori/models/shiori_draft.dart';
 import '../../shiori/screens/shiori_list.dart';
 import '../../spot/widgets/spot_detail.dart';
 
 class SpotList extends StatefulWidget {
+  final String animeId;
   final String animeTitle;
-  final String? bannerImage;
+
+  /// アニメのキービジュアルURL（バナー・network画像）
+  final String? bannerImageUrl;
   final int spotCount;
 
   const SpotList({
     super.key,
+    required this.animeId,
     required this.animeTitle,
-    this.bannerImage,
+    this.bannerImageUrl,
     this.spotCount = 10,
   });
 
@@ -22,101 +36,199 @@ class SpotList extends StatefulWidget {
 }
 
 class _SpotListState extends State<SpotList> {
-  // しおりに追加した聖地数（バッジ表示用）
-  int _shioriCount = 0;
+  final SpotApi _api = SpotApi();
 
-  // ブックマーク済みの聖地インデックス
-  final Set<int> _bookmarked = {};
+  final ShioriDraft _draft = ShioriDraft.instance;
 
-  // ダミーの聖地リスト
-  final List<Map<String, String>> _spots = [
-    {'anime': '四月は君の嘘', 'place': '須賀神社', 'address': '東京都新宿区須賀町5-6'},
-    {'anime': '君の膵臓をたべたい', 'place': '須賀神社', 'address': '東京都新宿区須賀町5-6'},
-    {'anime': '君の名は。', 'place': '須賀神社', 'address': '東京都新宿区須賀町5-6'},
-    {'anime': '君の名は。', 'place': '須賀神社', 'address': '東京都新宿区須賀町5-6'},
-  ];
+  List<Spot> _spots = [];
+  bool _loading = true;
+  String? _error;
+
+  // ブックマーク済みの聖地（spot_id）
+  final Set<String> _bookmarked = {};
+
+  Map<String, String> get _authHeaders {
+    final token = Supabase.instance.client.auth.currentSession?.accessToken;
+    return token != null ? {'Authorization': 'Bearer $token'} : {};
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSpots();
+    _draft.spots.addListener(_onDraftChanged);
+  }
+
+  @override
+  void dispose() {
+    _draft.spots.removeListener(_onDraftChanged);
+    super.dispose();
+  }
+
+  void _onDraftChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _loadSpots() async {
+    try {
+      final spots = await _api.fetchSpots(widget.animeId);
+      if (!mounted) return;
+      setState(() {
+        _spots = spots
+            .map(
+              (spot) => spot.withAnime(
+                animeId: widget.animeId,
+                animeTitle: widget.animeTitle,
+                keyVisualUrl: widget.bannerImageUrl,
+              ),
+            )
+            .toList();
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = '聖地の取得に失敗しました。';
+      });
+    }
+  }
+
+  void _toggleSelect(Spot spot) {
+    _draft.toggle(spot); // リスナー経由で再描画
+  }
+
+  void _openDetail(Spot spot) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SpotDetailScreen(
+          spot: spot,
+          animeTitle: widget.animeTitle,
+          keyVisualUrl: widget.bannerImageUrl,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _toggleBookmark(String spotId) async {
+    final wasBookmarked = _bookmarked.contains(spotId);
+    setState(() {
+      wasBookmarked ? _bookmarked.remove(spotId) : _bookmarked.add(spotId);
+    });
+    try {
+      if (wasBookmarked) {
+        await _api.removeBookmark(spotId);
+      } else {
+        await _api.addBookmark(spotId);
+      }
+    } catch (_) {
+      // 失敗したら元に戻す
+      if (!mounted) return;
+      setState(() {
+        wasBookmarked ? _bookmarked.add(spotId) : _bookmarked.remove(spotId);
+      });
+    }
+  }
+
+  void _createShiori() {
+    final selected = List<Spot>.from(_draft.spots.value);
+    if (selected.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('聖地を「+追加」してから作成してください')));
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ShioriListScreen(spots: selected)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // ── メインコンテンツ ──────────────────────
           CustomScrollView(
             slivers: [
-              // アニメバナーヘッダー
               _buildSliverAppBar(),
-
-              // 聖地カードリスト
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _buildSpotCard(index),
+              if (_loading)
+                const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (_error != null)
+                SliverFillRemaining(
+                  child: Center(
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(color: AppColors.textMuted),
                     ),
-                    childCount: _spots.length,
+                  ),
+                )
+              else if (_spots.isEmpty)
+                const SliverFillRemaining(
+                  child: Center(
+                    child: Text(
+                      '聖地が登録されていません',
+                      style: TextStyle(color: AppColors.textMuted),
+                    ),
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.lg,
+                    AppSpacing.lg,
+                    120,
+                  ),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                        child: _buildSpotCard(_spots[index]),
+                      ),
+                      childCount: _spots.length,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
 
           // ── 旅のしおりを作成ボタン（左下固定） ─────
           Positioned(
-            left: 16,
-            bottom: 10,
+            left: AppSpacing.lg,
+            bottom: AppSpacing.sm,
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ShioriListScreen(spots: _spots),
-                      ),
-                    );
-                  },
-
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF10357A),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 14,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    elevation: 0,
-                  ),
-                  icon: const Icon(Icons.location_on_outlined, size: 18),
-                  label: const Text(
-                    '旅のしおりを作成',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
+                AppButton(
+                  label: '旅のしおりを作成',
+                  icon: Icons.location_on_outlined,
+                  size: AppButtonSize.compact,
+                  fullWidth: false,
+                  onPressed: _createShiori,
                 ),
 
-                // バッジ（追加数）
-                if (_shioriCount > 0)
+                // バッジ（選択数）
+                if (_draft.spots.value.isNotEmpty)
                   Positioned(
-                    top: -6,
-                    right: -6,
+                    top: -AppSpacing.xs,
+                    right: -AppSpacing.xs,
                     child: Container(
                       width: 20,
                       height: 20,
                       decoration: const BoxDecoration(
-                        color: Colors.red,
+                        color: AppColors.badge,
                         shape: BoxShape.circle,
                       ),
                       child: Center(
                         child: Text(
-                          '$_shioriCount',
+                          '${_draft.spots.value.length}',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),
@@ -130,7 +242,6 @@ class _SpotListState extends State<SpotList> {
         ],
       ),
 
-      // ── ボトムナビゲーション ──────────────────────
       bottomNavigationBar: MainBottomNav(
         onTap: (index) {
           Navigator.pushReplacement(
@@ -150,35 +261,33 @@ class _SpotListState extends State<SpotList> {
       automaticallyImplyLeading: false,
       backgroundColor: AppColors.primary,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        icon: const Icon(Icons.arrow_back, color: AppColors.white),
         onPressed: () => Navigator.pop(context),
       ),
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           fit: StackFit.expand,
           children: [
-            // バナー画像
             Stack(
               fit: StackFit.expand,
               children: [
-                widget.bannerImage != null
-                    ? Image.asset(widget.bannerImage!, fit: BoxFit.cover)
-                    : Image.asset(
-                        'assets/images/place_sample.jpg',
+                widget.bannerImageUrl != null &&
+                        widget.bannerImageUrl!.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: widget.bannerImageUrl!,
                         fit: BoxFit.cover,
-                        alignment: const Alignment(0, -0.9),
-                      ),
-
-                // Overlay
-                Container(color: Colors.white.withValues(alpha: 0.2)),
+                        errorWidget: (_, __, ___) => _bannerPlaceholder(),
+                      )
+                    : _bannerPlaceholder(),
+                const DecoratedBox(
+                  decoration: BoxDecoration(gradient: AppColors.cardGradient),
+                ),
               ],
             ),
-
-            // タイトルと聖地数
             Positioned(
-              left: 16,
-              right: 16,
-              bottom: 16,
+              left: AppSpacing.lg,
+              right: AppSpacing.lg,
+              bottom: AppSpacing.lg,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
@@ -189,25 +298,25 @@ class _SpotListState extends State<SpotList> {
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      shadows: [Shadow(color: Colors.black)],
+                      color: AppColors.white,
+                      shadows: [Shadow(color: AppColors.black)],
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(
                         Icons.location_on_outlined,
-                        color: Colors.white,
+                        color: AppColors.white,
                         size: 14,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSpacing.xs),
                       Text(
                         '聖地 ${widget.spotCount}箇所',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: Colors.white70,
+                          color: AppColors.white.withValues(alpha: 0.7),
                         ),
                       ),
                     ],
@@ -221,75 +330,69 @@ class _SpotListState extends State<SpotList> {
     );
   }
 
-  // ── 聖地カード1枚 ───────────────────────────────────
-  Widget _buildSpotCard(int index) {
-    final spot = _spots[index];
-    final isBookmarked = _bookmarked.contains(index);
+  Widget _bannerPlaceholder() => Container(
+    color: AppColors.primary,
+    child: Icon(
+      Icons.movie_outlined,
+      color: AppColors.white.withValues(alpha: 0.54),
+      size: 56,
+    ),
+  );
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.07),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
+  // ── 聖地サムネイル（実写真→Street View→プレースホルダ） ──
+  Widget _buildThumbnail(Spot spot) {
+    final image = spot.image;
+    if (image != null && image.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: image,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => _placeholderImage(),
+        errorWidget: (_, __, ___) => _streetViewOrPlaceholder(spot),
+      );
+    }
+    return _streetViewOrPlaceholder(spot);
+  }
+
+  Widget _streetViewOrPlaceholder(Spot spot) {
+    final url = spot.streetViewProxyUrl ?? spot.streetViewImageUrl;
+    if (url != null && url.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: url,
+        httpHeaders: _authHeaders,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => _placeholderImage(),
+        errorWidget: (_, __, ___) => _placeholderImage(),
+      );
+    }
+    return _placeholderImage();
+  }
+
+  Widget _placeholderImage() => Container(
+    color: AppColors.placeholder,
+    child: const Icon(Icons.image_outlined, color: AppColors.iconMuted),
+  );
+
+  // ── 聖地カード1枚 ───────────────────────────────────
+  Widget _buildSpotCard(Spot spot) {
+    final isBookmarked = _bookmarked.contains(spot.spotId);
+    final isSelected = _draft.contains(spot.spotId);
+
+    return AppCard(
+      clip: true,
       child: Row(
         children: [
           // ── サムネイル + ブックマーク ──────────────
           Stack(
             children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  bottomLeft: Radius.circular(16),
-                ),
-                child: SizedBox(
-                  width: 150,
-                  height: 130,
-                  child: Image.asset(
-                    'assets/images/place_sample.jpg',
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: Colors.grey.shade200,
-                      child: Icon(
-                        Icons.image_outlined,
-                        color: Colors.grey.shade400,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              // ブックマークアイコン（左上）
+              SizedBox(width: 150, height: 130, child: _buildThumbnail(spot)),
               Positioned(
-                top: 6,
-                left: 6,
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      isBookmarked
-                          ? _bookmarked.remove(index)
-                          : _bookmarked.add(index);
-                    });
-                  },
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.85),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
-                      color: AppColors.primary,
-                      size: 16,
-                    ),
-                  ),
+                top: AppSpacing.xs,
+                left: AppSpacing.xs,
+                child: AppCircleIconButton(
+                  icon: isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
+                  onTap: () => _toggleBookmark(spot.spotId),
+                  size: 28,
+                  iconSize: 16,
                 ),
               ),
             ],
@@ -298,95 +401,81 @@ class _SpotListState extends State<SpotList> {
           // ── テキスト情報 ──────────────────────────
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.sm,
+                AppSpacing.xs,
+                AppSpacing.sm,
+                AppSpacing.xs,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ＋追加ボタン（右上）
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: TextButton.icon(
-                      onPressed: () => setState(() => _shioriCount++),
-                      icon: const Icon(
-                        Icons.add,
-                        size: 14,
-                        color: Colors.black,
-                      ),
-                      label: const Text(
-                        '追加',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
+                  Text(
+                    spot.animeTitle ?? widget.animeTitle,
+                    maxLines: 2,
+                    style: AppTextStyles.label.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-
-                  // アニメタイトル
-                  Transform.translate(
-                    offset: const Offset(0, -16),
-                    child: Text(
-                      spot['anime']!,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-
+                  const SizedBox(height: AppSpacing.xs),
                   // 場所名
                   Text(
-                    spot['place']!,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
+                    spot.name,
+                    style: AppTextStyles.subtitle,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
 
                   // 住所
                   Text(
-                    spot['address']!,
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade800),
+                    spot.addressText,
+                    style: AppTextStyles.label.copyWith(fontSize: 13),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
 
-                  Align(
-                    alignment: Alignment.bottomRight,
-                    child: ElevatedButton(
-                      // 詳細ボタン → spot_detail_screenへ遷移
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SpotDetailScreen(),
+                  const SizedBox(height: AppSpacing.xs),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton.icon(
+                        onPressed: () => _toggleSelect(spot),
+                        icon: Icon(
+                          isSelected ? Icons.check : Icons.add,
+                          size: 14,
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.textPrimary,
+                        ),
+                        label: Text(
+                          isSelected ? '追加済み' : '追加',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected
+                                ? AppColors.primary
+                                : AppColors.textPrimary,
                           ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 14,
                         ),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.xs,
+                          ),
+                          minimumSize: const Size(0, 32),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
                         ),
-                        elevation: 0,
                       ),
-                      child: const Text('詳細', style: TextStyle(fontSize: 14)),
-                    ),
+                      const SizedBox(width: AppSpacing.sm),
+                      AppButton(
+                        label: '詳細',
+                        onPressed: () => _openDetail(spot),
+                        size: AppButtonSize.compact,
+                        fullWidth: false,
+                      ),
+                    ],
                   ),
                 ],
               ),

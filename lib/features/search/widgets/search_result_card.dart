@@ -1,16 +1,27 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_dimens.dart';
+import '../../../core/widgets/app_buttons.dart';
+import '../../../core/widgets/app_card.dart';
 
 class SearchResultCard extends StatelessWidget {
   final String title;
+
+  /// アニメのキービジュアル URL（横画像）。null の場合はプレースホルダー表示
   final String? bannerImage;
   final int spotCount;
 
-  /// 聖地のサムネイル画像リスト（最大4枚）
+  /// 聖地のサムネイル画像 URL リスト（最大4枚）
   final List<String> spotImages;
+
+  /// 画像リクエストに付与する HTTP ヘッダ（認証など）
+  final Map<String, String> httpHeaders;
 
   /// 「聖地を見る」ボタンタップ時のコールバック
   final VoidCallback? onViewSpots;
+  final bool variableSpotImages;
+  final GestureDragUpdateCallback? onBannerVerticalDragUpdate;
 
   const SearchResultCard({
     super.key,
@@ -18,58 +29,31 @@ class SearchResultCard extends StatelessWidget {
     this.bannerImage,
     this.spotCount = 10,
     this.spotImages = const [],
+    this.httpHeaders = const {},
     this.onViewSpots,
+    this.variableSpotImages = false,
+    this.onBannerVerticalDragUpdate,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── バナー画像（上部・タイトルオーバーレイ付き） ──
           _buildBanner(),
-
-          // ── 下部エリア（スタンプ + ボタン） ────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.md),
             child: Row(
               children: [
-                // スタンプサムネイル（最大4枚）
                 ..._buildSpotThumbnails(),
-
                 const Spacer(),
-
-                // 聖地を見るボタン
-                ElevatedButton(
+                AppButton(
+                  label: '聖地を見る',
                   onPressed: onViewSpots,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    '聖地を見る',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
+                  size: AppButtonSize.compact,
+                  fullWidth: false,
                 ),
               ],
             ),
@@ -79,119 +63,111 @@ class SearchResultCard extends StatelessWidget {
     );
   }
 
-  // ── バナー画像（タイトル・聖地数オーバーレイ付き） ──────
   Widget _buildBanner() {
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(16),
-        topRight: Radius.circular(16),
-      ),
-      child: Stack(
-        children: [
-          SizedBox(
-            width: double.infinity,
-            height: 140,
-            child: bannerImage != null
-                ? Image.asset(bannerImage!, fit: BoxFit.cover)
-                : Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Image.asset(
-                        'assets/images/place_sample.jpg',
-                        fit: BoxFit.cover,
-                        alignment: const Alignment(0, -0.8),
-                        errorBuilder: (_, __, ___) => Container(
-                          color: Colors.grey.shade300,
-                          child: Icon(
-                            Icons.image_outlined,
-                            color: Colors.grey.shade400,
-                            size: 40,
-                          ),
-                        ),
-                      ),
-
-                      // Overlay
-                      Container(color: Colors.white.withValues(alpha: 0.2)),
-                    ],
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onVerticalDragUpdate: onBannerVerticalDragUpdate,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(AppRadius.lg),
+          topRight: Radius.circular(AppRadius.lg),
+        ),
+        child: Stack(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: 140,
+              child: bannerImage != null
+                  ? CachedNetworkImage(
+                      imageUrl: bannerImage!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: 140,
+                      placeholder: (_, _) =>
+                          Container(color: AppColors.placeholder),
+                      errorWidget: (_, _, _) => _placeholderBanner(),
+                    )
+                  : _placeholderBanner(),
+            ),
+            // グラデーションオーバーレイ
+            const Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(gradient: AppColors.cardGradient),
+              ),
+            ),
+            // アニメタイトル（左下）
+            Positioned(
+              left: AppSpacing.md,
+              right: AppSpacing.md,
+              bottom: 28,
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.white,
+                  shadows: [Shadow(color: Colors.black45, blurRadius: 4)],
+                ),
+              ),
+            ),
+            // 聖地数（左下）
+            Positioned(
+              left: AppSpacing.md,
+              bottom: AppSpacing.sm,
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.location_on_outlined,
+                    color: Colors.white70,
+                    size: 14,
                   ),
-          ),
-
-          // グラデーションオーバーレイ
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black54],
-                ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Text(
+                    '聖地 $spotCount箇所',
+                    style: const TextStyle(fontSize: 12, color: Colors.white70),
+                  ),
+                ],
               ),
             ),
-          ),
-
-          // アニメタイトル（左下）
-          Positioned(
-            left: 12,
-            bottom: 28,
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                shadows: [Shadow(color: Colors.black45, blurRadius: 4)],
-              ),
-            ),
-          ),
-
-          // 聖地数（左下）
-          Positioned(
-            left: 12,
-            bottom: 10,
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.location_on_outlined,
-                  color: Colors.white70,
-                  size: 14,
-                ),
-                const SizedBox(width: 3),
-                Text(
-                  '聖地 $spotCount箇所',
-                  style: const TextStyle(fontSize: 12, color: Colors.white70),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  // ── スタンプサムネイル（最大4枚） ──────────────────────
-  List<Widget> _buildSpotThumbnails() {
-    const maxCount = 4;
+  Widget _placeholderBanner() {
+    return Container(
+      color: AppColors.divider,
+      child: const Icon(Icons.image_outlined, color: AppColors.iconMuted, size: 40),
+    );
+  }
 
-    return List.generate(maxCount, (index) {
-      final hasImage = index < spotImages.length;
+  List<Widget> _buildSpotThumbnails() {
+    final count = variableSpotImages ? spotImages.take(4).length : 4;
+
+    return List.generate(count, (index) {
+      final url = index < spotImages.length ? spotImages[index] : null;
 
       return Padding(
-        padding: const EdgeInsets.only(right: 6),
+        padding: const EdgeInsets.only(right: AppSpacing.xs),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: AppRadius.brSm,
           child: SizedBox(
             width: 44,
             height: 44,
-            child: hasImage
-                ? Image.asset(
-                    spotImages[index],
+            child: url != null
+                ? CachedNetworkImage(
+                    imageUrl: url,
+                    httpHeaders: httpHeaders,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        //// 画像読み込み失敗時の背景
-                        Container(color: Colors.grey.shade300),
+                    placeholder: (_, _) =>
+                        Container(color: AppColors.placeholder),
+                    errorWidget: (_, _, _) =>
+                        Container(color: AppColors.divider),
                   )
-                // 画像がない場合のグレー背景
-                : Container(color: Colors.grey.shade300),
+                : Container(color: AppColors.divider),
           ),
         ),
       );

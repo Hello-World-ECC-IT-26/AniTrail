@@ -7,45 +7,47 @@ class MainBottomNav extends StatelessWidget {
 
   const MainBottomNav({super.key, this.currentIndex, required this.onTap});
 
-  Widget _icon(String path, bool active) {
-    return Image.asset(
-      path,
-      width: 24,
-      height: 24,
-      color: active ? AppColors.primary : Colors.grey,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final hasSelection = currentIndex != null;
+    final index = currentIndex ?? 0;
 
     return BottomNavigationBar(
-      currentIndex: currentIndex ?? 0,
+      currentIndex: index,
       onTap: onTap,
       type: BottomNavigationBarType.fixed,
       selectedItemColor: hasSelection ? AppColors.primary : Colors.grey,
       unselectedItemColor: Colors.grey,
       backgroundColor: Colors.white,
       elevation: 8,
+
       items: [
         BottomNavigationBarItem(
-          icon: _icon('assets/images/home.png', currentIndex == 0),
+          icon: _icon('assets/images/home.png', index == 0),
           label: 'ホーム',
         ),
         BottomNavigationBarItem(
-          icon: _icon('assets/images/map.png', currentIndex == 1),
+          icon: _icon('assets/images/map.png', index == 1),
           label: 'マップ',
         ),
         BottomNavigationBarItem(
-          icon: _icon('assets/images/stamp.png', currentIndex == 2),
+          icon: _icon('assets/images/stamp.png', index == 2),
           label: 'スタンプ',
         ),
         BottomNavigationBarItem(
-          icon: _icon('assets/images/coupon.png', currentIndex == 3),
+          icon: _icon('assets/images/coupon.png', index == 3),
           label: 'クーポン',
         ),
       ],
+    );
+  }
+
+  Widget _icon(String path, bool isActive) {
+    return Image.asset(
+      path,
+      width: 24,
+      height: 24,
+      color: isActive ? AppColors.primary : Colors.grey,
     );
   }
 }
