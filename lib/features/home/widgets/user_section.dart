@@ -36,7 +36,7 @@ class UserInfoSection extends StatelessWidget {
 
           // 通知ボタン（TODO: 通知画面へ遷移）
           IconButton(
-            icon: const Icon(Icons.notifications_outlined),
+            icon: const Icon(Icons.notifications_outlined, color: Colors.black),
             onPressed: () {},
           ),
         ],

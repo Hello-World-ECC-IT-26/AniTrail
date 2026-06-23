@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/styles/app_styles.dart';
 import '../../../core/widgets/main_buttom_nav.dart';
 import '../../shiori/screens/shiori_list.dart';
+import '../../spot/widgets/spot_detail.dart';
 
 class SpotList extends StatefulWidget {
   final String animeTitle;
@@ -362,7 +363,14 @@ class _SpotListState extends State<SpotList> {
                     alignment: Alignment.bottomRight,
                     child: ElevatedButton(
                       // 詳細ボタン → spot_detail_screenへ遷移
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SpotDetailScreen(),
+                          ),
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,

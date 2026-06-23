@@ -28,14 +28,14 @@ class EventSection extends StatelessWidget {
         const SizedBox(height: 10),
 
         SizedBox(
-          height: 120,
+          height: 160,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: 3,
             itemBuilder: (context, index) {
               return Container(
-                width: 200,
+                width: 300,
                 margin: const EdgeInsets.only(right: 12),
                 decoration: BoxDecoration(color: AppColors.primary),
                 child: const Center(

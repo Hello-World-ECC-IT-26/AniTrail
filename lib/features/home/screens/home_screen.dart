@@ -1,3 +1,4 @@
+import 'package:AniTrail/features/coupon/screens/coupon_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/event_section.dart';
@@ -18,7 +19,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 1;
+  int _currentIndex = 0;
 
   // スタンプカードのダミーデータ
   final List<Map<String, String>> _stampCards = [
@@ -36,15 +37,18 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _pages = [
-      const MapScreen(),
       _HomeBody(stampCards: _stampCards, onSearchTap: _onSearchTap),
+      const MapScreen(),
       const StampScreen(),
+      const CouponScreen(),
     ];
   }
 
   // ボトムナビゲーションタップ時の処理
-  void _onNavTap(int index) {
-    setState(() => _currentIndex = index);
+  void _onNavTap(int i) {
+    setState(() {
+      _currentIndex = i;
+    });
   }
 
   // 検索画面へ遷移し、戻り値でタブを切り替える
@@ -70,7 +74,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: IndexedStack(index: _currentIndex, children: _pages),
+      body: IndexedStack(
+        index: _currentIndex.clamp(0, _pages.length - 1),
+        children: _pages,
+      ),
+
       bottomNavigationBar: MainBottomNav(
         currentIndex: _currentIndex,
         onTap: _onNavTap,
@@ -118,6 +126,7 @@ class _SearchBar extends StatelessWidget {
   const _SearchBar();
 
   @override
+  @override
   Widget build(BuildContext context) {
     return Container(
       color: Colors.white,
@@ -125,8 +134,15 @@ class _SearchBar extends StatelessWidget {
       child: Container(
         height: 40,
         decoration: BoxDecoration(
-          color: const Color(0xFFF0F0F0),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [

@@ -1,8 +1,10 @@
+import 'package:AniTrail/features/search/screens/search_screen.dart';
 import 'package:flutter/material.dart';
 import '../../../core/styles/app_styles.dart';
 import '../../../core/widgets/main_buttom_nav.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../home/screens/home_screen.dart';
+import '../../search/widgets/search_results.dart';
 
 class ShioriEditScreen extends StatefulWidget {
   final String shioriTitle;
@@ -38,13 +40,7 @@ class _ShioriEditScreenState extends State<ShioriEditScreen> {
   }
 
   void _addSpot() {
-    setState(() {
-      _spots.add({
-        'anime': '君の名は。',
-        'place': '須賀神社',
-        'address': '東京都新宿区須賀町5-6',
-      });
-    });
+    Navigator.push(context, MaterialPageRoute(builder: (_) => SearchScreen()));
   }
 
   void _saveChanges() {

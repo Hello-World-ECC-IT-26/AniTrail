@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/styles/app_styles.dart';
+import '../../shiori/widgets/shiori_detail.dart';
 
 class StampCardSection extends StatefulWidget {
   final List<Map<String, String>> cards;
@@ -21,18 +22,64 @@ class _StampCardSectionState extends State<StampCardSection> {
         const SizedBox(height: 20),
 
         // セクションタイトル
-        const Center(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              '作成した旅のしおり',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              OutlinedButton(
+                onPressed: () {},
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.black87,
+                  side: const BorderSide(color: Colors.black),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 12,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '作成日順',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(width: 2),
+                    Icon(Icons.keyboard_arrow_down, size: 16),
+                  ],
+                ),
               ),
-            ),
+
+              const Expanded(
+                child: Center(
+                  child: Text(
+                    '作成した旅のしおり',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              ),
+
+              TextButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text(
+                  '作成',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                style: TextButton.styleFrom(foregroundColor: Colors.black87),
+              ),
+            ],
           ),
         ),
 
@@ -87,7 +134,13 @@ class _StampCardSectionState extends State<StampCardSection> {
                           });
                         },
                         onViewDetail: () {
-                          // TODO: しおり詳細画面へ遷移
+                          // しおり詳細画面へ遷移
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ShioriDetailScreen(),
+                            ),
+                          );
                         },
                       ),
                     );
