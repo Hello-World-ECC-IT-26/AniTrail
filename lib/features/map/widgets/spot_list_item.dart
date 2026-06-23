@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/styles/app_styles.dart';
 import '../../../core/styles/app_text.dart';
+import '../../../core/styles/app_dimens.dart';
 import '../models/anime_spot.dart';
 
 /// 聖地一覧の1行
@@ -33,18 +34,19 @@ class SpotListItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg, vertical: AppSpacing.md),
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: AppRadius.brSm,
               child: SizedBox(
                 width: 90,
                 height: 72,
                 child: _buildThumbnail(),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,7 +65,7 @@ class SpotListItem extends StatelessWidget {
                         ),
                       ),
                       if (spot.visited) ...[
-                        const SizedBox(width: 6),
+                        const SizedBox(width: AppSpacing.xs),
                         const Icon(
                           Icons.check_circle,
                           size: 16,
@@ -73,7 +75,7 @@ class SpotListItem extends StatelessWidget {
                     ],
                   ),
                   if (spot.addressText.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.xs),
                     Text(spot.addressText, style: AppTextStyles.label),
                   ],
                 ],
@@ -116,7 +118,7 @@ class SpotListItem extends StatelessWidget {
 
   Widget _placeholder() {
     return Container(
-      color: AppColors.grey,
+      color: AppColors.placeholder,
       child: const Icon(Icons.image, color: AppColors.textHint),
     );
   }

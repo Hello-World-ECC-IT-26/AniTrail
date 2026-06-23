@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/styles/app_styles.dart';
 import '../../../core/styles/app_text.dart';
+import '../../../core/styles/app_dimens.dart';
 import '../../../core/widgets/app_buttons.dart';
 
 enum SuccessType { register, login, password }
@@ -26,7 +27,7 @@ class SuccessScreen extends StatelessWidget {
     };
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           // ── 上部の青いセクション ────────────────────────────
@@ -75,10 +76,10 @@ class SuccessScreen extends StatelessWidget {
                     width: 100,
                     height: 100,
                     decoration: const BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.white,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.check,
                       color: AppColors.primary,
                       size: 52,
@@ -92,7 +93,7 @@ class SuccessScreen extends StatelessWidget {
           Expanded(
             flex: 3,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxxl),
               child: Column(
                 children: [
                   Expanded(
@@ -143,6 +144,6 @@ class _StarIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Icon(Icons.auto_awesome, color: Colors.white, size: size);
+    return Icon(Icons.auto_awesome, color: AppColors.white, size: size);
   }
 }

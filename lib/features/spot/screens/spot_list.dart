@@ -3,6 +3,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_text.dart';
+import '../../../core/styles/app_dimens.dart';
+import '../../../core/widgets/app_buttons.dart';
+import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/main_buttom_nav.dart';
 import '../../map/models/anime_spot.dart';
 import '../../map/services/spot_api.dart';
@@ -143,7 +148,7 @@ class _SpotListState extends State<SpotList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       body: Stack(
         children: [
           CustomScrollView(
@@ -158,26 +163,27 @@ class _SpotListState extends State<SpotList> {
                   child: Center(
                     child: Text(
                       _error!,
-                      style: TextStyle(color: Colors.grey.shade600),
+                      style: const TextStyle(color: AppColors.textMuted),
                     ),
                   ),
                 )
               else if (_spots.isEmpty)
-                SliverFillRemaining(
+                const SliverFillRemaining(
                   child: Center(
                     child: Text(
                       '聖地が登録されていません',
-                      style: TextStyle(color: Colors.grey.shade500),
+                      style: TextStyle(color: AppColors.textMuted),
                     ),
                   ),
                 )
               else
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+                  padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 120),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
                         child: _buildSpotCard(_spots[index]),
                       ),
                       childCount: _spots.length,
@@ -189,49 +195,36 @@ class _SpotListState extends State<SpotList> {
 
           // ── 旅のしおりを作成ボタン（左下固定） ─────
           Positioned(
-            left: 16,
-            bottom: 10,
+            left: AppSpacing.lg,
+            bottom: AppSpacing.sm,
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                ElevatedButton.icon(
+                AppButton(
+                  label: '旅のしおりを作成',
+                  icon: Icons.location_on_outlined,
+                  size: AppButtonSize.compact,
+                  fullWidth: false,
                   onPressed: _createShiori,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF10357A),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 14,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    elevation: 0,
-                  ),
-                  icon: const Icon(Icons.location_on_outlined, size: 18),
-                  label: const Text(
-                    '旅のしおりを作成',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
                 ),
 
                 // バッジ（選択数）
                 if (_draft.spots.value.isNotEmpty)
                   Positioned(
-                    top: -6,
-                    right: -6,
+                    top: -AppSpacing.xs,
+                    right: -AppSpacing.xs,
                     child: Container(
                       width: 20,
                       height: 20,
                       decoration: const BoxDecoration(
-                        color: Colors.red,
+                        color: AppColors.badge,
                         shape: BoxShape.circle,
                       ),
                       child: Center(
                         child: Text(
                           '${_draft.spots.value.length}',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),
@@ -264,7 +257,7 @@ class _SpotListState extends State<SpotList> {
       automaticallyImplyLeading: false,
       backgroundColor: AppColors.primary,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        icon: const Icon(Icons.arrow_back, color: AppColors.white),
         onPressed: () => Navigator.pop(context),
       ),
       flexibleSpace: FlexibleSpaceBar(
@@ -283,25 +276,14 @@ class _SpotListState extends State<SpotList> {
                       )
                     : _bannerPlaceholder(),
                 const DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      stops: [0, 0.55, 1],
-                      colors: [
-                        Color(0xB34A76E8),
-                        Color(0x80745FC6),
-                        Color(0x33745FC6),
-                      ],
-                    ),
-                  ),
+                  decoration: BoxDecoration(gradient: AppColors.cardGradient),
                 ),
               ],
             ),
             Positioned(
-              left: 16,
-              right: 16,
-              bottom: 16,
+              left: AppSpacing.lg,
+              right: AppSpacing.lg,
+              bottom: AppSpacing.lg,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
@@ -312,25 +294,25 @@ class _SpotListState extends State<SpotList> {
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      shadows: [Shadow(color: Colors.black)],
+                      color: AppColors.white,
+                      shadows: [Shadow(color: AppColors.black)],
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(
                         Icons.location_on_outlined,
-                        color: Colors.white,
+                        color: AppColors.white,
                         size: 14,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSpacing.xs),
                       Text(
                         '聖地 ${widget.spotCount}箇所',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: Colors.white70,
+                          color: AppColors.white.withValues(alpha: 0.7),
                         ),
                       ),
                     ],
@@ -346,7 +328,8 @@ class _SpotListState extends State<SpotList> {
 
   Widget _bannerPlaceholder() => Container(
     color: AppColors.primary,
-    child: const Icon(Icons.movie_outlined, color: Colors.white54, size: 56),
+    child: Icon(Icons.movie_outlined,
+        color: AppColors.white.withValues(alpha: 0.54), size: 56),
   );
 
   // ── 聖地サムネイル（実写真→Street View→プレースホルダ） ──
@@ -378,8 +361,8 @@ class _SpotListState extends State<SpotList> {
   }
 
   Widget _placeholderImage() => Container(
-    color: Colors.grey.shade200,
-    child: Icon(Icons.image_outlined, color: Colors.grey.shade400),
+    color: AppColors.placeholder,
+    child: const Icon(Icons.image_outlined, color: AppColors.iconMuted),
   );
 
   // ── 聖地カード1枚 ───────────────────────────────────
@@ -387,52 +370,28 @@ class _SpotListState extends State<SpotList> {
     final isBookmarked = _bookmarked.contains(spot.spotId);
     final isSelected = _draft.contains(spot.spotId);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.07),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
+    return AppCard(
+      clip: true,
       child: Row(
         children: [
           // ── サムネイル + ブックマーク ──────────────
           Stack(
             children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  bottomLeft: Radius.circular(16),
-                ),
-                child: SizedBox(
-                  width: 150,
-                  height: 130,
-                  child: _buildThumbnail(spot),
-                ),
+              SizedBox(
+                width: 150,
+                height: 130,
+                child: _buildThumbnail(spot),
               ),
               Positioned(
-                top: 6,
-                left: 6,
-                child: GestureDetector(
+                top: AppSpacing.xs,
+                left: AppSpacing.xs,
+                child: AppCircleIconButton(
+                  icon: isBookmarked
+                      ? Icons.bookmark
+                      : Icons.bookmark_outline,
                   onTap: () => _toggleBookmark(spot.spotId),
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.85),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
-                      color: AppColors.primary,
-                      size: 16,
-                    ),
-                  ),
+                  size: 28,
+                  iconSize: 16,
                 ),
               ),
             ],
@@ -441,42 +400,38 @@ class _SpotListState extends State<SpotList> {
           // ── テキスト情報 ──────────────────────────
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.sm, AppSpacing.xs, AppSpacing.sm, AppSpacing.xs),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     spot.animeTitle ?? widget.animeTitle,
                     maxLines: 2,
-                    style: const TextStyle(
-                      fontSize: 13,
+                    style: AppTextStyles.label.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: AppColors.textPrimary,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: AppSpacing.xs),
                   // 場所名
                   Text(
                     spot.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
+                    style: AppTextStyles.subtitle,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
 
                   // 住所
                   Text(
                     spot.addressText,
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade800),
+                    style: AppTextStyles.label.copyWith(fontSize: 13),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
 
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpacing.xs),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -485,7 +440,9 @@ class _SpotListState extends State<SpotList> {
                         icon: Icon(
                           isSelected ? Icons.check : Icons.add,
                           size: 14,
-                          color: isSelected ? AppColors.primary : Colors.black,
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.textPrimary,
                         ),
                         label: Text(
                           isSelected ? '追加済み' : '追加',
@@ -494,34 +451,23 @@ class _SpotListState extends State<SpotList> {
                             fontWeight: FontWeight.bold,
                             color: isSelected
                                 ? AppColors.primary
-                                : Colors.black,
+                                : AppColors.textPrimary,
                           ),
                         ),
                         style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
                           minimumSize: const Size(0, 32),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           visualDensity: VisualDensity.compact,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
+                      const SizedBox(width: AppSpacing.sm),
+                      AppButton(
+                        label: '詳細',
                         onPressed: () => _openDetail(spot),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text('詳細', style: TextStyle(fontSize: 14)),
+                        size: AppButtonSize.compact,
+                        fullWidth: false,
                       ),
                     ],
                   ),

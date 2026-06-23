@@ -1,5 +1,7 @@
 import 'package:AniTrail/features/shiori/widgets/shiori_complete.dart';
 import 'package:flutter/material.dart';
+import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_text.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../map/models/anime_spot.dart';
 import '../../map/services/spot_api.dart';
@@ -73,7 +75,7 @@ class _CreatingShioriScreenState extends State<CreatingShioriScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: const AniTrailAppBar(),
       body: Center(
         child: Column(
@@ -87,17 +89,12 @@ class _CreatingShioriScreenState extends State<CreatingShioriScreen> {
               errorBuilder: (_, __, ___) => const Icon(
                 Icons.directions_walk,
                 size: 100,
-                color: Colors.black87,
+                color: AppColors.textPrimary,
               ),
             ),
-            const Text(
+            Text(
               '旅のしおりを作成しています・・・',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-                letterSpacing: 0.5,
-              ),
+              style: AppTextStyles.heading.copyWith(letterSpacing: 0.5),
             ),
           ],
         ),

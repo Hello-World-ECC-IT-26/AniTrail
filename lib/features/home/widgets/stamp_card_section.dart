@@ -4,6 +4,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_text.dart';
+import '../../../core/styles/app_dimens.dart';
+import '../../../core/styles/app_shadows.dart';
+import '../../../core/widgets/app_buttons.dart';
 import '../../map/models/anime_spot.dart';
 import '../../map/services/spot_api.dart';
 import '../../search/screens/search_screen.dart';
@@ -23,28 +27,89 @@ class _StampCardSectionState extends State<StampCardSection> {
 
   List<StampCard> _cards = [];
   bool _loading = true;
+  Object? _error;
+  StreamSubscription<AuthState>? _authSubscription;
+  bool _loadInProgress = false;
+  bool _reloadPending = false;
+  bool _cacheLoaded = false;
   _Filter _filter = _Filter.all;
   int? _expandedIndex;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
+      state,
+    ) {
+      if (state.session != null) unawaited(_load());
+    });
+    unawaited(_load());
   }
 
   Future<void> _load() async {
+    if (_loadInProgress) {
+      _reloadPending = true;
+      return;
+    }
+    _loadInProgress = true;
+    try {
+      do {
+        _reloadPending = false;
+        await _performLoad();
+      } while (_reloadPending && mounted);
+    } finally {
+      _loadInProgress = false;
+    }
+  }
+
+  Future<void> _performLoad() async {
+    if (!_cacheLoaded) {
+      _cacheLoaded = true;
+      List<StampCard> cached = [];
+      try {
+        cached = await _api.readCachedStampCards();
+      } catch (_) {
+        // 端末キャッシュが読めない場合もAPI取得は続行する。
+      }
+      if (cached.isNotEmpty && mounted) {
+        setState(() {
+          _cards = cached;
+          _loading = false;
+        });
+        unawaited(_hydrateCards(cached.take(4).toList()));
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _error = null;
+        if (_cards.isEmpty) _loading = true;
+      });
+    }
     try {
       final cards = await _api.fetchStampCards();
       if (mounted) {
         setState(() {
           _cards = cards;
           _loading = false;
+          _error = null;
         });
         unawaited(_hydrateCards(cards.take(4).toList()));
       }
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _error = error;
+          _loading = false;
+        });
+      }
     }
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
   }
 
   List<StampCard> get _filtered => switch (_filter) {
@@ -115,11 +180,11 @@ class _StampCardSectionState extends State<StampCardSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 20),
+        const SizedBox(height: AppSpacing.xl),
 
         // ヘッダー行: [フィルター] 作成した旅のしおり [+作成]
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           child: Row(
             children: [
               // 左: フィルタードロップダウン（固定幅で中央タイトルを揃える）
@@ -138,18 +203,14 @@ class _StampCardSectionState extends State<StampCardSection> {
               ),
 
               // 中央: タイトル
-              const Expanded(
+              Expanded(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
                     '作成した旅のしおり',
                     textAlign: TextAlign.center,
                     maxLines: 1,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
+                    style: AppTextStyles.subtitle,
                   ),
                 ),
               ),
@@ -162,8 +223,9 @@ class _StampCardSectionState extends State<StampCardSection> {
                   child: TextButton.icon(
                     onPressed: _onCreate,
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.textPrimary,
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      foregroundColor: AppColors.primary,
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
@@ -182,36 +244,56 @@ class _StampCardSectionState extends State<StampCardSection> {
           ),
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
 
         if (_loading)
-          const Padding(
-            padding: EdgeInsets.all(32),
-            child: Center(child: CircularProgressIndicator()),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+            child: _buildLoadingAnimation(),
+          )
+        else if (_error != null && _cards.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('しおりを読み込めませんでした'),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppButton(
+                    label: '再読み込み',
+                    onPressed: _load,
+                    variant: AppButtonVariant.secondary,
+                    size: AppButtonSize.compact,
+                    fullWidth: false,
+                  ),
+                ],
+              ),
+            ),
           )
         else if (_cards.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(32),
+          const Padding(
+            padding: EdgeInsets.all(AppSpacing.xxxl),
             child: Center(
               child: Text(
                 'まだ旅のしおりがありません',
-                style: TextStyle(color: Colors.grey.shade500),
+                style: TextStyle(color: AppColors.textMuted),
               ),
             ),
           )
         else if (filtered.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.xxl),
             child: Center(
               child: Text(
                 'この条件のしおりはありません',
-                style: TextStyle(color: Colors.grey.shade500),
+                style: TextStyle(color: AppColors.textMuted),
               ),
             ),
           )
         else
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: _StackedCards(
               cards: filtered,
               authHeaders: _authHeaders,
@@ -234,10 +316,29 @@ class _StampCardSectionState extends State<StampCardSection> {
             ),
           ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xxl),
       ],
     );
   }
+
+  Widget _buildLoadingAnimation() => Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Image.asset(
+          'assets/images/loading.gif',
+          width: 110,
+          height: 110,
+          fit: BoxFit.contain,
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'しおりを読み込んでいます・・・',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+        ),
+      ],
+    ),
+  );
 }
 
 // ── スタック表示 ─────────────────────────────────────────────────────────
@@ -249,13 +350,13 @@ class _StackedCards extends StatelessWidget {
   final void Function(StampCard) onViewDetail;
 
   // カード本体の高さ
-  static const double _cardH = 132.0;
+  static const double _cardH = 140.0;
   // 下のカードが覗く量
   static const double _peekH = 91.0;
   // 展開時に追加される高さ。
   // 前面カードに隠れず展開行を完全に見せるには
-  // cardH(132) + 展開行(66) - peekH(91) = 107 以上が必要。
-  static const double _expandH = 108.0;
+  // cardH(140) + 展開行(66) - peekH(91) = 115 以上が必要。
+  static const double _expandH = 116.0;
 
   const _StackedCards({
     required this.cards,
@@ -326,16 +427,10 @@ class _ShioriCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.16),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: AppRadius.brLg,
+          boxShadow: AppShadows.card,
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -357,19 +452,14 @@ class _ShioriCard extends StatelessWidget {
   }
 
   Widget _buildBanner() {
-    // キービジュアル優先。無ければ一覧APIに含まれる聖地画像（Street View）にフォールバック。
-    // → 詳細取得（hydrate）前でも青一色にならない。
-    final bannerUrl =
-        card.keyVisualUrls.firstOrNull ?? card.spotImageUrls.firstOrNull;
-    // Street View プロキシ画像のみ Bearer 認証が必要。外部キービジュアルには付けない。
-    final needsAuth = bannerUrl != null && bannerUrl.contains('/street-view/');
+    final bannerUrl = card.keyVisualUrls.firstOrNull;
 
     return ClipRRect(
       borderRadius: BorderRadius.only(
-        topLeft: const Radius.circular(15),
-        topRight: const Radius.circular(15),
-        bottomLeft: Radius.circular(isExpanded ? 0 : 15),
-        bottomRight: Radius.circular(isExpanded ? 0 : 15),
+        topLeft: const Radius.circular(AppRadius.lg),
+        topRight: const Radius.circular(AppRadius.lg),
+        bottomLeft: Radius.circular(isExpanded ? 0 : AppRadius.lg),
+        bottomRight: Radius.circular(isExpanded ? 0 : AppRadius.lg),
       ),
       child: SizedBox(
         width: double.infinity,
@@ -381,7 +471,6 @@ class _ShioriCard extends StatelessWidget {
             bannerUrl != null
                 ? CachedNetworkImage(
                     imageUrl: bannerUrl,
-                    httpHeaders: needsAuth ? authHeaders : null,
                     fit: BoxFit.cover,
                     fadeInDuration: Duration.zero,
                     errorWidget: (ctx, err, st) =>
@@ -389,45 +478,20 @@ class _ShioriCard extends StatelessWidget {
                   )
                 : Container(color: AppColors.primary),
 
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.28),
-              ),
-            ),
-
             const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [Color(0x88000000), Colors.transparent],
-                  stops: [0.0, 0.9],
-                ),
-              ),
-            ),
-
-            // 上→下グラデーション（下部ピーク部の可読性）
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Color(0x88000000)],
-                  stops: [0.5, 1.0],
-                ),
-              ),
+              decoration: BoxDecoration(gradient: AppColors.cardGradient),
             ),
 
             // 展開矢印
             Positioned(
-              top: 12,
+              top: AppSpacing.md,
               right: 18,
               child: AnimatedRotation(
                 turns: isExpanded ? 0.5 : 0,
                 duration: const Duration(milliseconds: 260),
                 child: const Icon(
                   Icons.keyboard_arrow_down_rounded,
-                  color: Colors.white,
+                  color: AppColors.white,
                   size: 32,
                 ),
               ),
@@ -435,9 +499,9 @@ class _ShioriCard extends StatelessWidget {
 
             // タイトル・聖地数
             Positioned(
-              left: 28,
+              left: AppSpacing.lg,
               right: 54,
-              top: 24,
+              top: 26,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -446,9 +510,9 @@ class _ShioriCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 27,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppColors.white,
                       shadows: [
                         Shadow(
                           color: Colors.black54,
@@ -458,7 +522,7 @@ class _ShioriCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: AppSpacing.xs),
                   Row(
                     children: [
                       if (_dateLabel(card.createdAt) != null) ...[
@@ -469,14 +533,14 @@ class _ShioriCard extends StatelessWidget {
                             color: Colors.white70,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpacing.sm),
                       ],
                       const Icon(
                         Icons.location_on_outlined,
                         size: 12,
                         color: Colors.white70,
                       ),
-                      const SizedBox(width: 3),
+                      const SizedBox(width: AppSpacing.xs),
                       Text(
                         '聖地 ${card.spotCount}箇所',
                         style: const TextStyle(
@@ -498,52 +562,41 @@ class _ShioriCard extends StatelessWidget {
   Widget _buildExpandedRow() {
     final previews = card.spotImageUrls.take(4).toList();
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+      color: AppColors.surface,
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.md),
       child: Row(
         children: [
           Expanded(
             child: SizedBox(
-              height: 48,
+              height: 44,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: previews.length,
-                separatorBuilder: (ctx, i) => const SizedBox(width: 6),
+                separatorBuilder: (ctx, i) => const SizedBox(width: AppSpacing.xs),
                 itemBuilder: (ctx, i) => ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: AppRadius.brSm,
                   child: SizedBox(
-                    width: 48,
-                    height: 48,
+                    width: 44,
+                    height: 44,
                     child: CachedNetworkImage(
                       imageUrl: previews[i],
                       httpHeaders: authHeaders,
                       fit: BoxFit.cover,
                       errorWidget: (ctx, err, st) =>
-                          Container(color: Colors.grey.shade200),
+                          Container(color: AppColors.placeholder),
                     ),
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 10),
-          ElevatedButton(
+          const SizedBox(width: AppSpacing.sm),
+          AppButton(
+            label: '詳細を見る',
             onPressed: onViewDetail,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              elevation: 0,
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: const Text(
-              '詳細を見る',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-            ),
+            size: AppButtonSize.compact,
+            fullWidth: false,
           ),
         ],
       ),
@@ -569,7 +622,7 @@ class _FilterDropdown extends StatelessWidget {
       initialValue: current,
       onSelected: onChanged,
       offset: const Offset(0, 36),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      shape: const RoundedRectangleBorder(borderRadius: AppRadius.brMd),
       itemBuilder: (context) => [
         for (final f in _Filter.values)
           PopupMenuItem(
@@ -582,7 +635,7 @@ class _FilterDropdown extends StatelessWidget {
                   size: 16,
                   color: AppColors.primary,
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: AppSpacing.xs),
                 Text(switch (f) {
                   _Filter.all => '全て',
                   _Filter.incomplete => '未完了',
@@ -593,11 +646,12 @@ class _FilterDropdown extends StatelessWidget {
           ),
       ],
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: AppColors.textPrimary),
+          color: AppColors.surfaceMuted,
+          borderRadius: AppRadius.brSm,
+          border: Border.all(color: AppColors.divider),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -610,14 +664,14 @@ class _FilterDropdown extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),
             const Icon(
               Icons.keyboard_arrow_down_rounded,
               size: 16,
-              color: AppColors.textPrimary,
+              color: AppColors.textSecondary,
             ),
           ],
         ),

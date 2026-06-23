@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/auth_app_bar.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/styles/app_styles.dart';
 import '../../../core/styles/app_text.dart';
+import '../../../core/styles/app_dimens.dart';
 import '../../../core/widgets/app_buttons.dart';
 
 class OtpScreen extends StatefulWidget {
@@ -164,42 +166,25 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
-      appBar: AppBar(
-        toolbarHeight: 80,
-        backgroundColor: AppColors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, size: 18),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'メールアドレス認証',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      backgroundColor: AppColors.background,
+      appBar: const AuthAppBar(title: 'メールアドレス認証'),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 30),
+            const SizedBox(height: AppSpacing.xxl),
 
             Text('認証コード', style: AppTextStyles.title),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.sm),
 
             Text(
               'コードは ${widget.email} に送信されました',
-              style: const TextStyle(color: Colors.grey, fontSize: 12),
+              style: AppTextStyles.caption,
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: AppSpacing.xxl),
 
             // ───── OTP入力ボックス ─────
             Row(
@@ -222,9 +207,9 @@ class _OtpScreenState extends State<OtpScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                     onChanged: (v) => _onChanged(v, i),
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: AppRadius.brMd,
                       ),
                     ),
                   ),
@@ -232,7 +217,7 @@ class _OtpScreenState extends State<OtpScreen> {
               }),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.xl),
 
             // ───── OTP再送信 ─────
             GestureDetector(
@@ -240,7 +225,7 @@ class _OtpScreenState extends State<OtpScreen> {
               child: Text(
                 _canResend ? 'コードを再送信' : 'あと $_seconds 秒で再送信できます',
                 style: TextStyle(
-                  color: _canResend ? AppColors.primary : Colors.grey,
+                  color: _canResend ? AppColors.primary : AppColors.textMuted,
                   decoration: TextDecoration.underline,
                 ),
               ),

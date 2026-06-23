@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/auth_app_bar.dart';
 import '../widgets/auth_logo.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_dimens.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/custom_text_field.dart';
 
@@ -69,28 +71,11 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
     final isLoading = context.watch<AuthProvider>().isLoading;
 
     return Scaffold(
-      backgroundColor: AppColors.white,
-      appBar: AppBar(
-        toolbarHeight: 80,
-        backgroundColor: AppColors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 18),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'パスワード変更',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      backgroundColor: AppColors.background,
+      appBar: const AuthAppBar(title: 'パスワード変更'),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxxl),
           child: Form(
             key: _formKey,
             child: Column(
@@ -98,7 +83,7 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
                 // ── Logo ───────────────────────────────────
                 const AuthLogo(),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.xxxl),
 
                 // ── New Password Field ─────────────────────
                 CustomTextField(
@@ -110,7 +95,7 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
                   validator: _validatePassword,
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.lg),
 
                 // ── Confirm Password Field ─────────────────
                 CustomTextField(

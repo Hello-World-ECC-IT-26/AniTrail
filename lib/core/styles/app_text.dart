@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'app_styles.dart';
 
 class AppTextStyles {
@@ -43,6 +44,38 @@ class AppTextStyles {
     fontSize: 22,
     fontWeight: FontWeight.bold,
     color: AppColors.textPrimary,
+  );
+
+  /// 画面内の見出し（18 / bold）。
+  static const TextStyle heading = TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    color: AppColors.textPrimary,
+  );
+
+  /// セクション小見出し（16 / bold）。
+  static const TextStyle subtitle = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    color: AppColors.textPrimary,
+  );
+
+  /// 本文（14 / regular）。
+  static const TextStyle body = TextStyle(
+    fontSize: 14,
+    color: AppColors.textPrimary,
+  );
+
+  /// 補足本文（14 / secondary）。
+  static const TextStyle bodySecondary = TextStyle(
+    fontSize: 14,
+    color: AppColors.textSecondary,
+  );
+
+  /// キャプション（12 / muted）。
+  static const TextStyle caption = TextStyle(
+    fontSize: 12,
+    color: AppColors.textMuted,
   );
 
   static const TextStyle successMessage = TextStyle(

@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_text.dart';
+import '../../../core/styles/app_dimens.dart';
 import '../../map/models/anime_spot.dart';
 import '../../map/services/spot_api.dart';
 import 'search_result_card.dart';
@@ -97,29 +100,22 @@ class _SearchResultsState extends State<SearchResults> {
               errorBuilder: (context, err, stack) =>
                   const CircularProgressIndicator(),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              '検索中・・・',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text('検索中・・・', style: AppTextStyles.subtitle),
           ],
         ),
       );
     }
     if (_error != null) {
       return Center(
-        child: Text(_error!, style: TextStyle(color: Colors.grey.shade600)),
+        child: Text(_error!, style: const TextStyle(color: AppColors.textMuted)),
       );
     }
     if (_results.isEmpty) {
-      return Center(
+      return const Center(
         child: Text(
           '該当するアニメが見つかりませんでした',
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+          style: AppTextStyles.hint,
         ),
       );
     }
@@ -134,16 +130,17 @@ class _SearchResultsState extends State<SearchResults> {
     );
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.lg),
       itemCount: _results.length + 1,
       itemBuilder: (_, index) {
         if (index == 0) {
           return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.only(bottom: AppSpacing.md),
             child: Text(
               '${_results.length}件のアニメが見つかりました',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+              style: AppTextStyles.hint,
             ),
           );
         }
@@ -155,7 +152,7 @@ class _SearchResultsState extends State<SearchResults> {
             .toList();
 
         return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.only(bottom: AppSpacing.md),
           child: SearchResultCard(
             title: anime.title,
             bannerImage: anime.keyVisualUrl,

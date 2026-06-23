@@ -17,6 +17,9 @@ mixin MapLocationMixin<T extends StatefulWidget> on State<T> {
   bool hasFix = false;
   Spot? pinnedSpot;
 
+  /// しおりの聖地など、複数地点を同時にピン表示する場合に使用。
+  List<Spot> pinnedSpots = [];
+
   StreamSubscription<Position>? _positionSubscription;
 
   static const CameraPosition initialPosition = CameraPosition(
@@ -66,7 +69,7 @@ mixin MapLocationMixin<T extends StatefulWidget> on State<T> {
     currentLatLng = LatLng(position.latitude, position.longitude);
     hasFix = true;
     // ピン表示中は現在地に追従しない
-    if (pinnedSpot != null) return;
+    if (pinnedSpot != null || pinnedSpots.isNotEmpty) return;
     recenterCamera(animate: true);
   }
 
@@ -89,6 +92,45 @@ mixin MapLocationMixin<T extends StatefulWidget> on State<T> {
   void clearPin() {
     setState(() => pinnedSpot = null);
     recenterCamera(animate: true);
+  }
+
+  /// 複数の聖地をピン表示し、全てが収まるようカメラを合わせる。
+  void showSpotPins(List<Spot> spots) {
+    setState(() => pinnedSpots = spots);
+    fitSpotsBounds(spots);
+  }
+
+  void clearSpotPins() {
+    if (pinnedSpots.isEmpty) return;
+    setState(() => pinnedSpots = []);
+    recenterCamera(animate: true);
+  }
+
+  /// 渡した聖地が全て画面内に収まるようカメラを合わせる。
+  void fitSpotsBounds(List<Spot> spots) {
+    final pts = spots
+        .where((s) => s.latitude != null && s.longitude != null)
+        .map((s) => LatLng(s.latitude!, s.longitude!))
+        .toList();
+    final controller = mapController;
+    if (pts.isEmpty || controller == null) return;
+    if (pts.length == 1) {
+      controller.animateCamera(CameraUpdate.newLatLngZoom(pts.first, 15));
+      return;
+    }
+    var minLat = pts.first.latitude, maxLat = pts.first.latitude;
+    var minLng = pts.first.longitude, maxLng = pts.first.longitude;
+    for (final p in pts) {
+      minLat = min(minLat, p.latitude);
+      maxLat = max(maxLat, p.latitude);
+      minLng = min(minLng, p.longitude);
+      maxLng = max(maxLng, p.longitude);
+    }
+    final bounds = LatLngBounds(
+      southwest: LatLng(minLat, minLng),
+      northeast: LatLng(maxLat, maxLng),
+    );
+    controller.animateCamera(CameraUpdate.newLatLngBounds(bounds, 60));
   }
 
   /// 追従対象（ピン優先、なければ現在地）。null なら追従対象なし。

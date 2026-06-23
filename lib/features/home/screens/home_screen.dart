@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_text.dart';
+import '../../../core/styles/app_dimens.dart';
 import '../widgets/event_section.dart';
 import '../widgets/user_section.dart';
 import '../widgets/stamp_card_section.dart';
@@ -57,13 +60,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: _currentIndex != 0,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: _currentIndex == 0
           ? null
           : AniTrailAppBar(
               actions: [
                 IconButton(
-                  icon: const Icon(Icons.logout, color: Colors.white),
+                  icon: const Icon(Icons.logout, color: AppColors.white),
                   onPressed: () => context.read<AuthProvider>().logout(),
                 ),
               ],
@@ -103,7 +106,7 @@ class _HomeBody extends StatelessWidget {
           // スタンプカード一覧 *stamp_card_section*
           const StampCardSection(),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xxl),
         ],
       ),
     );
@@ -117,21 +120,22 @@ class _SearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      color: AppColors.background,
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.md),
       child: Container(
         height: 40,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF0F0F0),
-          borderRadius: BorderRadius.circular(8),
+        decoration: const BoxDecoration(
+          color: AppColors.surfaceMuted,
+          borderRadius: AppRadius.brSm,
         ),
-        child: Row(
+        child: const Row(
           children: [
-            const SizedBox(width: 12),
-            Text('検索', style: TextStyle(color: Colors.grey.shade500)),
-            const Spacer(),
-            Icon(Icons.search, color: Colors.grey.shade500),
-            const SizedBox(width: 12),
+            SizedBox(width: AppSpacing.md),
+            Text('検索', style: AppTextStyles.hint),
+            Spacer(),
+            Icon(Icons.search, color: AppColors.iconMuted),
+            SizedBox(width: AppSpacing.md),
           ],
         ),
       ),

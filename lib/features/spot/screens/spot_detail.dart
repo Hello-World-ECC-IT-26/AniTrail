@@ -4,7 +4,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_text.dart';
+import '../../../core/styles/app_dimens.dart';
 import '../../../core/widgets/app_bar.dart';
+import '../../../core/widgets/app_buttons.dart';
+import '../../../core/widgets/app_icon_button.dart';
+import '../../../core/widgets/app_bottom_action_bar.dart';
 import '../../../core/widgets/main_buttom_nav.dart';
 import '../../home/screens/home_screen.dart';
 import '../../map/models/anime_spot.dart';
@@ -109,7 +114,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: const AniTrailAppBar(),
       body: Stack(
         children: [
@@ -128,24 +133,17 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                   alignment: Alignment.center,
                   children: [
                     Positioned(
-                      left: 8,
+                      left: AppSpacing.sm,
                       child: IconButton(
                         icon: const Icon(
                           Icons.arrow_back,
-                          color: Colors.black87,
+                          color: AppColors.textPrimary,
                         ),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ),
                     Center(
-                      child: Text(
-                        spot.name,
-                        style: const TextStyle(
-                          color: Colors.black87,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: Text(spot.name, style: AppTextStyles.heading),
                     ),
                   ],
                 ),
@@ -157,121 +155,79 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                 child: Stack(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: AppRadius.brSm,
                       child: AspectRatio(
                         aspectRatio: 16 / 11,
                         child: _buildImage(),
                       ),
                     ),
                     Positioned(
-                      top: 10,
-                      right: 10,
-                      child: GestureDetector(
+                      top: AppSpacing.sm,
+                      right: AppSpacing.sm,
+                      child: AppCircleIconButton(
+                        icon: _bookmarked
+                            ? Icons.bookmark
+                            : Icons.bookmark_outline,
                         onTap: _bookmarkLoading ? null : _toggleBookmark,
-                        child: Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            _bookmarked
-                                ? Icons.bookmark
-                                : Icons.bookmark_outline,
-                            color: AppColors.primary,
-                            size: 18,
-                          ),
-                        ),
                       ),
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.xl),
 
               // ── アニメタイトル ──
               Center(
-                child: Text(
-                  '「${widget.animeTitle}」',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
+                child: Text('「${widget.animeTitle}」',
+                    style: AppTextStyles.subtitle),
               ),
 
               if (spot.sceneText.isNotEmpty) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpacing.sm),
                 Center(
                   child: Text(
                     spot.sceneText,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
+                    style: AppTextStyles.subtitle.copyWith(fontSize: 15),
                   ),
                 ),
               ],
 
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
 
               // ── 名称 ──
               Center(
                 child: Text(
                   spot.name,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
+                  style: AppTextStyles.subtitle,
                 ),
               ),
 
               if (spot.addressText.isNotEmpty) ...[
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Center(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
                     child: Text(
                       spot.addressText,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade600,
-                      ),
+                      style: AppTextStyles.label.copyWith(fontSize: 13),
                     ),
                   ),
                 ),
               ],
 
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.xl),
 
               // ── マップで確認 ──
               Center(
-                child: ElevatedButton.icon(
+                child: AppButton(
+                  label: 'マップで確認',
                   onPressed: _openMap,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    elevation: 0,
-                  ),
-                  icon: const Icon(Icons.location_on_outlined, size: 18),
-                  label: const Text(
-                    'マップで確認',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                  ),
+                  icon: Icons.location_on_outlined,
+                  fullWidth: false,
                 ),
               ),
             ],
@@ -280,7 +236,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
           // ── 旅のしおりを確認（追加ボタンの上に固定） ──
           if (widget.showShioriActions)
             Positioned(
-              left: 16,
+              left: AppSpacing.lg,
               bottom: 80,
               child: ValueListenableBuilder<List<Spot>>(
                 valueListenable: _draft.spots,
@@ -288,7 +244,11 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                   return Stack(
                     clipBehavior: Clip.none,
                     children: [
-                      ElevatedButton.icon(
+                      AppButton(
+                        label: '旅のしおりを確認',
+                        icon: Icons.location_on_outlined,
+                        size: AppButtonSize.compact,
+                        fullWidth: false,
                         onPressed: spots.isEmpty
                             ? null
                             : () {
@@ -301,43 +261,23 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                                   ),
                                 );
                               },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF10357A),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 2,
-                        ),
-                        icon: const Icon(Icons.location_on_outlined, size: 18),
-                        label: const Text(
-                          '旅のしおりを確認',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
                       ),
                       if (spots.isNotEmpty)
                         Positioned(
-                          top: -6,
-                          right: -6,
+                          top: -AppSpacing.xs,
+                          right: -AppSpacing.xs,
                           child: Container(
                             width: 20,
                             height: 20,
                             decoration: const BoxDecoration(
-                              color: Colors.red,
+                              color: AppColors.badge,
                               shape: BoxShape.circle,
                             ),
                             alignment: Alignment.center,
                             child: Text(
                               '${spots.length}',
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: AppColors.white,
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -360,27 +300,10 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                 valueListenable: _draft.spots,
                 builder: (context, _, __) {
                   final added = _draft.contains(spot.spotId);
-                  return Container(
-                    color: const Color(0xFF10357A),
-                    child: TextButton.icon(
-                      onPressed: () => _draft.toggle(_draftSpot),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        minimumSize: const Size(double.infinity, 0),
-                      ),
-                      icon: Icon(
-                        added ? Icons.check : Icons.add,
-                        color: Colors.white,
-                      ),
-                      label: Text(
-                        added ? 'しおりに追加済み' : 'しおりに追加',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                  return AppBottomActionBar(
+                    icon: added ? Icons.check : Icons.add,
+                    label: added ? 'しおりに追加済み' : 'しおりに追加',
+                    onPressed: () => _draft.toggle(_draftSpot),
                   );
                 },
               ),
@@ -406,18 +329,18 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
     final url = _imageUrl;
     if (url == null || url.isEmpty) {
       return Container(
-        color: Colors.grey.shade200,
-        child: Icon(Icons.image_outlined, color: Colors.grey.shade400),
+        color: AppColors.placeholder,
+        child: const Icon(Icons.image_outlined, color: AppColors.iconMuted),
       );
     }
     return CachedNetworkImage(
       imageUrl: url,
       httpHeaders: _authHeaders,
       fit: BoxFit.cover,
-      placeholder: (_, __) => Container(color: Colors.grey.shade200),
+      placeholder: (_, __) => Container(color: AppColors.placeholder),
       errorWidget: (_, __, ___) => Container(
-        color: Colors.grey.shade200,
-        child: Icon(Icons.image_outlined, color: Colors.grey.shade400),
+        color: AppColors.placeholder,
+        child: const Icon(Icons.image_outlined, color: AppColors.iconMuted),
       ),
     );
   }

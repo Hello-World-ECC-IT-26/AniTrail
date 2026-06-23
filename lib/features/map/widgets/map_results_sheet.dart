@@ -6,6 +6,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/styles/app_styles.dart';
 import '../../../core/styles/app_text.dart';
+import '../../../core/styles/app_dimens.dart';
+import '../../../core/styles/app_shadows.dart';
+import '../../../core/widgets/app_buttons.dart';
+import '../../../core/widgets/app_chip.dart';
 import '../../search/widgets/search_result_card.dart';
 import '../models/anime_spot.dart';
 import '../services/spot_api.dart';
@@ -134,9 +138,9 @@ class _MapResultsSheetState extends State<MapResultsSheet> {
       builder: (context, scrollController) {
         return Container(
           decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-            boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+            boxShadow: AppShadows.sheet,
           ),
           child: CustomScrollView(
             controller: scrollController,
@@ -236,26 +240,12 @@ class _MapResultsSheetState extends State<MapResultsSheet> {
           child: Row(
             children: [
               ...List.generate(_kFilters.length, (i) {
-                final selected = widget.filterIndex == i;
                 return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
+                  padding: const EdgeInsets.only(right: AppSpacing.sm),
+                  child: AppChip(
+                    label: _kFilters[i],
+                    selected: widget.filterIndex == i,
                     onTap: () => widget.onFilterChange(i),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: selected ? AppColors.primary : AppColors.grey,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        _kFilters[i],
-                        style: TextStyle(
-                          color: selected ? Colors.white : AppColors.textSecondary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
                   ),
                 );
               }),
@@ -495,21 +485,9 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
 
         // 経路ボタン
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _openDirections,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                elevation: 0,
-              ),
-              child: const Text('経路', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-            ),
-          ),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
+          child: AppButton(label: '経路', onPressed: _openDirections),
         ),
 
         // 写真グリッド

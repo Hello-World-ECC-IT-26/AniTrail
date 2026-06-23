@@ -1,6 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_dimens.dart';
+import '../../../core/widgets/app_buttons.dart';
+import '../../../core/widgets/app_card.dart';
 
 class SearchResultCard extends StatelessWidget {
   final String title;
@@ -17,6 +20,8 @@ class SearchResultCard extends StatelessWidget {
 
   /// 「聖地を見る」ボタンタップ時のコールバック
   final VoidCallback? onViewSpots;
+  final bool variableSpotImages;
+  final GestureDragUpdateCallback? onBannerVerticalDragUpdate;
 
   const SearchResultCard({
     super.key,
@@ -26,50 +31,29 @@ class SearchResultCard extends StatelessWidget {
     this.spotImages = const [],
     this.httpHeaders = const {},
     this.onViewSpots,
+    this.variableSpotImages = false,
+    this.onBannerVerticalDragUpdate,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildBanner(),
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.md),
             child: Row(
               children: [
                 ..._buildSpotThumbnails(),
                 const Spacer(),
-                ElevatedButton(
+                AppButton(
+                  label: '聖地を見る',
                   onPressed: onViewSpots,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    '聖地を見る',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
+                  size: AppButtonSize.compact,
+                  fullWidth: false,
                 ),
               ],
             ),
@@ -80,103 +64,96 @@ class SearchResultCard extends StatelessWidget {
   }
 
   Widget _buildBanner() {
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(16),
-        topRight: Radius.circular(16),
-      ),
-      child: Stack(
-        children: [
-          SizedBox(
-            width: double.infinity,
-            height: 140,
-            child: bannerImage != null
-                ? CachedNetworkImage(
-                    imageUrl: bannerImage!,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: 140,
-                    placeholder: (_, _) =>
-                        Container(color: Colors.grey.shade200),
-                    errorWidget: (_, _, _) => _placeholderBanner(),
-                  )
-                : _placeholderBanner(),
-          ),
-          // グラデーションオーバーレイ
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  stops: [0, 0.55, 1],
-                  colors: [
-                    Color(0xB34A76E8),
-                    Color(0x80745FC6),
-                    Color(0x33745FC6),
-                  ],
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onVerticalDragUpdate: onBannerVerticalDragUpdate,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(AppRadius.lg),
+          topRight: Radius.circular(AppRadius.lg),
+        ),
+        child: Stack(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: 140,
+              child: bannerImage != null
+                  ? CachedNetworkImage(
+                      imageUrl: bannerImage!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: 140,
+                      placeholder: (_, _) =>
+                          Container(color: AppColors.placeholder),
+                      errorWidget: (_, _, _) => _placeholderBanner(),
+                    )
+                  : _placeholderBanner(),
+            ),
+            // グラデーションオーバーレイ
+            const Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(gradient: AppColors.cardGradient),
+              ),
+            ),
+            // アニメタイトル（左下）
+            Positioned(
+              left: AppSpacing.md,
+              right: AppSpacing.md,
+              bottom: 28,
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.white,
+                  shadows: [Shadow(color: Colors.black45, blurRadius: 4)],
                 ),
               ),
             ),
-          ),
-          // アニメタイトル（左下）
-          Positioned(
-            left: 12,
-            right: 12,
-            bottom: 28,
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                shadows: [Shadow(color: Colors.black45, blurRadius: 4)],
+            // 聖地数（左下）
+            Positioned(
+              left: AppSpacing.md,
+              bottom: AppSpacing.sm,
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.location_on_outlined,
+                    color: Colors.white70,
+                    size: 14,
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Text(
+                    '聖地 $spotCount箇所',
+                    style: const TextStyle(fontSize: 12, color: Colors.white70),
+                  ),
+                ],
               ),
             ),
-          ),
-          // 聖地数（左下）
-          Positioned(
-            left: 12,
-            bottom: 10,
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.location_on_outlined,
-                  color: Colors.white70,
-                  size: 14,
-                ),
-                const SizedBox(width: 3),
-                Text(
-                  '聖地 $spotCount箇所',
-                  style: const TextStyle(fontSize: 12, color: Colors.white70),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _placeholderBanner() {
     return Container(
-      color: Colors.grey.shade300,
-      child: Icon(Icons.image_outlined, color: Colors.grey.shade400, size: 40),
+      color: AppColors.divider,
+      child: const Icon(Icons.image_outlined, color: AppColors.iconMuted, size: 40),
     );
   }
 
   List<Widget> _buildSpotThumbnails() {
-    const maxCount = 4;
+    final count = variableSpotImages ? spotImages.take(4).length : 4;
 
-    return List.generate(maxCount, (index) {
+    return List.generate(count, (index) {
       final url = index < spotImages.length ? spotImages[index] : null;
 
       return Padding(
-        padding: const EdgeInsets.only(right: 6),
+        padding: const EdgeInsets.only(right: AppSpacing.xs),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: AppRadius.brSm,
           child: SizedBox(
             width: 44,
             height: 44,
@@ -186,11 +163,11 @@ class SearchResultCard extends StatelessWidget {
                     httpHeaders: httpHeaders,
                     fit: BoxFit.cover,
                     placeholder: (_, _) =>
-                        Container(color: Colors.grey.shade200),
+                        Container(color: AppColors.placeholder),
                     errorWidget: (_, _, _) =>
-                        Container(color: Colors.grey.shade300),
+                        Container(color: AppColors.divider),
                   )
-                : Container(color: Colors.grey.shade300),
+                : Container(color: AppColors.divider),
           ),
         ),
       );

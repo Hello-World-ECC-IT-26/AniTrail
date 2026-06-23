@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/styles/app_styles.dart';
 
 class AuthLogo extends StatelessWidget {
   const AuthLogo({super.key});
@@ -10,8 +11,8 @@ class AuthLogo extends StatelessWidget {
       height: 100,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.grey.shade200,
-        border: Border.all(color: Colors.grey.shade300, width: 1),
+        color: AppColors.placeholder,
+        border: Border.all(color: AppColors.divider, width: 1),
       ),
       child: ClipOval(
         child: Image.asset(
@@ -20,7 +21,7 @@ class AuthLogo extends StatelessWidget {
           errorBuilder: (context, error, stackTrace) => const Center(
             child: Text(
               'ロゴ',
-              style: TextStyle(color: Colors.grey, fontSize: 16),
+              style: TextStyle(color: AppColors.iconMuted, fontSize: 16),
             ),
           ),
         ),

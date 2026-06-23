@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/styles/app_styles.dart';
 import '../../../core/styles/app_text.dart';
+import '../../../core/styles/app_dimens.dart';
 
 /// 検索履歴リスト（検索カード内に表示）
 class SearchHistoryList extends StatelessWidget {
@@ -28,7 +29,7 @@ class SearchHistoryList extends StatelessWidget {
   Widget build(BuildContext context) {
     if (history.isEmpty) {
       return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 16),
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
         child: Center(child: Text('検索履歴はありません', style: AppTextStyles.hint)),
       );
     }
@@ -41,7 +42,8 @@ class SearchHistoryList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
           child: Text('検索履歴', style: AppTextStyles.label),
         ),
         ListView.builder(
@@ -55,17 +57,13 @@ class SearchHistoryList extends StatelessWidget {
               dense: true,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               leading:
-                  Icon(Icons.history, color: Colors.grey.shade400, size: 20),
+                  const Icon(Icons.history, color: AppColors.iconMuted, size: 20),
               title: Text(
                 item,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
+                style: AppTextStyles.input.copyWith(fontWeight: FontWeight.w600),
               ),
               trailing: IconButton(
-                icon: Icon(Icons.close, size: 16, color: Colors.grey.shade400),
+                icon: const Icon(Icons.close, size: 16, color: AppColors.iconMuted),
                 onPressed: () => onDelete(item),
               ),
               onTap: () => onSelect(item),

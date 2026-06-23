@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'core/constants/app_constants.dart';
+import 'core/styles/app_styles.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/register_screen.dart';
@@ -46,7 +47,8 @@ class MyApp extends StatelessWidget {
         title: AppConstants.appName,
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1976D2)),
+          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
+          scaffoldBackgroundColor: AppColors.background,
           useMaterial3: true,
         ),
         home: const AuthWrapper(),
