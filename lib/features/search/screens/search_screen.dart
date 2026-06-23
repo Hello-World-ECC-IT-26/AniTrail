@@ -3,6 +3,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/search_results.dart';
 import '../widgets/search_overlay.dart';
 import '../../spot/screens/spot_list.dart';
+import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_text.dart';
+import '../../../core/styles/app_dimens.dart';
+import '../../../core/styles/app_input.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/main_buttom_nav.dart';
 
@@ -82,7 +86,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
 
       // アプリバー
       appBar: const AniTrailAppBar(),
@@ -95,7 +99,8 @@ class _SearchScreenState extends State<SearchScreen> {
         children: [
           // ── 検索バー
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
             child: TextField(
               controller: controller,
               focusNode: focusNode,
@@ -115,21 +120,12 @@ class _SearchScreenState extends State<SearchScreen> {
                 });
               },
 
-              style: const TextStyle(fontSize: 14),
+              style: AppTextStyles.input,
 
-              decoration: InputDecoration(
+              decoration: AppInputDecorations.filled(
                 hintText: '検索',
-
-                filled: true,
-                fillColor: const Color(0xFFF0F0F0),
-
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-
-                prefixIcon: const Icon(Icons.search),
-
+                prefixIcon: Icons.search,
+                fillColor: AppColors.surfaceMuted,
                 // クリアボタン
                 suffixIcon: query.isNotEmpty
                     ? IconButton(

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_dimens.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/custom_text_field.dart';
 import '../providers/auth_provider.dart';
@@ -74,10 +75,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final isLoading = context.watch<AuthProvider>().isLoading;
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxxl),
           child: Form(
             key: _formKey,
             child: Column(
@@ -85,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 // ── Logo ───────────────────────────────────
                 const SizedBox(height: 100),
                 const AuthLogo(),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.xxxl),
 
                 // ── Email Field ────────────────────────────
                 CustomTextField(
@@ -97,7 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.lg),
 
                 // ── Password Field ─────────────────────────
                 CustomTextField(
@@ -118,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   isLoading: isLoading,
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpacing.xl),
 
                 // ── Forgot Password ────────────────────────
                 AppLinkText(
@@ -132,14 +133,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpacing.xl),
 
                 // ── Divider ────────────────────────────────
-                const Divider(
-                  thickness: 1,
-                  color: Color.fromARGB(255, 102, 102, 102),
-                ),
-                const SizedBox(height: 20),
+                const Divider(thickness: 1, color: AppColors.textMuted),
+                const SizedBox(height: AppSpacing.xl),
 
                 // ── Register Button ────────────────────────
                 SecondaryButton(
@@ -152,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.md),
 
                 // ── Google Button ──────────────────────────
                 GoogleButton(

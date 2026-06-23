@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_text.dart';
+import '../../../core/styles/app_dimens.dart';
 import '../../map/services/spot_api.dart';
 
 class SearchOverlay extends StatefulWidget {
@@ -81,19 +83,17 @@ class _SearchOverlayState extends State<SearchOverlay> {
 
   @override
   Widget build(BuildContext context) {
+    const radius = BorderRadius.only(
+      bottomLeft: Radius.circular(AppRadius.md),
+      bottomRight: Radius.circular(AppRadius.md),
+    );
     return Material(
       elevation: 3,
-      borderRadius: const BorderRadius.only(
-        bottomLeft: Radius.circular(12),
-        bottomRight: Radius.circular(12),
-      ),
+      borderRadius: radius,
       child: Container(
         decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(12),
-            bottomRight: Radius.circular(12),
-          ),
+          color: AppColors.surface,
+          borderRadius: radius,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,20 +101,17 @@ class _SearchOverlayState extends State<SearchOverlay> {
           children: [
             // ラベル（履歴 or 予測ワード）
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.xs),
               child: Text(
                 _isTyping ? 'お好みのアニメはこちらですか？' : '検索履歴',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade500,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w500),
               ),
             ),
 
             _isTyping ? _buildSuggestions() : _buildHistory(),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
           ],
         ),
       ),
@@ -132,17 +129,13 @@ class _SearchOverlayState extends State<SearchOverlay> {
         final text = widget.history[index];
         return ListTile(
           dense: true,
-          leading: Icon(Icons.history, color: Colors.grey.shade400, size: 18),
+          leading: const Icon(Icons.history, color: AppColors.iconMuted, size: 18),
           title: Text(
             text,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
+            style: AppTextStyles.input.copyWith(fontWeight: FontWeight.w600),
           ),
           trailing: IconButton(
-            icon: Icon(Icons.close, size: 16, color: Colors.grey.shade400),
+            icon: const Icon(Icons.close, size: 16, color: AppColors.iconMuted),
             onPressed: () => widget.onDeleteHistory(text),
           ),
           onTap: () => widget.onSelect(text),
@@ -155,7 +148,7 @@ class _SearchOverlayState extends State<SearchOverlay> {
   Widget _buildSuggestions() {
     if (_loading) {
       return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 20),
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
         child: Center(
           child: SizedBox(
             width: 20,
@@ -168,11 +161,13 @@ class _SearchOverlayState extends State<SearchOverlay> {
     if (_suggestions.isEmpty) {
       return Container(
         width: double.infinity,
-        margin: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF7F8FA),
-          borderRadius: BorderRadius.circular(12),
+        margin: const EdgeInsets.fromLTRB(
+            AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.sm),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
+        decoration: const BoxDecoration(
+          color: AppColors.surfaceVariant,
+          borderRadius: AppRadius.brMd,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -181,28 +176,25 @@ class _SearchOverlayState extends State<SearchOverlay> {
               width: 40,
               height: 40,
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.search_off_rounded,
                 size: 21,
-                color: Colors.grey.shade400,
+                color: AppColors.iconMuted,
               ),
             ),
-            const SizedBox(height: 10),
-            const Text(
+            const SizedBox(height: AppSpacing.sm),
+            Text(
               '一致するアニメがありません',
-              style: TextStyle(
-                color: Colors.black54,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTextStyles.bodySecondary
+                  .copyWith(fontSize: 13, fontWeight: FontWeight.w600),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               '別のキーワードで検索してみてください',
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
+              style: AppTextStyles.caption.copyWith(fontSize: 11),
             ),
           ],
         ),
@@ -217,10 +209,10 @@ class _SearchOverlayState extends State<SearchOverlay> {
         final text = _suggestions[index];
         return ListTile(
           dense: true,
-          leading: Icon(Icons.search, color: Colors.grey.shade400, size: 18),
+          leading: const Icon(Icons.search, color: AppColors.iconMuted, size: 18),
           title: RichText(
             text: TextSpan(
-              style: const TextStyle(fontSize: 14, color: Colors.black87),
+              style: AppTextStyles.input,
               children: _highlight(text, widget.query),
             ),
           ),

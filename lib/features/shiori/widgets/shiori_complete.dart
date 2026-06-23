@@ -2,6 +2,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_text.dart';
+import '../../../core/styles/app_dimens.dart';
+import '../../../core/widgets/app_buttons.dart';
+import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/main_buttom_nav.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../home/screens/home_screen.dart';
@@ -56,44 +60,28 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
     final obtained = spots.where((s) => _visited.contains(s.spotId)).length;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: const AniTrailAppBar(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 40),
+        padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg, AppSpacing.xxl, AppSpacing.lg, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Center(
-              child: Text(
-                '旅のしおりが作成されました！',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
+            Center(
+              child: Text('旅のしおりが作成されました！',
+                  style: AppTextStyles.successMessage),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xxl),
 
             if (_animeVisualSpots.isNotEmpty) ...[
               _buildAnimeVisuals(),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.xl),
             ],
 
             // ── しおりカード ──────────────────────────
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(16),
+            AppCard(
+              padding: const EdgeInsets.all(AppSpacing.lg),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -104,11 +92,7 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
                       Expanded(
                         child: Text(
                           widget.shioriTitle,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
+                          style: AppTextStyles.subtitle,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -122,13 +106,12 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
                         icon: const Icon(
                           Icons.edit_outlined,
                           size: 14,
-                          color: Colors.black54,
+                          color: AppColors.textSecondary,
                         ),
-                        label: const Text(
+                        label: Text(
                           '編集',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.black,
+                          style: AppTextStyles.label.copyWith(
+                            color: AppColors.textPrimary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -140,25 +123,19 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
 
                   // ── 聖地リスト ──────────────────────
                   ...spots.map((spot) => _buildSpotRow(spot)),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpacing.xl),
 
                   // ── スタンプカード ──────────────────
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'スタンプカード',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
+                      Text('スタンプカード',
+                          style: AppTextStyles.subtitle.copyWith(fontSize: 15)),
                       Text(
                         '$obtained/$total',
                         style: const TextStyle(
@@ -169,7 +146,7 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpacing.sm),
 
                   // スタンプグリッド（聖地数ぶん。取得済みを着色）
                   GridView.builder(
@@ -187,15 +164,13 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
                       final filled = i < obtained;
                       return Container(
                         decoration: BoxDecoration(
-                          color: filled
-                              ? AppColors.primary
-                              : Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(6),
+                          color: filled ? AppColors.primary : AppColors.divider,
+                          borderRadius: AppRadius.brSm,
                         ),
                         child: filled
                             ? const Icon(
                                 Icons.check,
-                                color: Colors.white,
+                                color: AppColors.white,
                                 size: 18,
                               )
                             : null,
@@ -206,49 +181,30 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xxl),
 
-            const Center(
+            Center(
               child: Text(
                 '聖地を巡ってスタンプをゲットしましょう！',
-                style: TextStyle(
+                style: AppTextStyles.body.copyWith(
                   fontSize: 13,
-                  color: Colors.black,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
 
             // ── マップで確認ボタン（スコープ外・準備中） ──
             Center(
-              child: OutlinedButton.icon(
+              child: AppButton(
+                label: 'マップで確認',
+                icon: Icons.location_on_outlined,
+                fullWidth: false,
                 onPressed: () {
                   ScaffoldMessenger.of(
                     context,
                   ).showSnackBar(const SnackBar(content: Text('マップ確認は準備中です')));
                 },
-                style: OutlinedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  side: BorderSide.none,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                icon: const Icon(
-                  Icons.location_on_outlined,
-                  size: 18,
-                  color: Colors.white,
-                ),
-                label: const Text(
-                  'マップで確認',
-                  style: TextStyle(fontSize: 15, color: Colors.white),
-                ),
               ),
             ),
           ],
@@ -294,8 +250,8 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
   }
 
   Widget _placeholderImage() => Container(
-    color: Colors.grey.shade200,
-    child: Icon(Icons.image_outlined, color: Colors.grey.shade400),
+    color: AppColors.placeholder,
+    child: const Icon(Icons.image_outlined, color: AppColors.iconMuted),
   );
 
   List<Spot> get _animeVisualSpots {
@@ -315,13 +271,13 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
     child: ListView.separated(
       scrollDirection: Axis.horizontal,
       itemCount: _animeVisualSpots.length,
-      separatorBuilder: (_, __) => const SizedBox(width: 10),
+      separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
       itemBuilder: (_, index) {
         final spot = _animeVisualSpots[index];
         return SizedBox(
           width: 240,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: AppRadius.brMd,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -334,27 +290,17 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
                 else
                   _placeholderImage(),
                 const DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [Color(0xB34A76E8), Color(0x33745FC6)],
-                    ),
-                  ),
+                  decoration: BoxDecoration(gradient: AppColors.cardGradientSoft),
                 ),
                 Positioned(
-                  left: 12,
-                  right: 12,
-                  bottom: 12,
+                  left: AppSpacing.md,
+                  right: AppSpacing.md,
+                  bottom: AppSpacing.md,
                   child: Text(
                     spot.animeTitle ?? '',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: AppTextStyles.subtitle.copyWith(color: AppColors.white),
                   ),
                 ),
               ],
@@ -370,37 +316,22 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
     final visited = _visited.contains(spot.spotId);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: AppCard(
+        clip: true,
+        radius: AppRadius.md,
         child: Row(
           children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(10),
-                bottomLeft: Radius.circular(10),
-              ),
-              child: SizedBox(
-                width: 120,
-                height: 100,
-                child: _buildThumbnail(spot),
-              ),
+            SizedBox(
+              width: 120,
+              height: 100,
+              child: _buildThumbnail(spot),
             ),
 
             // ── テキスト情報 ──────────────────────────
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+                padding: const EdgeInsets.all(AppSpacing.sm),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -409,13 +340,12 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
                         spot.animeTitle!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12,
+                        style: AppTextStyles.caption.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Colors.black54,
+                          color: AppColors.textSecondary,
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: AppSpacing.xs),
                     ],
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -423,11 +353,7 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
                         Expanded(
                           child: Text(
                             spot.name,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
+                            style: AppTextStyles.subtitle,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -436,18 +362,15 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: visited ? Colors.grey : Colors.red,
+                            color: visited ? AppColors.textMuted : AppColors.error,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.xs),
                     Text(
                       spot.addressText,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade800,
-                      ),
+                      style: AppTextStyles.label.copyWith(fontSize: 13),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),

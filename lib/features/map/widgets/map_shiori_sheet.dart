@@ -5,6 +5,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/styles/app_styles.dart';
 import '../../../core/styles/app_text.dart';
+import '../../../core/styles/app_dimens.dart';
+import '../../../core/styles/app_shadows.dart';
+import '../../../core/widgets/app_buttons.dart';
+import '../../../core/widgets/app_chip.dart';
 import '../../search/widgets/search_result_card.dart';
 import '../../spot/screens/spot_detail.dart';
 import '../models/anime_spot.dart';
@@ -174,11 +178,10 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
           builder: (context, scrollController) {
             return Container(
               decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                boxShadow: [
-                  BoxShadow(color: Color(0x33000000), blurRadius: 12),
-                ],
+                color: AppColors.surface,
+                borderRadius:
+                    BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+                boxShadow: AppShadows.sheet,
               ),
               child: Column(
                 children: [
@@ -202,7 +205,7 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
   Widget _buildHandle() {
     return Center(
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 10),
+        margin: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
         width: 40,
         height: 4,
         decoration: BoxDecoration(
@@ -218,32 +221,16 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
     final selected = _selected;
     if (selected == null) {
       return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+        padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.sm),
         child: Row(
           children: List.generate(_kFilters.length, (i) {
-            final isSel = _filterIndex == i;
             return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: GestureDetector(
+              padding: const EdgeInsets.only(right: AppSpacing.sm),
+              child: AppChip(
+                label: _kFilters[i],
+                selected: _filterIndex == i,
                 onTap: () => setState(() => _filterIndex = i),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSel ? AppColors.primary : AppColors.grey,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    _kFilters[i],
-                    style: TextStyle(
-                      color: isSel ? Colors.white : AppColors.textSecondary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
               ),
             );
           }),
@@ -252,7 +239,8 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
     }
     // 詳細ヘッダー: 戻る + しおりタイトル
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 0, 16, 8),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xs, 0, AppSpacing.lg, AppSpacing.sm),
       child: Row(
         children: [
           IconButton(
@@ -289,9 +277,10 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
     }
     return ListView.separated(
       controller: controller,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.xxl),
       itemCount: cards.length,
-      separatorBuilder: (context, i) => const SizedBox(height: 12),
+      separatorBuilder: (context, i) => const SizedBox(height: AppSpacing.md),
       itemBuilder: (context, i) {
         final card = cards[i];
         return SearchResultCard(
@@ -319,7 +308,7 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
     }
     return ListView.separated(
       controller: controller,
-      padding: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
       itemCount: spots.length,
       separatorBuilder: (context, i) =>
           const Divider(height: 1, indent: 16, endIndent: 16),
@@ -353,10 +342,16 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(text, style: TextStyle(color: Colors.grey.shade500)),
+          Text(text, style: const TextStyle(color: AppColors.textMuted)),
           if (retry) ...[
-            const SizedBox(height: 12),
-            OutlinedButton(onPressed: _load, child: const Text('再読み込み')),
+            const SizedBox(height: AppSpacing.md),
+            AppButton(
+              label: '再読み込み',
+              onPressed: _load,
+              variant: AppButtonVariant.secondary,
+              size: AppButtonSize.compact,
+              fullWidth: false,
+            ),
           ],
         ],
       ),

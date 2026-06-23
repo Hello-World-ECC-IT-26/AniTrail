@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_text.dart';
+import '../../../core/styles/app_dimens.dart';
 
 class EventSection extends StatelessWidget {
   const EventSection({super.key});
@@ -9,37 +11,36 @@ class EventSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
 
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: const Text(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          child: Text(
             '期間限定イベント開催中！',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+            style: AppTextStyles.subtitle,
           ),
         ),
 
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpacing.sm),
 
         SizedBox(
           height: 120,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             itemCount: 3,
             itemBuilder: (context, index) {
               return Container(
                 width: 200,
-                margin: const EdgeInsets.only(right: 12),
-                decoration: BoxDecoration(color: AppColors.primary),
+                margin: const EdgeInsets.only(right: AppSpacing.md),
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: AppRadius.brMd,
+                ),
                 child: const Center(
-                  child: Text('イベント', style: TextStyle(color: Colors.white)),
+                  child: Text('イベント', style: TextStyle(color: AppColors.white)),
                 ),
               );
             },

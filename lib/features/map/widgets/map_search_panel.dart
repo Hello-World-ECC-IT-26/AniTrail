@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/styles/app_styles.dart';
 import '../../../core/styles/app_text.dart';
+import '../../../core/styles/app_dimens.dart';
 import 'search_history_list.dart';
 
 /// マップ上に浮く検索カード（検索バータップ時に表示）。
@@ -62,18 +63,19 @@ class _MapSearchPanelState extends State<MapSearchPanel> {
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      top: MediaQuery.of(context).padding.top + 12,
-      left: 16,
-      right: 16,
+      top: MediaQuery.of(context).padding.top + AppSpacing.md,
+      left: AppSpacing.lg,
+      right: AppSpacing.lg,
       child: Material(
         elevation: 4,
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.surface,
+        borderRadius: AppRadius.brMd,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xs, vertical: AppSpacing.xs),
               child: Row(
                 children: [
                   IconButton(
@@ -118,7 +120,7 @@ class _MapSearchPanelState extends State<MapSearchPanel> {
               onDelete: widget.onDeleteHistory,
               onShowMore: widget.onShowMore,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
           ],
         ),
       ),

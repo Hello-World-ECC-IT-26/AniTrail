@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/styles/app_styles.dart';
 import '../../../core/styles/app_text.dart';
+import '../../../core/styles/app_dimens.dart';
 
 /// マップ上部の折りたたみ検索バー + しおりボタン
 class MapSearchBar extends StatelessWidget {
@@ -32,19 +33,19 @@ class MapSearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      top: MediaQuery.of(context).padding.top + 12,
-      left: 16,
-      right: 16,
+      top: MediaQuery.of(context).padding.top + AppSpacing.md,
+      left: AppSpacing.lg,
+      right: AppSpacing.lg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Material(
               elevation: 4,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: AppRadius.brMd,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.md,
                 ),
                 child: Row(
                   children: [
@@ -61,7 +62,7 @@ class MapSearchBar extends StatelessWidget {
                       )
                     else ...[
                       Icon(Icons.location_on_outlined, color: AppColors.primary),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.sm),
                     ],
                     Expanded(
                       child: GestureDetector(
@@ -82,12 +83,12 @@ class MapSearchBar extends StatelessWidget {
               ),
           ),
           if (showShiori) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             FloatingActionButton.small(
               backgroundColor: AppColors.primary,
               heroTag: 'shiori',
               onPressed: onShioriTap,
-              child: const Icon(Icons.bookmark_outline, color: Colors.white),
+              child: const Icon(Icons.bookmark_outline, color: AppColors.white),
             ),
           ],
         ],

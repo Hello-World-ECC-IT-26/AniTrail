@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
+
 import '../styles/app_styles.dart';
 
 class MainBottomNav extends StatelessWidget {
   final int? currentIndex;
   final ValueChanged<int> onTap;
 
-  const MainBottomNav({
-    super.key,
-    this.currentIndex,
-    required this.onTap,
-  });
+  const MainBottomNav({super.key, this.currentIndex, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -17,9 +14,9 @@ class MainBottomNav extends StatelessWidget {
     return BottomNavigationBar(
       currentIndex: currentIndex ?? 0,
       onTap: onTap,
-      selectedItemColor: hasSelection ? AppColors.primary : Colors.grey,
-      unselectedItemColor: Colors.grey,
-      backgroundColor: Colors.white,
+      selectedItemColor: hasSelection ? AppColors.primary : AppColors.iconMuted,
+      unselectedItemColor: AppColors.iconMuted,
+      backgroundColor: AppColors.surface,
       elevation: 8,
       items: const [
         BottomNavigationBarItem(
