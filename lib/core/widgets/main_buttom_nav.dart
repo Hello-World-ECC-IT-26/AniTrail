@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../styles/app_styles.dart';
 
 class MainBottomNav extends StatelessWidget {
@@ -11,30 +10,44 @@ class MainBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasSelection = currentIndex != null;
+    final index = currentIndex ?? 0;
+
     return BottomNavigationBar(
-      currentIndex: currentIndex ?? 0,
+      currentIndex: index,
       onTap: onTap,
-      selectedItemColor: hasSelection ? AppColors.primary : AppColors.iconMuted,
-      unselectedItemColor: AppColors.iconMuted,
-      backgroundColor: AppColors.surface,
+      type: BottomNavigationBarType.fixed,
+      selectedItemColor: hasSelection ? AppColors.primary : Colors.grey,
+      unselectedItemColor: Colors.grey,
+      backgroundColor: Colors.white,
       elevation: 8,
-      items: const [
+
+      items: [
         BottomNavigationBarItem(
-          icon: Icon(Icons.map_outlined),
-          activeIcon: Icon(Icons.map),
-          label: 'マップ',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home),
+          icon: _icon('assets/images/home.png', index == 0),
           label: 'ホーム',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.style_outlined),
-          activeIcon: Icon(Icons.style),
+          icon: _icon('assets/images/map.png', index == 1),
+          label: 'マップ',
+        ),
+        BottomNavigationBarItem(
+          icon: _icon('assets/images/stamp.png', index == 2),
           label: 'スタンプ',
         ),
+        BottomNavigationBarItem(
+          icon: _icon('assets/images/coupon.png', index == 3),
+          label: 'クーポン',
+        ),
       ],
+    );
+  }
+
+  Widget _icon(String path, bool isActive) {
+    return Image.asset(
+      path,
+      width: 24,
+      height: 24,
+      color: isActive ? AppColors.primary : Colors.grey,
     );
   }
 }

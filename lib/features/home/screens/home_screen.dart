@@ -1,3 +1,4 @@
+import 'package:AniTrail/features/coupon/screens/coupon_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/styles/app_styles.dart';
@@ -14,8 +15,8 @@ import '../../stamp/screens/stamp_screen.dart';
 import '../../search/screens/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, this.initialIndex = 1})
-    : assert(initialIndex >= 0 && initialIndex <= 2);
+  const HomeScreen({super.key, this.initialIndex = 0})
+    : assert(initialIndex >= 0 && initialIndex <= 3);
 
   final int initialIndex;
 
@@ -34,9 +35,10 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _currentIndex = widget.initialIndex;
     _pages = [
-      const MapScreen(),
       _HomeBody(onSearchTap: _onSearchTap),
+      const MapScreen(),
       const StampScreen(),
+      const CouponScreen(),
     ];
   }
 
@@ -61,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: _currentIndex != 0,
       backgroundColor: AppColors.background,
-      appBar: _currentIndex == 0
+      appBar: _currentIndex == 1
           ? null
           : AniTrailAppBar(
               actions: [
@@ -122,7 +124,11 @@ class _SearchBar extends StatelessWidget {
     return Container(
       color: AppColors.background,
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.md),
+        AppSpacing.lg,
+        0,
+        AppSpacing.lg,
+        AppSpacing.md,
+      ),
       child: Container(
         height: 40,
         decoration: const BoxDecoration(

@@ -100,7 +100,11 @@ class _SearchScreenState extends State<SearchScreen> {
           // ── 検索バー
           Padding(
             padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              0,
+            ),
             child: TextField(
               controller: controller,
               focusNode: focusNode,

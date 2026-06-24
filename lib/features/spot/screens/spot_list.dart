@@ -179,7 +179,11 @@ class _SpotListState extends State<SpotList> {
               else
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 120),
+                    AppSpacing.lg,
+                    AppSpacing.lg,
+                    AppSpacing.lg,
+                    120,
+                  ),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) => Padding(
@@ -328,8 +332,11 @@ class _SpotListState extends State<SpotList> {
 
   Widget _bannerPlaceholder() => Container(
     color: AppColors.primary,
-    child: Icon(Icons.movie_outlined,
-        color: AppColors.white.withValues(alpha: 0.54), size: 56),
+    child: Icon(
+      Icons.movie_outlined,
+      color: AppColors.white.withValues(alpha: 0.54),
+      size: 56,
+    ),
   );
 
   // ── 聖地サムネイル（実写真→Street View→プレースホルダ） ──
@@ -377,18 +384,12 @@ class _SpotListState extends State<SpotList> {
           // ── サムネイル + ブックマーク ──────────────
           Stack(
             children: [
-              SizedBox(
-                width: 150,
-                height: 130,
-                child: _buildThumbnail(spot),
-              ),
+              SizedBox(width: 150, height: 130, child: _buildThumbnail(spot)),
               Positioned(
                 top: AppSpacing.xs,
                 left: AppSpacing.xs,
                 child: AppCircleIconButton(
-                  icon: isBookmarked
-                      ? Icons.bookmark
-                      : Icons.bookmark_outline,
+                  icon: isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
                   onTap: () => _toggleBookmark(spot.spotId),
                   size: 28,
                   iconSize: 16,
@@ -401,7 +402,11 @@ class _SpotListState extends State<SpotList> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.sm, AppSpacing.xs, AppSpacing.sm, AppSpacing.xs),
+                AppSpacing.sm,
+                AppSpacing.xs,
+                AppSpacing.sm,
+                AppSpacing.xs,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -455,8 +460,9 @@ class _SpotListState extends State<SpotList> {
                           ),
                         ),
                         style: TextButton.styleFrom(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.xs,
+                          ),
                           minimumSize: const Size(0, 32),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           visualDensity: VisualDensity.compact,

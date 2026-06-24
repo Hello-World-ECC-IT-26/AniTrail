@@ -224,8 +224,9 @@ class _StampCardSectionState extends State<StampCardSection> {
                     onPressed: _onCreate,
                     style: TextButton.styleFrom(
                       foregroundColor: AppColors.primary,
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xs,
+                      ),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
@@ -564,7 +565,11 @@ class _ShioriCard extends StatelessWidget {
     return Container(
       color: AppColors.surface,
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.md),
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        AppSpacing.md,
+      ),
       child: Row(
         children: [
           Expanded(
@@ -573,7 +578,8 @@ class _ShioriCard extends StatelessWidget {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: previews.length,
-                separatorBuilder: (ctx, i) => const SizedBox(width: AppSpacing.xs),
+                separatorBuilder: (ctx, i) =>
+                    const SizedBox(width: AppSpacing.xs),
                 itemBuilder: (ctx, i) => ClipRRect(
                   borderRadius: AppRadius.brSm,
                   child: SizedBox(
@@ -647,7 +653,9 @@ class _FilterDropdown extends StatelessWidget {
       ],
       child: Container(
         padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xs,
+        ),
         decoration: BoxDecoration(
           color: AppColors.surfaceMuted,
           borderRadius: AppRadius.brSm,
