@@ -15,8 +15,8 @@ import '../../stamp/screens/stamp_screen.dart';
 import '../../search/screens/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, this.initialIndex = 1})
-    : assert(initialIndex >= 0 && initialIndex <= 2);
+  const HomeScreen({super.key, this.initialIndex = 0})
+    : assert(initialIndex >= 0 && initialIndex <= 3);
 
   final int initialIndex;
 
@@ -25,20 +25,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-<<<<<<< HEAD
-  int _currentIndex = 0;
-
-  // スタンプカードのダミーデータ
-  final List<Map<String, String>> _stampCards = [
-    {'title': 'しおりのタイトル', 'date': '4月1日'},
-    {'title': 'しおりのタイトル', 'date': '5月12日'},
-    {'title': 'しおりのタイトル', 'date': '8月22日'},
-    {'title': 'しおりのタイトル', 'date': '10月1日'},
-    {'title': 'しおりのタイトル', 'date': '12月29日'},
-  ];
-=======
   late int _currentIndex;
->>>>>>> 96a751cfc876f6f3e1418e26a981850b939dbba1
 
   // 各タブの画面リスト
   late final List<Widget> _pages;
@@ -48,23 +35,16 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _currentIndex = widget.initialIndex;
     _pages = [
-<<<<<<< HEAD
-      _HomeBody(stampCards: _stampCards, onSearchTap: _onSearchTap),
-      const MapScreen(),
-=======
-      const MapScreen(),
       _HomeBody(onSearchTap: _onSearchTap),
->>>>>>> 96a751cfc876f6f3e1418e26a981850b939dbba1
+      const MapScreen(),
       const StampScreen(),
       const CouponScreen(),
     ];
   }
 
   // ボトムナビゲーションタップ時の処理
-  void _onNavTap(int i) {
-    setState(() {
-      _currentIndex = i;
-    });
+  void _onNavTap(int index) {
+    setState(() => _currentIndex = index);
   }
 
   // 検索画面へ遷移し、戻り値でタブを切り替える
@@ -81,25 +61,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-<<<<<<< HEAD
-      backgroundColor: Colors.white,
-      appBar: AniTrailAppBar(
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () => context.read<AuthProvider>().logout(),
-          ),
-        ],
-      ),
-      body: IndexedStack(
-        index: _currentIndex.clamp(0, _pages.length - 1),
-        children: _pages,
-      ),
-
-=======
       resizeToAvoidBottomInset: _currentIndex != 0,
       backgroundColor: AppColors.background,
-      appBar: _currentIndex == 0
+      appBar: _currentIndex == 1
           ? null
           : AniTrailAppBar(
               actions: [
@@ -110,7 +74,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
       body: IndexedStack(index: _currentIndex, children: _pages),
->>>>>>> 96a751cfc876f6f3e1418e26a981850b939dbba1
       bottomNavigationBar: MainBottomNav(
         currentIndex: _currentIndex,
         onTap: _onNavTap,
@@ -157,30 +120,20 @@ class _SearchBar extends StatelessWidget {
   const _SearchBar();
 
   @override
-  @override
   Widget build(BuildContext context) {
     return Container(
       color: AppColors.background,
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.md),
+        AppSpacing.lg,
+        0,
+        AppSpacing.lg,
+        AppSpacing.md,
+      ),
       child: Container(
         height: 40,
-<<<<<<< HEAD
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-=======
         decoration: const BoxDecoration(
           color: AppColors.surfaceMuted,
           borderRadius: AppRadius.brSm,
->>>>>>> 96a751cfc876f6f3e1418e26a981850b939dbba1
         ),
         child: const Row(
           children: [

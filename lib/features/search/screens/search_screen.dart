@@ -99,70 +99,19 @@ class _SearchScreenState extends State<SearchScreen> {
         children: [
           // ── 検索バー
           Padding(
-<<<<<<< HEAD
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: controller,
-                focusNode: focusNode,
-=======
             padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              0,
+            ),
             child: TextField(
               controller: controller,
               focusNode: focusNode,
->>>>>>> 96a751cfc876f6f3e1418e26a981850b939dbba1
 
-                // 入力変更時
-                onChanged: (v) => setState(() => query = v),
+              // 入力変更時
+              onChanged: (v) => setState(() => query = v),
 
-<<<<<<< HEAD
-                // 検索確定時
-                onSubmitted: (v) {
-                  focusNode.unfocus();
-                  setState(() {
-                    query = v;
-                    isFocused = false;
-                  });
-                },
-
-                style: const TextStyle(fontSize: 14),
-
-                decoration: InputDecoration(
-                  hintText: '検索',
-
-                  filled: true,
-                  fillColor: const Color(0xFFFFFFFF),
-
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-
-                  prefixIcon: const Icon(Icons.search),
-
-                  // クリアボタン
-                  suffixIcon: query.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () {
-                            controller.clear();
-                            setState(() => query = '');
-                          },
-                        )
-                      : null,
-                ),
-=======
               // 検索確定時
               onSubmitted: (v) {
                 final submitted = v.trim();
@@ -191,7 +140,6 @@ class _SearchScreenState extends State<SearchScreen> {
                         },
                       )
                     : null,
->>>>>>> 96a751cfc876f6f3e1418e26a981850b939dbba1
               ),
             ),
           ),

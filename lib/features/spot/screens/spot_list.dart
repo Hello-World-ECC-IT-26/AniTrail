@@ -13,7 +13,7 @@ import '../../map/models/anime_spot.dart';
 import '../../map/services/spot_api.dart';
 import '../../shiori/models/shiori_draft.dart';
 import '../../shiori/screens/shiori_list.dart';
-import '../../spot/widgets/spot_detail.dart';
+import 'spot_detail.dart';
 
 class SpotList extends StatefulWidget {
   final String animeId;
