@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/styles/app_styles.dart';
 import '../../../core/styles/app_text.dart';
 import '../../../core/styles/app_dimens.dart';
+import '../../profile/screens/profile_screen.dart';
 
 class UserInfoSection extends StatelessWidget {
   const UserInfoSection({super.key});
@@ -11,7 +12,9 @@ class UserInfoSection extends StatelessWidget {
     return Container(
       color: AppColors.background,
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
+      ),
       child: Row(
         children: [
           // アバター（未設定時はグレーの人アイコン）
@@ -28,15 +31,26 @@ class UserInfoSection extends StatelessWidget {
 
           // ユーザー名・スタンプ数
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('かなや',
-                    style: AppTextStyles.body
-                        .copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 2),
-                Text('集めたスタンプ数：10', style: AppTextStyles.caption),
-              ],
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MyPageScreen()),
+                );
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'かなや',
+                    style: AppTextStyles.body.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text('集めたスタンプ数：10', style: AppTextStyles.caption),
+                ],
+              ),
             ),
           ),
 
