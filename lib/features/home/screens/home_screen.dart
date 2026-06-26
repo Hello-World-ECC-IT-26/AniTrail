@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _HomeBody(onSearchTap: _onSearchTap),
       const MapScreen(),
       const StampScreen(),
-      const CouponScreen(),
+      const CouponListScreen(),
     ];
   }
 

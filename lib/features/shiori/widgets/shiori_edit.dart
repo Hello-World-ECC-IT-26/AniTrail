@@ -4,7 +4,6 @@ import '../../../core/styles/app_styles.dart';
 import '../../../core/widgets/main_buttom_nav.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../home/screens/home_screen.dart';
-import '../../search/widgets/search_results.dart';
 
 class ShioriEditScreen extends StatefulWidget {
   final String shioriTitle;
