@@ -110,8 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   validator: _validatePassword,
                 ),
 
-                // ── Push button to bottom ──────────────────
-                const Spacer(),
+                const SizedBox(height: 40),
 
                 PrimaryButton(
                   label: 'ログイン',
@@ -133,11 +132,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
 
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: 40),
 
                 // ── Divider ────────────────────────────────
                 const Divider(thickness: 1, color: AppColors.textMuted),
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: 40),
 
                 // ── Register Button ────────────────────────
                 SecondaryButton(
