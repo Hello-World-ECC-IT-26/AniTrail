@@ -102,10 +102,16 @@ class _SearchOverlayState extends State<SearchOverlay> {
             // ラベル（履歴 or 予測ワード）
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.xs),
+                AppSpacing.lg,
+                AppSpacing.md,
+                AppSpacing.lg,
+                AppSpacing.xs,
+              ),
               child: Text(
                 _isTyping ? 'お好みのアニメはこちらですか？' : '検索履歴',
-                style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w500),
+                style: AppTextStyles.caption.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
 
@@ -129,7 +135,11 @@ class _SearchOverlayState extends State<SearchOverlay> {
         final text = widget.history[index];
         return ListTile(
           dense: true,
-          leading: const Icon(Icons.history, color: AppColors.iconMuted, size: 18),
+          leading: const Icon(
+            Icons.history,
+            color: AppColors.iconMuted,
+            size: 18,
+          ),
           title: Text(
             text,
             style: AppTextStyles.input.copyWith(fontWeight: FontWeight.w600),
@@ -162,9 +172,15 @@ class _SearchOverlayState extends State<SearchOverlay> {
       return Container(
         width: double.infinity,
         margin: const EdgeInsets.fromLTRB(
-            AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.sm),
+          AppSpacing.md,
+          AppSpacing.sm,
+          AppSpacing.md,
+          AppSpacing.sm,
+        ),
         padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.xl,
+        ),
         decoration: const BoxDecoration(
           color: AppColors.surfaceVariant,
           borderRadius: AppRadius.brMd,
@@ -188,8 +204,10 @@ class _SearchOverlayState extends State<SearchOverlay> {
             const SizedBox(height: AppSpacing.sm),
             Text(
               '一致するアニメがありません',
-              style: AppTextStyles.bodySecondary
-                  .copyWith(fontSize: 13, fontWeight: FontWeight.w600),
+              style: AppTextStyles.bodySecondary.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
@@ -209,7 +227,11 @@ class _SearchOverlayState extends State<SearchOverlay> {
         final text = _suggestions[index];
         return ListTile(
           dense: true,
-          leading: const Icon(Icons.search, color: AppColors.iconMuted, size: 18),
+          leading: const Icon(
+            Icons.search,
+            color: AppColors.iconMuted,
+            size: 18,
+          ),
           title: RichText(
             text: TextSpan(
               style: AppTextStyles.input,

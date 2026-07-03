@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _HomeBody(onSearchTap: _onSearchTap),
       const MapScreen(),
       const StampScreen(),
-      const CouponListScreen(),
+      const CouponScreen(),
     ];
   }
 
@@ -131,9 +131,16 @@ class _SearchBar extends StatelessWidget {
       ),
       child: Container(
         height: 40,
-        decoration: const BoxDecoration(
-          color: AppColors.surfaceMuted,
+        decoration: BoxDecoration(
+          color: Colors.white,
           borderRadius: AppRadius.brSm,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: const Row(
           children: [

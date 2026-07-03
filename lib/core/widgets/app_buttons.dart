@@ -36,6 +36,7 @@ class AppButton extends StatelessWidget {
   final AppButtonSize size;
   final IconData? icon;
   final bool isLoading;
+  final double? height;
 
   /// 横幅いっぱいに広げるか。false なら内容に合わせた幅。
   final bool fullWidth;
@@ -49,6 +50,7 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.isLoading = false,
     this.fullWidth = true,
+    this.height,
   });
 
   bool get _compact => size == AppButtonSize.compact;
@@ -62,7 +64,7 @@ class AppButton extends StatelessWidget {
   EdgeInsets get _padding => _compact
       ? const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
-          vertical: AppSpacing.sm,
+          vertical: AppSpacing.md,
         )
       : const EdgeInsets.symmetric(
           horizontal: AppSpacing.xl,
@@ -147,7 +149,7 @@ class AppButton extends StatelessWidget {
     if (size == AppButtonSize.regular && !_compact) {
       return SizedBox(
         width: fullWidth ? double.infinity : null,
-        height: AppSizes.buttonHeight,
+        height: height ?? AppSizes.buttonHeight,
         child: button,
       );
     }

@@ -223,7 +223,7 @@ class _StampCardSectionState extends State<StampCardSection> {
                   child: TextButton.icon(
                     onPressed: _onCreate,
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.primary,
+                      foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.xs,
                       ),
@@ -629,6 +629,7 @@ class _FilterDropdown extends StatelessWidget {
       onSelected: onChanged,
       offset: const Offset(0, 36),
       shape: const RoundedRectangleBorder(borderRadius: AppRadius.brMd),
+
       itemBuilder: (context) => [
         for (final f in _Filter.values)
           PopupMenuItem(
@@ -657,9 +658,9 @@ class _FilterDropdown extends StatelessWidget {
           vertical: AppSpacing.xs,
         ),
         decoration: BoxDecoration(
-          color: AppColors.surfaceMuted,
+          color: Colors.white,
           borderRadius: AppRadius.brSm,
-          border: Border.all(color: AppColors.divider),
+          border: Border.all(color: Colors.black),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -672,14 +673,14 @@ class _FilterDropdown extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
+                  color: Colors.black,
                 ),
               ),
             ),
             const Icon(
               Icons.keyboard_arrow_down_rounded,
               size: 16,
-              color: AppColors.textSecondary,
+              color: Colors.black,
             ),
           ],
         ),
