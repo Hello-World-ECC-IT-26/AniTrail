@@ -3,28 +3,39 @@ import '../../../core/styles/app_styles.dart';
 import '../../../core/widgets/main_buttom_nav.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/widgets/app_bar.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../core/widgets/app_bottom_action_bar.dart';
+import 'coupon_content.dart';
+import 'coupon_condition.dart';
+import 'coupon_howtouse.dart';
+import 'coupon_notice.dart';
 
 class CouponDetailScreen extends StatefulWidget {
   final Map<String, String> coupon;
-
   const CouponDetailScreen({super.key, required this.coupon});
-
   @override
   State<CouponDetailScreen> createState() => _CouponDetailScreenState();
 }
 
+class AccordionItem {
+  final String title;
+  final Widget content;
+
+  const AccordionItem({required this.title, required this.content});
+}
+
 class _CouponDetailScreenState extends State<CouponDetailScreen> {
   int? _expandedIndex;
-
-  final List<Map<String, String>> _accordionItems = [
-    {'title': 'クーポン内容', 'content': 'アニメ「〇〇」の聖地「〇〇店」の食事で10%OFFでご利用できます。'},
-    {'title': 'ご利用条件', 'content': '・本クーポンは1回のみ有効です。\n・他のクーポンとの併用はできません。'},
-    {'title': 'ご利用方法', 'content': '会計時にスタッフにアプリ画面をご提示ください。'},
-    {'title': 'ご利用上の注意', 'content': '・有効期限を過ぎたクーポンはご利用できません。\n・返金・換金はできません。'},
+  final List<AccordionItem> _accordionItems = [
+    AccordionItem(title: 'クーポン内容', content: const CouponContent()),
+    AccordionItem(title: 'ご利用条件', content: const CouponCondition()),
+    AccordionItem(title: 'ご利用方法', content: const CouponHowToUse()),
+    AccordionItem(title: 'ご利用上の注意', content: const CouponNotice()),
   ];
 
-  //  PERBAIKAN: Menggunakan => dan widget.coupon
+  //  PERBAIKAN: Menggunakan => and widget.coupon
   bool get isAnimeGoods => widget.coupon['icon'] == 'anime_goods';
+  bool isFavorite = false;
 
   @override
   Widget build(BuildContext context) {
@@ -37,10 +48,13 @@ class _CouponDetailScreenState extends State<CouponDetailScreen> {
         children: [
           // ── ヘッダーバー（戻る + タイトル） ────────────
           Container(
-            margin: const EdgeInsets.symmetric(vertical: 14),
-            color: const Color(0xFFFFFFFF),
-            padding: const EdgeInsets.fromLTRB(4, 12, 16, 12),
-
+            padding: const EdgeInsets.fromLTRB(4, 20, 16, 20),
+            decoration: const BoxDecoration(
+              color: Color(0xFFFFFFFF),
+              border: Border(
+                bottom: BorderSide(color: Color(0xFFE0E0E0), width: 1),
+              ),
+            ),
             child: Row(
               children: [
                 Transform.translate(
@@ -73,15 +87,16 @@ class _CouponDetailScreenState extends State<CouponDetailScreen> {
               child: Column(
                 children: [
                   // ── クーポンビジュアルカード ────────────
-                  Padding(
+                  Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
+                    margin: const EdgeInsets.only(top: 25),
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
+                            color: Colors.black.withOpacity(0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           ),
@@ -92,7 +107,7 @@ class _CouponDetailScreenState extends State<CouponDetailScreen> {
                           // 上部: 青いバナー
                           Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                            padding: const EdgeInsets.fromLTRB(30, 25, 30, 5),
                             decoration: const BoxDecoration(
                               color: AppColors.primary,
                             ),
@@ -104,20 +119,20 @@ class _CouponDetailScreenState extends State<CouponDetailScreen> {
                                   children: [
                                     Text(
                                       widget.coupon['type'] ?? '',
-                                      style: const TextStyle(
-                                        fontSize: 14,
+                                      style: GoogleFonts.lunasima(
+                                        fontSize: 28,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
-                                        letterSpacing: 1,
+                                        height: 1.0,
                                       ),
                                     ),
                                     Text(
                                       widget.coupon['title'] ?? '',
-                                      style: const TextStyle(
-                                        fontSize: 26,
+                                      style: GoogleFonts.lunasima(
+                                        fontSize: 48,
                                         fontWeight: FontWeight.w900,
                                         color: Colors.white,
-                                        letterSpacing: 2,
+                                        height: 1.1,
                                       ),
                                     ),
                                   ],
@@ -127,20 +142,36 @@ class _CouponDetailScreenState extends State<CouponDetailScreen> {
                                   text: TextSpan(
                                     children: [
                                       TextSpan(
-                                        text: widget.coupon['discount'] ?? '0',
-                                        style: const TextStyle(
-                                          fontSize: 48,
-                                          fontWeight: FontWeight.w900,
+                                        text: widget.coupon['discount']!,
+                                        style: GoogleFonts.lusitana(
+                                          fontSize: 100,
+                                          fontWeight: FontWeight.w700,
                                           color: Colors.white,
                                         ),
                                       ),
-                                      const TextSpan(
-                                        text: '%\nOFF',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                          height: 1.3,
+                                      WidgetSpan(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              '%',
+                                              style: GoogleFonts.lusitana(
+                                                fontSize: 48,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.white,
+                                                height: 1.0,
+                                              ),
+                                            ),
+                                            Text(
+                                              'OFF',
+                                              style: GoogleFonts.lusitana(
+                                                fontSize: 26,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.white,
+                                                height: 1.0,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
@@ -149,21 +180,17 @@ class _CouponDetailScreenState extends State<CouponDetailScreen> {
                               ],
                             ),
                           ),
-
-                          // ギザギザ区切り
+                          // スカラップ区切り
                           CustomPaint(
-                            size: const Size(double.infinity, 16),
-                            painter: _ZigzagPainter(),
+                            size: const Size(double.infinity, 10),
+                            painter: _ScallopPainter(),
                           ),
 
                           // 下部: 説明
                           Container(
+                            height: 240,
                             decoration: const BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.only(
-                                bottomLeft: Radius.circular(12),
-                                bottomRight: Radius.circular(12),
-                              ),
                             ),
                             child: Stack(
                               children: [
@@ -177,15 +204,18 @@ class _CouponDetailScreenState extends State<CouponDetailScreen> {
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.fromLTRB(
-                                    20,
-                                    16,
-                                    16,
-                                    16,
+                                    35,
+                                    35,
+                                    35,
+                                    35,
                                   ),
                                   child: Row(
                                     children: [
                                       Expanded(
                                         child: Column(
+                                          spacing: 48,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
@@ -193,25 +223,29 @@ class _CouponDetailScreenState extends State<CouponDetailScreen> {
                                               widget.coupon['description'] ??
                                                   'アニメ「〇〇」の聖地\n「〇〇店」の食事で\n10%OFFでご利用できます',
                                               style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.grey.shade700,
-                                                height: 1.6,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 16),
-                                            Text(
-                                              '有効期限',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey.shade600,
-                                              ),
-                                            ),
-                                            Text(
-                                              '${widget.coupon['expiry'] ?? ''}(土)',
-                                              style: TextStyle(
-                                                fontSize: 13,
+                                                fontSize: 14,
                                                 color: Colors.grey.shade700,
                                               ),
+                                            ),
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  '有効期限',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.grey.shade600,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  '${widget.coupon['expiry'] ?? ''}(土)',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.grey.shade700,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
@@ -221,8 +255,8 @@ class _CouponDetailScreenState extends State<CouponDetailScreen> {
                                         isAnimeGoods
                                             ? 'assets/images/goods.svg'
                                             : 'assets/images/food.svg',
-                                        width: 80,
-                                        height: 80,
+                                        width: 150,
+                                        height: 170,
                                         fit: BoxFit.contain,
                                       ),
                                     ],
@@ -238,29 +272,20 @@ class _CouponDetailScreenState extends State<CouponDetailScreen> {
 
                   // 利用するボタン
                   Container(
-                    color: const Color(0xFF10357A),
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(top: 16),
-                    child: TextButton.icon(
+                    margin: const EdgeInsets.only(top: 25),
+                    child: AppBottomActionBar(
+                      icon: isFavorite
+                          ? Icons.check_circle
+                          : Icons.currency_yen,
+                      label: isFavorite ? '利用済み' : '利用する',
+                      backgroundColor: isFavorite
+                          ? const Color(0xFF0BC847)
+                          : const Color(0xFF10357A),
                       onPressed: () {
-                        // TODO: クーポン利用処理
+                        setState(() {
+                          isFavorite = !isFavorite;
+                        });
                       },
-                      icon: const Icon(
-                        Icons.currency_yen,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                      label: const Text(
-                        '利用する',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
                     ),
                   ),
 
@@ -274,7 +299,7 @@ class _CouponDetailScreenState extends State<CouponDetailScreen> {
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: _accordionItems.length,
                       separatorBuilder: (_, __) =>
-                          const Divider(height: 1, indent: 16),
+                          const Divider(height: 1, indent: 0),
                       itemBuilder: (context, index) {
                         final item = _accordionItems[index];
                         final isExpanded = _expandedIndex == index;
@@ -282,16 +307,21 @@ class _CouponDetailScreenState extends State<CouponDetailScreen> {
                           children: [
                             ListTile(
                               title: Text(
-                                item['title']!,
+                                item.title,
                                 style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w500,
                                   color: Colors.black87,
                                 ),
                               ),
-                              trailing: Icon(
-                                Icons.keyboard_arrow_down_rounded,
-                                color: Colors.grey.shade400,
+                              trailing: AnimatedRotation(
+                                turns: isExpanded ? 0.5 : 0.0,
+                                duration: const Duration(milliseconds: 250),
+                                curve: Curves.easeInOut,
+                                child: Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  color: Colors.grey.shade400,
+                                ),
                               ),
                               onTap: () => setState(() {
                                 _expandedIndex = isExpanded ? null : index;
@@ -305,14 +335,7 @@ class _CouponDetailScreenState extends State<CouponDetailScreen> {
                                   16,
                                   16,
                                 ),
-                                child: Text(
-                                  item['content']!,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey.shade600,
-                                    height: 1.6,
-                                  ),
-                                ),
+                                child: item.content,
                               ),
                           ],
                         );
@@ -320,7 +343,7 @@ class _CouponDetailScreenState extends State<CouponDetailScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 30),
                 ],
               ),
             ),
@@ -332,31 +355,29 @@ class _CouponDetailScreenState extends State<CouponDetailScreen> {
   }
 }
 
-class _ZigzagPainter extends CustomPainter {
+class _ScallopPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paintWhite = Paint()..color = Colors.white;
-    final paintBlue = Paint()..color = AppColors.primary;
-    const zigzagWidth = 12.0;
-    final count = (size.width / zigzagWidth).ceil();
-    final path = Path();
-    path.moveTo(0, 0);
-    for (var i = 0; i < count; i++) {
-      final x = i * zigzagWidth;
-      path.lineTo(x + zigzagWidth / 2, size.height);
-      path.lineTo(x + zigzagWidth, 0);
+    final bluePaint = Paint()..color = AppColors.primary;
+    final whitePaint = Paint()..color = Colors.white;
+
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bluePaint);
+
+    const radius = 11.0;
+    const gap = 10.0;
+    const margin = 8.0;
+
+    for (
+      double x = margin + radius;
+      x <= size.width - margin - radius;
+      x += radius * 3 + gap
+    ) {
+      canvas.drawCircle(Offset(x, size.height), radius, whitePaint);
     }
-    path.lineTo(size.width, 0);
-    path.close();
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, size.width, size.height / 2),
-      paintBlue,
-    );
-    canvas.drawPath(path, paintWhite);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
 class _DashedBorderPainter extends CustomPainter {
@@ -366,30 +387,44 @@ class _DashedBorderPainter extends CustomPainter {
       ..color = AppColors.primary
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
-    const dashWidth = 6.0;
-    const dashSpace = 4.0;
+    const margin = 9.0;
+    final rect = Rect.fromLTWH(
+      margin,
+      margin,
+      size.width - margin * 2,
+      size.height - margin * 2,
+    );
 
-    void drawLine(Offset start, Offset end) {
+    void drawDashedLine(Offset start, Offset end) {
+      const dash = 5.0;
+      const gap = 5.0;
       final dx = end.dx - start.dx;
       final dy = end.dy - start.dy;
-      final length = (dx * dx + dy * dy).abs();
-      if (length == 0) return;
-      final count = length / (dashWidth + dashSpace);
-      final stepX = dx / count;
-      final stepY = dy / count;
-      final dX = stepX * (dashWidth / (dashWidth + dashSpace));
-      final dY = stepY * (dashWidth / (dashWidth + dashSpace));
-      var cur = start;
-      for (var i = 0; i < count; i++) {
-        canvas.drawLine(cur, Offset(cur.dx + dX, cur.dy + dY), paint);
-        cur = Offset(cur.dx + stepX, cur.dy + stepY);
+      final distance = (end - start).distance;
+      final direction = Offset(dx / distance, dy / distance);
+      double current = 0;
+      while (current < distance) {
+        final from = start + direction * current;
+        final to = start + direction * (current + dash).clamp(0, distance);
+        canvas.drawLine(from, to, paint);
+        current += dash + gap;
       }
     }
 
-    drawLine(const Offset(0, 0), Offset(size.width, 0));
-    drawLine(Offset(size.width, 0), Offset(size.width, size.height));
-    drawLine(Offset(size.width, size.height), Offset(0, size.height));
-    drawLine(Offset(0, size.height), const Offset(0, 0));
+    //内側のborder
+    drawDashedLine(Offset(rect.left, rect.top), Offset(rect.right, rect.top));
+
+    drawDashedLine(
+      Offset(rect.right, rect.top),
+      Offset(rect.right, rect.bottom),
+    );
+
+    drawDashedLine(
+      Offset(rect.right, rect.bottom),
+      Offset(rect.left, rect.bottom),
+    );
+
+    drawDashedLine(Offset(rect.left, rect.bottom), Offset(rect.left, rect.top));
   }
 
   @override
