@@ -331,6 +331,20 @@ class SpotApi {
     return stats.keys.toSet();
   }
 
+  /// ログインユーザーが獲得したスタンプ履歴の総数を返す。
+  Future<int> fetchCollectedStampCount() async {
+    final token = _accessToken;
+    final res = await _client.get(
+      Uri.parse('$_baseUrl/stamps/count'),
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
+    );
+    if (res.statusCode != 200) {
+      throw Exception('スタンプ数の取得に失敗しました (${res.statusCode})');
+    }
+    final body = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+    return (body['count'] as num?)?.toInt() ?? 0;
+  }
+
   /// 訪問履歴をスポット単位の回数・最終訪問日時に集計する。
   Future<Map<String, StampVisitStats>> fetchStampVisitStats(
     String cardId,

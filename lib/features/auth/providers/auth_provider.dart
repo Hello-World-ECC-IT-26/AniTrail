@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
@@ -17,6 +18,7 @@ class AuthProvider extends ChangeNotifier {
   // OTP 検証時に使うメールアドレスと用途を保持
   String? _pendingEmail;
   OtpPurpose _otpPurpose = OtpPurpose.register;
+  XFile? _pendingAvatar;
 
   StreamSubscription<AuthState>? _authSubscription;
 
@@ -103,6 +105,7 @@ class AuthProvider extends ChangeNotifier {
     required String email,
     required String password,
     String? username,
+    XFile? avatar,
   }) async {
     _setLoading();
     try {
@@ -116,6 +119,7 @@ class AuthProvider extends ChangeNotifier {
       debugPrint('Register success - email: $email');
       _pendingEmail = email.trim();
       _otpPurpose = OtpPurpose.register;
+      _pendingAvatar = avatar;
       _setSuccess();
     } on AuthException catch (e) {
       debugPrint('Register AuthException: ${e.message}');
@@ -155,6 +159,26 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> resendOtp({
+    required String email,
+    required OtpPurpose purpose,
+  }) async {
+    _setLoading();
+
+    try {
+      if (purpose == OtpPurpose.register) {
+        await authService.resendSignupOtp(email: email.trim());
+      } else {
+        await authService.sendPasswordResetOtp(email: email.trim());
+      }
+      _setSuccess();
+    } on AuthException catch (e) {
+      _setError(e.message);
+    } catch (e) {
+      _setError(e.toString());
+    }
+  }
+
   Future<void> verifyOtp({
     required String email,
     required String otp,
@@ -172,6 +196,10 @@ class AuthProvider extends ChangeNotifier {
         token: otp.trim(),
         type: type,
       );
+      if (purpose == OtpPurpose.register && _pendingAvatar != null) {
+        await authService.uploadAvatar(_pendingAvatar!);
+        _pendingAvatar = null;
+      }
 
       _setSuccess();
     } on AuthException catch (e) {
