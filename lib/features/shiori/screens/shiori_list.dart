@@ -1,4 +1,4 @@
-import 'package:AniTrail/features/home/screens/home_screen.dart';
+import 'package:anitrail/features/home/screens/home_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -104,14 +104,14 @@ class _ShioriListScreenState extends State<ShioriListScreen> {
                   Positioned(
                     left: AppSpacing.sm,
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back,
-                          color: AppColors.textPrimary),
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: AppColors.textPrimary,
+                      ),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ),
-                  Center(
-                    child: Text('旅のしおり', style: AppTextStyles.heading),
-                  ),
+                  Center(child: Text('旅のしおり', style: AppTextStyles.heading)),
                 ],
               ),
             ),
@@ -122,7 +122,11 @@ class _ShioriListScreenState extends State<ShioriListScreen> {
             padding: const EdgeInsets.only(top: 60),
             child: ListView(
               padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 120),
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                120,
+              ),
               children: [
                 // ── しおりタイトル入力 ───────────────
                 TextField(
@@ -154,7 +158,9 @@ class _ShioriListScreenState extends State<ShioriListScreen> {
                   onTap: () => Navigator.pop(context),
                   child: Container(
                     height: 130,
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xl,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: AppRadius.brMd,
@@ -164,12 +170,17 @@ class _ShioriListScreenState extends State<ShioriListScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.add, color: AppColors.iconMuted, size: 20),
+                        const Icon(
+                          Icons.add,
+                          color: AppColors.iconMuted,
+                          size: 20,
+                        ),
                         const SizedBox(width: AppSpacing.xs),
                         Text(
                           '行き先を追加',
-                          style: AppTextStyles.body
-                              .copyWith(color: AppColors.textMuted),
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.textMuted,
+                          ),
                         ),
                       ],
                     ),
@@ -209,8 +220,9 @@ class _ShioriListScreenState extends State<ShioriListScreen> {
       return CachedNetworkImage(
         imageUrl: image,
         fit: BoxFit.cover,
-        placeholder: (_, __) => _placeholderImage(),
-        errorWidget: (_, __, ___) => _streetViewOrPlaceholder(spot),
+        placeholder: (context, imageUrl) => _placeholderImage(),
+        errorWidget: (context, imageUrl, error) =>
+            _streetViewOrPlaceholder(spot),
       );
     }
     return _streetViewOrPlaceholder(spot);
@@ -223,8 +235,8 @@ class _ShioriListScreenState extends State<ShioriListScreen> {
         imageUrl: url,
         httpHeaders: _authHeaders,
         fit: BoxFit.cover,
-        placeholder: (_, __) => _placeholderImage(),
-        errorWidget: (_, __, ___) => _placeholderImage(),
+        placeholder: (context, imageUrl) => _placeholderImage(),
+        errorWidget: (context, imageUrl, error) => _placeholderImage(),
       );
     }
     return _placeholderImage();
@@ -252,8 +264,9 @@ class _ShioriListScreenState extends State<ShioriListScreen> {
     child: ListView.separated(
       scrollDirection: Axis.horizontal,
       itemCount: _animeVisualSpots.length,
-      separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
-      itemBuilder: (_, index) {
+      separatorBuilder: (context, index) =>
+          const SizedBox(width: AppSpacing.sm),
+      itemBuilder: (context, index) {
         final spot = _animeVisualSpots[index];
         return SizedBox(
           width: 240,
@@ -266,12 +279,15 @@ class _ShioriListScreenState extends State<ShioriListScreen> {
                   CachedNetworkImage(
                     imageUrl: spot.keyVisualUrl!,
                     fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => _placeholderImage(),
+                    errorWidget: (context, imageUrl, error) =>
+                        _placeholderImage(),
                   )
                 else
                   _placeholderImage(),
                 const DecoratedBox(
-                  decoration: BoxDecoration(gradient: AppColors.cardGradientSoft),
+                  decoration: BoxDecoration(
+                    gradient: AppColors.cardGradientSoft,
+                  ),
                 ),
                 Positioned(
                   left: AppSpacing.md,
@@ -281,7 +297,9 @@ class _ShioriListScreenState extends State<ShioriListScreen> {
                     spot.animeTitle ?? '',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.subtitle.copyWith(color: AppColors.white),
+                    style: AppTextStyles.subtitle.copyWith(
+                      color: AppColors.white,
+                    ),
                   ),
                 ),
               ],
@@ -300,17 +318,17 @@ class _ShioriListScreenState extends State<ShioriListScreen> {
       clip: true,
       child: Row(
         children: [
-          SizedBox(
-            width: 150,
-            height: 130,
-            child: _buildThumbnail(spot),
-          ),
+          SizedBox(width: 150, height: 130, child: _buildThumbnail(spot)),
 
           // ── テキスト情報 ──────────────────────────
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.sm, AppSpacing.xs, AppSpacing.sm, AppSpacing.xs),
+                AppSpacing.sm,
+                AppSpacing.xs,
+                AppSpacing.sm,
+                AppSpacing.xs,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

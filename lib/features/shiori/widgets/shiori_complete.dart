@@ -64,13 +64,19 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
       appBar: const AniTrailAppBar(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg, AppSpacing.xxl, AppSpacing.lg, 40),
+          AppSpacing.lg,
+          AppSpacing.xxl,
+          AppSpacing.lg,
+          40,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
-              child: Text('旅のしおりが作成されました！',
-                  style: AppTextStyles.successMessage),
+              child: Text(
+                '旅のしおりが作成されました！',
+                style: AppTextStyles.successMessage,
+              ),
             ),
             const SizedBox(height: AppSpacing.xxl),
 
@@ -134,8 +140,10 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('スタンプカード',
-                          style: AppTextStyles.subtitle.copyWith(fontSize: 15)),
+                      Text(
+                        'スタンプカード',
+                        style: AppTextStyles.subtitle.copyWith(fontSize: 15),
+                      ),
                       Text(
                         '$obtained/$total',
                         style: const TextStyle(
@@ -228,8 +236,9 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
       return CachedNetworkImage(
         imageUrl: image,
         fit: BoxFit.cover,
-        placeholder: (_, __) => _placeholderImage(),
-        errorWidget: (_, __, ___) => _streetViewOrPlaceholder(spot),
+        placeholder: (context, imageUrl) => _placeholderImage(),
+        errorWidget: (context, imageUrl, error) =>
+            _streetViewOrPlaceholder(spot),
       );
     }
     return _streetViewOrPlaceholder(spot);
@@ -242,8 +251,8 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
         imageUrl: url,
         httpHeaders: _authHeaders,
         fit: BoxFit.cover,
-        placeholder: (_, __) => _placeholderImage(),
-        errorWidget: (_, __, ___) => _placeholderImage(),
+        placeholder: (context, imageUrl) => _placeholderImage(),
+        errorWidget: (context, imageUrl, error) => _placeholderImage(),
       );
     }
     return _placeholderImage();
@@ -271,8 +280,9 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
     child: ListView.separated(
       scrollDirection: Axis.horizontal,
       itemCount: _animeVisualSpots.length,
-      separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
-      itemBuilder: (_, index) {
+      separatorBuilder: (context, index) =>
+          const SizedBox(width: AppSpacing.sm),
+      itemBuilder: (context, index) {
         final spot = _animeVisualSpots[index];
         return SizedBox(
           width: 240,
@@ -285,12 +295,15 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
                   CachedNetworkImage(
                     imageUrl: spot.keyVisualUrl!,
                     fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => _placeholderImage(),
+                    errorWidget: (context, imageUrl, error) =>
+                        _placeholderImage(),
                   )
                 else
                   _placeholderImage(),
                 const DecoratedBox(
-                  decoration: BoxDecoration(gradient: AppColors.cardGradientSoft),
+                  decoration: BoxDecoration(
+                    gradient: AppColors.cardGradientSoft,
+                  ),
                 ),
                 Positioned(
                   left: AppSpacing.md,
@@ -300,7 +313,9 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
                     spot.animeTitle ?? '',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.subtitle.copyWith(color: AppColors.white),
+                    style: AppTextStyles.subtitle.copyWith(
+                      color: AppColors.white,
+                    ),
                   ),
                 ),
               ],
@@ -322,11 +337,7 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
         radius: AppRadius.md,
         child: Row(
           children: [
-            SizedBox(
-              width: 120,
-              height: 100,
-              child: _buildThumbnail(spot),
-            ),
+            SizedBox(width: 120, height: 100, child: _buildThumbnail(spot)),
 
             // ── テキスト情報 ──────────────────────────
             Expanded(
@@ -362,7 +373,9 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: visited ? AppColors.textMuted : AppColors.error,
+                            color: visited
+                                ? AppColors.textMuted
+                                : AppColors.error,
                           ),
                         ),
                       ],

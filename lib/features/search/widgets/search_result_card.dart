@@ -20,6 +20,8 @@ class SearchResultCard extends StatelessWidget {
 
   /// 「聖地を見る」ボタンタップ時のコールバック
   final VoidCallback? onViewSpots;
+  final String actionLabel;
+  final int thumbnailCount;
   final bool variableSpotImages;
   final GestureDragUpdateCallback? onBannerVerticalDragUpdate;
 
@@ -31,6 +33,8 @@ class SearchResultCard extends StatelessWidget {
     this.spotImages = const [],
     this.httpHeaders = const {},
     this.onViewSpots,
+    this.actionLabel = '聖地を見る',
+    this.thumbnailCount = 4,
     this.variableSpotImages = false,
     this.onBannerVerticalDragUpdate,
   });
@@ -44,13 +48,17 @@ class SearchResultCard extends StatelessWidget {
           _buildBanner(),
           Padding(
             padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.md),
+              AppSpacing.md,
+              AppSpacing.sm,
+              AppSpacing.md,
+              AppSpacing.md,
+            ),
             child: Row(
               children: [
                 ..._buildSpotThumbnails(),
                 const Spacer(),
                 AppButton(
-                  label: '聖地を見る',
+                  label: actionLabel,
                   onPressed: onViewSpots,
                   size: AppButtonSize.compact,
                   fullWidth: false,
@@ -140,12 +148,18 @@ class SearchResultCard extends StatelessWidget {
   Widget _placeholderBanner() {
     return Container(
       color: AppColors.divider,
-      child: const Icon(Icons.image_outlined, color: AppColors.iconMuted, size: 40),
+      child: const Icon(
+        Icons.image_outlined,
+        color: AppColors.iconMuted,
+        size: 40,
+      ),
     );
   }
 
   List<Widget> _buildSpotThumbnails() {
-    final count = variableSpotImages ? spotImages.take(4).length : 4;
+    final count = variableSpotImages
+        ? spotImages.take(thumbnailCount).length
+        : thumbnailCount;
 
     return List.generate(count, (index) {
       final url = index < spotImages.length ? spotImages[index] : null;

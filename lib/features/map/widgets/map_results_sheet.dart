@@ -60,7 +60,8 @@ class MapResultsSheet extends StatefulWidget {
 
 class _MapResultsSheetState extends State<MapResultsSheet> {
   Spot? _detailSpot;
-  final DraggableScrollableController _sheetController = DraggableScrollableController();
+  final DraggableScrollableController _sheetController =
+      DraggableScrollableController();
 
   @override
   void initState() {
@@ -96,6 +97,29 @@ class _MapResultsSheetState extends State<MapResultsSheet> {
         padding: const EdgeInsets.symmetric(vertical: 48),
         child: Center(child: child),
       ),
+    );
+  }
+
+  Widget _buildLoadingAnimation(String message) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Image.asset(
+          'assets/images/loading.gif',
+          width: 110,
+          height: 110,
+          fit: BoxFit.contain,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          message,
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 
@@ -139,7 +163,9 @@ class _MapResultsSheetState extends State<MapResultsSheet> {
         return Container(
           decoration: const BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(AppRadius.lg),
+            ),
             boxShadow: AppShadows.sheet,
           ),
           child: CustomScrollView(
@@ -160,15 +186,20 @@ class _MapResultsSheetState extends State<MapResultsSheet> {
     final handle = SliverToBoxAdapter(child: _buildHandle());
 
     if (widget.loading) {
-      return [handle, _centerMessage(const CircularProgressIndicator())];
+      return [handle, _centerMessage(_buildLoadingAnimation('検索しています・・・'))];
     }
     if (widget.error != null) {
-      return [handle, _centerMessage(Text(widget.error!, style: AppTextStyles.hint))];
+      return [
+        handle,
+        _centerMessage(Text(widget.error!, style: AppTextStyles.hint)),
+      ];
     }
     if (widget.results.isEmpty) {
       return [
         handle,
-        _centerMessage(const Text('該当するアニメが見つかりませんでした', style: AppTextStyles.hint)),
+        _centerMessage(
+          const Text('該当するアニメが見つかりませんでした', style: AppTextStyles.hint),
+        ),
       ];
     }
 
@@ -181,9 +212,15 @@ class _MapResultsSheetState extends State<MapResultsSheet> {
           separatorBuilder: (_, _) => const SizedBox(height: 16),
           itemBuilder: (context, i) {
             final anime = widget.results[i];
-            final token = Supabase.instance.client.auth.currentSession?.accessToken;
-            final headers = token != null ? {'Authorization': 'Bearer $token'} : <String, String>{};
-            final baseUrl = (dotenv.env['API_BASE_URL'] ?? '').replaceAll(RegExp(r'/$'), '');
+            final token =
+                Supabase.instance.client.auth.currentSession?.accessToken;
+            final headers = token != null
+                ? {'Authorization': 'Bearer $token'}
+                : <String, String>{};
+            final baseUrl = (dotenv.env['API_BASE_URL'] ?? '').replaceAll(
+              RegExp(r'/$'),
+              '',
+            );
             final previewUrls = anime.spotPreview
                 .map((p) => p.proxyUrl(baseUrl))
                 .whereType<String>()
@@ -207,9 +244,12 @@ class _MapResultsSheetState extends State<MapResultsSheet> {
     final anime = widget.selectedAnime!;
     final spots = anime.spots.where((s) {
       switch (widget.filterIndex) {
-        case 1: return s.visited;
-        case 2: return !s.visited;
-        default: return true;
+        case 1:
+          return s.visited;
+        case 2:
+          return !s.visited;
+        default:
+          return true;
       }
     }).toList();
     if (widget.sortIndex == 1) spots.sort((a, b) => a.name.compareTo(b.name));
@@ -227,7 +267,9 @@ class _MapResultsSheetState extends State<MapResultsSheet> {
             Expanded(
               child: Text(
                 anime.title,
-                style: AppTextStyles.input.copyWith(fontWeight: FontWeight.w600),
+                style: AppTextStyles.input.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -258,7 +300,11 @@ class _MapResultsSheetState extends State<MapResultsSheet> {
                       widget.sortIndex == 0 ? '距離が近い順' : '名前順',
                       style: AppTextStyles.label,
                     ),
-                    const Icon(Icons.keyboard_arrow_down, size: 18, color: AppColors.textSecondary),
+                    const Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 18,
+                      color: AppColors.textSecondary,
+                    ),
                   ],
                 ),
               ),
@@ -268,7 +314,7 @@ class _MapResultsSheetState extends State<MapResultsSheet> {
       ),
       const SliverToBoxAdapter(child: Divider(height: 1)),
       if (widget.spotsLoading)
-        _centerMessage(const CircularProgressIndicator())
+        _centerMessage(_buildLoadingAnimation('聖地を読み込んでいます・・・'))
       else if (spots.isEmpty)
         _centerMessage(
           Text(
@@ -346,7 +392,10 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
   void didUpdateWidget(_SpotDetailContent old) {
     super.didUpdateWidget(old);
     if (old.spot.spotId != widget.spot.spotId) {
-      setState(() { _bookmarkLoading = true; _postUrls = []; });
+      setState(() {
+        _bookmarkLoading = true;
+        _postUrls = [];
+      });
       _loadBookmark();
       _loadPostUrls();
     }
@@ -360,7 +409,12 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
   Future<void> _loadBookmark() async {
     try {
       final result = await _api.isBookmarked(spot.spotId);
-      if (mounted) setState(() { _bookmarked = result; _bookmarkLoading = false; });
+      if (mounted) {
+        setState(() {
+          _bookmarked = result;
+          _bookmarkLoading = false;
+        });
+      }
     } catch (_) {
       if (mounted) setState(() => _bookmarkLoading = false);
     }
@@ -374,7 +428,12 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
       } else {
         await _api.addBookmark(spot.spotId);
       }
-      if (mounted) setState(() { _bookmarked = !_bookmarked; _bookmarkLoading = false; });
+      if (mounted) {
+        setState(() {
+          _bookmarked = !_bookmarked;
+          _bookmarkLoading = false;
+        });
+      }
     } catch (_) {
       if (mounted) setState(() => _bookmarkLoading = false);
     }
@@ -384,11 +443,14 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
     final lat = spot.latitude;
     final lng = spot.longitude;
     if (lat == null || lng == null) return;
-    final uri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng');
+    final uri = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng',
+    );
     if (await canLaunchUrl(uri)) await launchUrl(uri);
   }
 
-  String? get _streetViewUrl => spot.streetViewProxyUrl ?? spot.streetViewImageUrl;
+  String? get _streetViewUrl =>
+      spot.streetViewProxyUrl ?? spot.streetViewImageUrl;
 
   // Street View を先頭固定、続いてユーザー投稿写真
   List<String> get _photoUrls {
@@ -400,7 +462,8 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
   }
 
   Widget _imageWidget(String url) {
-    final isProxy = url == spot.streetViewProxyUrl || url == spot.streetViewImageUrl;
+    final isProxy =
+        url == spot.streetViewProxyUrl || url == spot.streetViewImageUrl;
     return CachedNetworkImage(
       imageUrl: url,
       httpHeaders: isProxy ? _authHeaders : {},
@@ -434,7 +497,9 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
             Expanded(
               child: Text(
                 widget.animeTitle,
-                style: AppTextStyles.input.copyWith(fontWeight: FontWeight.w600),
+                style: AppTextStyles.input.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -454,17 +519,27 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
                     Text(spot.name, style: AppTextStyles.title),
                     if (spot.distanceText.isNotEmpty) ...[
                       const SizedBox(height: 4),
-                      Text('現在地から ${spot.distanceText}', style: AppTextStyles.label),
+                      Text(
+                        '現在地から ${spot.distanceText}',
+                        style: AppTextStyles.label,
+                      ),
                     ],
                     if (spot.addressText.isNotEmpty) ...[
                       const SizedBox(height: 6),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.location_on_outlined, size: 15, color: AppColors.textSecondary),
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 15,
+                            color: AppColors.textSecondary,
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
-                            child: Text(spot.addressText, style: AppTextStyles.label),
+                            child: Text(
+                              spot.addressText,
+                              style: AppTextStyles.label,
+                            ),
                           ),
                         ],
                       ),
@@ -486,7 +561,11 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
         // 経路ボタン
         Padding(
           padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
+            AppSpacing.lg,
+            AppSpacing.md,
+            AppSpacing.lg,
+            0,
+          ),
           child: AppButton(label: '経路', onPressed: _openDirections),
         ),
 
@@ -510,7 +589,7 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
     if (photos.length == 1) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(10),
-        child: AspectRatio(aspectRatio: 16 / 9, child: _imageWidget(photos[0])),
+        child: AspectRatio(aspectRatio: 4 / 3, child: _imageWidget(photos[0])),
       );
     }
 
@@ -523,7 +602,8 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
               flex: 2,
               child: ClipRRect(
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(10), bottomLeft: Radius.circular(10),
+                  topLeft: Radius.circular(10),
+                  bottomLeft: Radius.circular(10),
                 ),
                 child: _imageWidget(photos[0]),
               ),
@@ -532,7 +612,8 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
             Expanded(
               child: ClipRRect(
                 borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(10), bottomRight: Radius.circular(10),
+                  topRight: Radius.circular(10),
+                  bottomRight: Radius.circular(10),
                 ),
                 child: _imageWidget(photos[1]),
               ),
@@ -550,7 +631,8 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
             flex: 2,
             child: ClipRRect(
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(10), bottomLeft: Radius.circular(10),
+                topLeft: Radius.circular(10),
+                bottomLeft: Radius.circular(10),
               ),
               child: _imageWidget(photos[0]),
             ),
@@ -561,14 +643,18 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
               children: [
                 Expanded(
                   child: ClipRRect(
-                    borderRadius: const BorderRadius.only(topRight: Radius.circular(10)),
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(10),
+                    ),
                     child: _imageWidget(photos[1]),
                   ),
                 ),
                 const SizedBox(height: 3),
                 Expanded(
                   child: ClipRRect(
-                    borderRadius: const BorderRadius.only(bottomRight: Radius.circular(10)),
+                    borderRadius: const BorderRadius.only(
+                      bottomRight: Radius.circular(10),
+                    ),
                     child: _imageWidget(photos[2]),
                   ),
                 ),

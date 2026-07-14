@@ -1,8 +1,8 @@
-import 'package:AniTrail/features/shiori/widgets/shiori_complete.dart';
+import 'package:anitrail/features/shiori/widgets/shiori_complete.dart';
 import 'package:flutter/material.dart';
 import '../../../core/styles/app_styles.dart';
-import '../../../core/styles/app_text.dart';
 import '../../../core/widgets/app_bar.dart';
+import '../../../core/widgets/loading_screen.dart';
 import '../../map/models/anime_spot.dart';
 import '../../map/services/spot_api.dart';
 import '../models/shiori_draft.dart';
@@ -77,28 +77,7 @@ class _CreatingShioriScreenState extends State<CreatingShioriScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const AniTrailAppBar(),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/images/loading.gif',
-              width: 300,
-              height: 300,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => const Icon(
-                Icons.directions_walk,
-                size: 100,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            Text(
-              '旅のしおりを作成しています・・・',
-              style: AppTextStyles.heading.copyWith(letterSpacing: 0.5),
-            ),
-          ],
-        ),
-      ),
+      body: const AppLoadingScreen(message: '旅のしおりを作成しています・・・', imageSize: 300),
     );
   }
 }
