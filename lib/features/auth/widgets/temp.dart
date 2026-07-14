@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ProfileAvatar extends StatefulWidget {
-  const ProfileAvatar({super.key});
+  final ValueChanged<XFile?>? onImageSelected;
+
+  const ProfileAvatar({super.key, this.onImageSelected});
 
   @override
   State<ProfileAvatar> createState() => _ProfileAvatarState();
@@ -32,6 +34,7 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
       setState(() {
         _imageBytes = bytes;
       });
+      widget.onImageSelected?.call(image);
     } catch (e) {
       debugPrint('画像選択エラー: $e');
     }

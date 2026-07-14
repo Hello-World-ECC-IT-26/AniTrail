@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/styles/app_styles.dart';
@@ -22,6 +23,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
+  XFile? _avatar;
 
   @override
   void dispose() {
@@ -65,6 +67,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       email: _emailController.text,
       password: _passwordController.text,
       username: _usernameController.text,
+      avatar: _avatar,
     );
 
     if (!mounted) return;
@@ -89,6 +92,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<AuthProvider>().isLoading;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const AuthAppBar(title: 'アカウント新規登録'),
@@ -106,7 +111,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       children: [
                         const SizedBox(height: AppSpacing.lg),
 
-                        const ProfileAvatar(),
+                        ProfileAvatar(
+                          onImageSelected: (avatar) => _avatar = avatar,
+                        ),
 
                         const SizedBox(height: AppSpacing.xxxl),
 
@@ -161,7 +168,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         // ── Register Button ────────────────────────
                         PrimaryButton(
                           label: '新規登録',
-                          onPressed: _handleRegister,
+                          onPressed: isLoading ? null : _handleRegister,
+                          isLoading: isLoading,
                         ),
 
                         const SizedBox(height: 40),
