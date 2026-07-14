@@ -11,7 +11,9 @@ import 'stamp_screen.dart';
 
 /// 取得済みスタンプを、アニメ作品ごとにまとめて表示する一覧。
 class AllStampCollectionsScreen extends StatefulWidget {
-  const AllStampCollectionsScreen({super.key});
+  final bool showBackButton;
+
+  const AllStampCollectionsScreen({super.key, this.showBackButton = true});
 
   @override
   State<AllStampCollectionsScreen> createState() =>
@@ -101,11 +103,14 @@ class _AllStampCollectionsScreenState extends State<AllStampCollectionsScreen> {
                     ),
                     child: Row(
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                        const SizedBox(width: AppSpacing.xs),
+                        if (widget.showBackButton) ...[
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back_ios_new),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                          const SizedBox(width: AppSpacing.xs),
+                        ] else
+                          const SizedBox(width: AppSpacing.lg),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,13 +160,14 @@ class _AllStampCollectionsScreenState extends State<AllStampCollectionsScreen> {
   Widget _buildMessage(String message) {
     return Column(
       children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new),
-            onPressed: () => Navigator.of(context).pop(),
+        if (widget.showBackButton)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
           ),
-        ),
         Expanded(
           child: Center(child: Text(message, style: AppTextStyles.body)),
         ),
