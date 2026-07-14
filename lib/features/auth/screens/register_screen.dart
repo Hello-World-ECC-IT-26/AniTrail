@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../../core/constants/app_constants.dart';
 import '../../../core/styles/app_styles.dart';
 import '../../../core/styles/app_dimens.dart';
@@ -8,7 +7,7 @@ import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/custom_text_field.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_app_bar.dart';
-import '../widgets/auth_logo.dart';
+import '../widgets/temp.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -59,7 +58,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
+
     final auth = context.read<AuthProvider>();
+
     await auth.register(
       email: _emailController.text,
       password: _passwordController.text,
@@ -67,6 +68,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
 
     if (!mounted) return;
+
     if (auth.status == AuthStatus.success) {
       Navigator.pushNamed(
         context,
@@ -89,73 +91,87 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const AuthAppBar(title: '新規登録'),
+      appBar: const AuthAppBar(title: 'アカウント新規登録'),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxxl),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                // ── Logo ───────────────────────────────────
-                const AuthLogo(),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxxl),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        const SizedBox(height: AppSpacing.lg),
 
-                const SizedBox(height: AppSpacing.xxxl),
-                // ── Username Field ─────────────────────────
-                CustomTextField(
-                  label: 'ユーザー名',
-                  hintText: 'アニトレ',
-                  prefixIcon: Icons.person_outline,
-                  controller: _usernameController,
-                  validator: _validateUsername,
+                        const ProfileAvatar(),
+
+                        const SizedBox(height: AppSpacing.xxxl),
+
+                        // ── Username Field ─────────────────────────
+                        CustomTextField(
+                          label: 'ユーザー名',
+                          hintText: 'スタンプ太郎',
+                          prefixIcon: Icons.person_outline,
+                          controller: _usernameController,
+                          validator: _validateUsername,
+                        ),
+
+                        const SizedBox(height: AppSpacing.lg),
+
+                        // ── Email Field ────────────────────────────
+                        CustomTextField(
+                          label: 'メールアドレス',
+                          hintText: 'helloworld@gmail.com',
+                          prefixIcon: Icons.email_outlined,
+                          controller: _emailController,
+                          validator: _validateEmail,
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+
+                        const SizedBox(height: AppSpacing.lg),
+
+                        // ── Password Field ─────────────────────────
+                        CustomTextField(
+                          label: 'パスワード',
+                          hintText: 'helloworld315',
+                          prefixIcon: Icons.lock_outline,
+                          controller: _passwordController,
+                          isPassword: true,
+                          validator: _validatePassword,
+                        ),
+
+                        const SizedBox(height: AppSpacing.lg),
+
+                        // ── Confirm Password Field ─────────────────
+                        CustomTextField(
+                          label: 'パスワード再入力',
+                          hintText: '●●●●●●●●',
+                          prefixIcon: Icons.lock_outline,
+                          controller: _confirmController,
+                          isPassword: true,
+                          validator: _validateConfirm,
+                        ),
+
+                        const Spacer(),
+                        const SizedBox(height: AppSpacing.xl),
+
+                        // ── Register Button ────────────────────────
+                        PrimaryButton(
+                          label: '新規登録',
+                          onPressed: _handleRegister,
+                        ),
+
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  ),
                 ),
-
-                const SizedBox(height: AppSpacing.lg),
-
-                // ── Email Field ────────────────────────────
-                CustomTextField(
-                  label: 'メールアドレス',
-                  hintText: 'hello@example.com',
-                  prefixIcon: Icons.email_outlined,
-                  controller: _emailController,
-                  validator: _validateEmail,
-                  keyboardType: TextInputType.emailAddress,
-                ),
-
-                const SizedBox(height: AppSpacing.lg),
-
-                // ── Password Field ─────────────────────────
-                CustomTextField(
-                  label: 'パスワード',
-                  hintText: '●●●●●●●●',
-                  prefixIcon: Icons.lock_outline,
-                  controller: _passwordController,
-                  isPassword: true,
-                  validator: _validatePassword,
-                ),
-
-                const SizedBox(height: AppSpacing.lg),
-
-                // ── Confirm Password Field ─────────────────
-                CustomTextField(
-                  label: 'パスワード再入力',
-                  hintText: '●●●●●●●●●●',
-                  prefixIcon: Icons.lock_outline,
-                  controller: _confirmController,
-                  isPassword: true,
-                  validator: _validateConfirm,
-                ),
-
-                // ── Push button to bottom ──────────────────
-                const Spacer(),
-
-                // ── Register Button ────────────────────────
-                PrimaryButton(label: '新規登録', onPressed: _handleRegister),
-
-                const SizedBox(height: 40),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

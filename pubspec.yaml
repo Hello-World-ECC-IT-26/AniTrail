@@ -1,6 +1,6 @@
 name: anitrail
 description: "AniTrail"
-publish_to: 'none'
+publish_to: "none"
 version: 0.1.0
 
 environment:
@@ -21,8 +21,9 @@ dependencies:
   shared_preferences: ^2.3.0
   cached_network_image: ^3.4.0
   url_launcher: ^6.3.0
-  google_fonts: ^6.3.2
-  image_picker: ^1.2.3
+  google_fonts: ^8.1.0
+  image_picker: 1.2.3
+  flutter_svg: ^2.0.10
 
 dev_dependencies:
   flutter_test:

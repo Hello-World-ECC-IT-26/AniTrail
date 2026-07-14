@@ -26,19 +26,17 @@ class EventSection extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
 
         SizedBox(
-          height: 120,
+          height: 160,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             itemCount: 3,
             itemBuilder: (context, index) {
               return Container(
-                width: 200,
-                margin: const EdgeInsets.only(right: AppSpacing.md),
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: AppRadius.brMd,
-                ),
+                width: 300,
+                margin: const EdgeInsets.only(right: 12),
+                decoration: BoxDecoration(color: AppColors.primary),
+
                 child: const Center(
                   child: Text('イベント', style: TextStyle(color: AppColors.white)),
                 ),

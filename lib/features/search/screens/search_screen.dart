@@ -100,42 +100,56 @@ class _SearchScreenState extends State<SearchScreen> {
           // ── 検索バー
           Padding(
             padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
-            child: TextField(
-              controller: controller,
-              focusNode: focusNode,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              0,
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: AppRadius.brMd,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: controller,
+                focusNode: focusNode,
 
-              // 入力変更時
-              onChanged: (v) => setState(() => query = v),
+                onChanged: (v) => setState(() => query = v),
 
-              // 検索確定時
-              onSubmitted: (v) {
-                final submitted = v.trim();
-                if (submitted.isEmpty) return;
-                focusNode.unfocus();
-                _addHistory(submitted);
-                setState(() {
-                  query = submitted;
-                  isFocused = false;
-                });
-              },
+                onSubmitted: (v) {
+                  final submitted = v.trim();
+                  if (submitted.isEmpty) return;
+                  focusNode.unfocus();
+                  _addHistory(submitted);
+                  setState(() {
+                    query = submitted;
+                    isFocused = false;
+                  });
+                },
 
-              style: AppTextStyles.input,
+                style: AppTextStyles.input,
 
-              decoration: AppInputDecorations.filled(
-                hintText: '検索',
-                prefixIcon: Icons.search,
-                fillColor: AppColors.surfaceMuted,
-                // クリアボタン
-                suffixIcon: query.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () {
-                          controller.clear();
-                          setState(() => query = '');
-                        },
-                      )
-                    : null,
+                decoration: AppInputDecorations.filled(
+                  hintText: '検索',
+                  prefixIcon: Icons.search,
+                  fillColor: Colors.white,
+                  suffixIcon: query.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () {
+                            controller.clear();
+                            setState(() => query = '');
+                          },
+                        )
+                      : const Icon(Icons.search, color: AppColors.iconMuted),
+                ),
               ),
             ),
           ),
