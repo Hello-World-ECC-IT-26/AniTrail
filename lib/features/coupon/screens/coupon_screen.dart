@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/styles/app_styles.dart';
 import '../../coupon/widgets/coupon_detail.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'dart:math' as math;
 
 class CouponScreen extends StatefulWidget {
   const CouponScreen({super.key});
@@ -200,14 +202,14 @@ class _CouponScreenState extends State<CouponScreen> {
                       const Icon(Icons.sort, size: 16, color: Colors.black87),
                       const Icon(
                         Icons.arrow_downward,
-                        size: 14,
+                        size: 13,
                         color: Colors.black87,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         _sortOrder,
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: 14,
                           color: Colors.black87,
                         ),
                       ),
@@ -249,129 +251,193 @@ class _CouponScreenState extends State<CouponScreen> {
     final isAnimeGoods = coupon['icon'] == 'anime_goods';
 
     return SizedBox(
-      height: 130,
-      child: CustomPaint(
-        painter: CouponBackgroundPainter(
-          borderColor: AppColors.primary,
-          bgColorRight: AppColors.primary,
-          bgColorLeft: Colors.white,
-        ),
-        child: Row(
-          children: [
-            // 左側: クーポン情報
-            Expanded(
-              flex: 3,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: CustomPaint(painter: _DashedBorderPainter()),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  coupon['type']!,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primary,
-                                    letterSpacing: 1,
-                                  ),
-                                ),
-                                Text(
-                                  coupon['title']!,
-                                  style: const TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.primary,
-                                    letterSpacing: 2,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Spacer(),
-                            SvgPicture.asset(
-                              isAnimeGoods
-                                  ? 'assets/images/goods.svg'
-                                  : 'assets/images/food.svg',
-                              width: 80,
-                              height: 80,
-                              fit: BoxFit.contain,
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.access_time,
-                              size: 14,
-                              color: AppColors.primary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              coupon['expiry']!,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+      height: 150,
+      child: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              offset: const Offset(0, 2),
+              blurRadius: 6,
+              spreadRadius: 0,
             ),
-
-            // 右側: 割引率
-            SizedBox(
-              width: 110,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+          ],
+        ),
+        child: CustomPaint(
+          painter: CouponBackgroundPainter(
+            borderColor: AppColors.primary,
+            bgColorRight: AppColors.primary,
+            bgColorLeft: Colors.white,
+          ),
+          child: Row(
+            children: [
+              // 左側: クーポン情報
+              Expanded(
+                child: Stack(
                   children: [
-                    const Icon(Icons.pets, color: Colors.white70, size: 20),
-                    const SizedBox(height: 4),
-                    RichText(
-                      text: TextSpan(
+                    Positioned.fill(
+                      child: CustomPaint(painter: _DashedBorderPainter()),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(25, 32, 12, 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          TextSpan(
-                            text: coupon['discount']!,
-                            style: const TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const TextSpan(
-                            text: '%\nOFF',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              height: 1.3,
-                            ),
+                          Row(
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    coupon['type']!,
+                                    style: GoogleFonts.lunasima(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppColors.primary,
+                                      letterSpacing: 1,
+                                      height: 0.5,
+                                      // foreground: Paint()
+                                      //   ..style = PaintingStyle.stroke
+                                      //   ..strokeWidth = 2
+                                      //   ..color = AppColors.primary,
+                                    ),
+                                  ),
+                                  Text(
+                                    coupon['title']!,
+                                    style: GoogleFonts.lunasima(
+                                      fontSize: 40,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.5,
+                                      color: AppColors.primary,
+                                      // foreground: Paint()
+                                      //   ..style = PaintingStyle.stroke
+                                      //   ..strokeWidth = 2.5
+                                      //   ..color = AppColors.primary,
+                                    ),
+                                  ),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.access_time,
+                                        size: 18,
+                                        color: AppColors.primary,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        coupon['expiry']!,
+                                        style: GoogleFonts.lunasima(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w900,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const Spacer(),
+                              SvgPicture.asset(
+                                isAnimeGoods
+                                    ? 'assets/images/goods.svg'
+                                    : 'assets/images/food.svg',
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.contain,
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    const Icon(Icons.pets, color: Colors.white70, size: 20),
                   ],
                 ),
               ),
-            ),
-          ],
+
+              // 右側: 割引率
+              SizedBox(
+                width: 140,
+                height: 120,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Positioned(
+                            top: -20,
+                            right: 5,
+                            child: Transform.rotate(
+                              angle: 30 * math.pi / 180,
+                              child: const Icon(
+                                Icons.pets,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                          Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  coupon['discount']!,
+                                  style: GoogleFonts.lusitana(
+                                    fontSize: 64,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(width: 2),
+                                Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '%',
+                                      style: GoogleFonts.lusitana(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    Transform.translate(
+                                      offset: const Offset(0, -6),
+                                      child: Text(
+                                        'OFF',
+                                        style: GoogleFonts.lusitana(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          Positioned(
+                            bottom: -20,
+                            left: 5,
+                            child: Transform.rotate(
+                              angle: -30 * math.pi / 180,
+                              child: Icon(
+                                Icons.pets,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -397,7 +463,7 @@ class CouponBackgroundPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 
-    final dividerX = size.width - 110;
+    final dividerX = size.width - 140; //割合率の背景
     const notchRadius = 16.0;
 
     // 1. Gambar Background Kiri (Putih) -> 修正箇所
@@ -472,9 +538,7 @@ class _DashedBorderPainter extends CustomPainter {
       ..color = AppColors.primary
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
-    const dashWidth = 6.0;
-    const dashSpace = 4.0;
-    const margin = 6.0;
+    const margin = 9.0;
     final rect = Rect.fromLTWH(
       margin,
       margin,
@@ -482,27 +546,36 @@ class _DashedBorderPainter extends CustomPainter {
       size.height - margin * 2,
     );
 
-    void drawLine(Offset start, Offset end) {
+    void drawDashedLine(Offset start, Offset end) {
+      const dash = 5.0;
+      const gap = 5.0;
       final dx = end.dx - start.dx;
       final dy = end.dy - start.dy;
-      final length = (dx * dx + dy * dy).abs();
-      if (length <= 0) return; // 0以下のチェックで安全性を向上
-      final count = length / (dashWidth + dashSpace);
-      final stepX = dx / count;
-      final stepY = dy / count;
-      final dX = stepX * (dashWidth / (dashWidth + dashSpace));
-      final dY = stepY * (dashWidth / (dashWidth + dashSpace));
-      var cur = start;
-      for (var i = 0; i < count; i++) {
-        canvas.drawLine(cur, Offset(cur.dx + dX, cur.dy + dY), paint);
-        cur = Offset(cur.dx + stepX, cur.dy + stepY);
+      final distance = (end - start).distance;
+      final direction = Offset(dx / distance, dy / distance);
+      double current = 0;
+      while (current < distance) {
+        final from = start + direction * current;
+        final to = start + direction * (current + dash).clamp(0, distance);
+        canvas.drawLine(from, to, paint);
+        current += dash + gap;
       }
     }
 
-    drawLine(Offset(rect.left, rect.top), Offset(rect.right, rect.top));
-    drawLine(Offset(rect.right, rect.top), Offset(rect.right, rect.bottom));
-    drawLine(Offset(rect.right, rect.bottom), Offset(rect.left, rect.bottom));
-    drawLine(Offset(rect.left, rect.bottom), Offset(rect.left, rect.top));
+    //内側のborder
+    drawDashedLine(Offset(rect.left, rect.top), Offset(rect.right, rect.top));
+
+    drawDashedLine(
+      Offset(rect.right, rect.top),
+      Offset(rect.right, rect.bottom),
+    );
+
+    drawDashedLine(
+      Offset(rect.right, rect.bottom),
+      Offset(rect.left, rect.bottom),
+    );
+
+    drawDashedLine(Offset(rect.left, rect.bottom), Offset(rect.left, rect.top));
   }
 
   @override
