@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -14,6 +13,7 @@ import '../../search/widgets/search_result_card.dart';
 import '../models/anime_spot.dart';
 import '../services/spot_api.dart';
 import 'spot_list_item.dart';
+import 'spot_photo_gallery.dart';
 
 const _kFilters = ['すべて', '訪問済み', '未訪問'];
 
@@ -461,23 +461,6 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
     return urls;
   }
 
-  Widget _imageWidget(String url) {
-    final isProxy =
-        url == spot.streetViewProxyUrl || url == spot.streetViewImageUrl;
-    return CachedNetworkImage(
-      imageUrl: url,
-      httpHeaders: isProxy ? _authHeaders : {},
-      fit: BoxFit.cover,
-      placeholder: (_, _) => _placeholder(),
-      errorWidget: (_, _, _) => _placeholder(),
-    );
-  }
-
-  Widget _placeholder() => Container(
-    color: AppColors.grey,
-    child: const Icon(Icons.image, color: AppColors.textHint, size: 32),
-  );
-
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
@@ -584,85 +567,11 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
   }
 
   Widget _buildPhotoGrid() {
-    final photos = _photoUrls;
-
-    if (photos.length == 1) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: AspectRatio(aspectRatio: 4 / 3, child: _imageWidget(photos[0])),
-      );
-    }
-
-    if (photos.length == 2) {
-      return SizedBox(
-        height: 200,
-        child: Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  bottomLeft: Radius.circular(10),
-                ),
-                child: _imageWidget(photos[0]),
-              ),
-            ),
-            const SizedBox(width: 3),
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(10),
-                  bottomRight: Radius.circular(10),
-                ),
-                child: _imageWidget(photos[1]),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return SizedBox(
-      height: 200,
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(10),
-                bottomLeft: Radius.circular(10),
-              ),
-              child: _imageWidget(photos[0]),
-            ),
-          ),
-          const SizedBox(width: 3),
-          Expanded(
-            child: Column(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topRight: Radius.circular(10),
-                    ),
-                    child: _imageWidget(photos[1]),
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      bottomRight: Radius.circular(10),
-                    ),
-                    child: _imageWidget(photos[2]),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return SpotPhotoGallery(
+      photoUrls: _photoUrls,
+      authHeaders: _authHeaders,
+      requiresAuthHeaders: (url) =>
+          url == spot.streetViewProxyUrl || url == spot.streetViewImageUrl,
     );
   }
 }
