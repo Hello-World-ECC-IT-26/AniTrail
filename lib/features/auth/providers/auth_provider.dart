@@ -53,10 +53,13 @@ class AuthProvider extends ChangeNotifier {
     super.dispose();
   }
 
-  void _setLoading() {
+  bool _startRequest() {
+    if (isLoading) return false;
+
     _status = AuthStatus.loading;
     _errorMessage = null;
     notifyListeners();
+    return true;
   }
 
   void _setError(String message) {
@@ -79,7 +82,7 @@ class AuthProvider extends ChangeNotifier {
 
   //ログアウト
   Future<void> logout() async {
-    _setLoading();
+    if (!_startRequest()) return;
     try {
       await authService.signOut();
       _setSuccess();
@@ -90,7 +93,7 @@ class AuthProvider extends ChangeNotifier {
 
   //ログイン
   Future<void> login({required String email, required String password}) async {
-    _setLoading();
+    if (!_startRequest()) return;
     try {
       await authService.login(email: email.trim(), password: password);
       _setSuccess();
@@ -107,7 +110,7 @@ class AuthProvider extends ChangeNotifier {
     String? username,
     XFile? avatar,
   }) async {
-    _setLoading();
+    if (!_startRequest()) return;
     try {
       await authService.signUp(
         email: email.trim(),
@@ -132,7 +135,7 @@ class AuthProvider extends ChangeNotifier {
 
   //パスワード再設定
   Future<void> updatePassword({required String newPassword}) async {
-    _setLoading();
+    if (!_startRequest()) return;
     try {
       await authService.updatePassword(newPassword: newPassword);
       _setSuccess();
@@ -144,7 +147,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> sendPasswordResetOtp({required String email}) async {
-    _setLoading();
+    if (!_startRequest()) return;
 
     try {
       _otpPurpose = OtpPurpose.forgotPassword;
@@ -163,7 +166,7 @@ class AuthProvider extends ChangeNotifier {
     required String email,
     required OtpPurpose purpose,
   }) async {
-    _setLoading();
+    if (!_startRequest()) return;
 
     try {
       if (purpose == OtpPurpose.register) {
@@ -184,7 +187,7 @@ class AuthProvider extends ChangeNotifier {
     required String otp,
     required OtpPurpose purpose,
   }) async {
-    _setLoading();
+    if (!_startRequest()) return;
 
     try {
       final type = purpose == OtpPurpose.register
@@ -211,7 +214,7 @@ class AuthProvider extends ChangeNotifier {
 
   //googleでログイン
   Future<bool> loginWithGoogle() async {
-    _setLoading();
+    if (!_startRequest()) return false;
 
     try {
       const webClientId =

@@ -92,6 +92,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<AuthProvider>().isLoading;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const AuthAppBar(title: 'アカウント新規登録'),
@@ -166,7 +168,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         // ── Register Button ────────────────────────
                         PrimaryButton(
                           label: '新規登録',
-                          onPressed: _handleRegister,
+                          onPressed: isLoading ? null : _handleRegister,
+                          isLoading: isLoading,
                         ),
 
                         const SizedBox(height: 40),

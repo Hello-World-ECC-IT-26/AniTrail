@@ -210,7 +210,7 @@ class SecondaryButton extends StatelessWidget {
 class AppLinkText extends StatelessWidget {
   final String prefixText;
   final String linkText;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const AppLinkText({
     super.key,
@@ -221,6 +221,7 @@ class AppLinkText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isEnabled = onTap != null;
     return RichText(
       text: TextSpan(
         style: AppTextStyles.hint,
@@ -229,10 +230,14 @@ class AppLinkText extends StatelessWidget {
           TextSpan(
             text: linkText,
             style: AppTextStyles.hint.copyWith(
-              color: AppColors.primary,
-              decoration: TextDecoration.underline,
+              color: isEnabled ? AppColors.primary : AppColors.textMuted,
+              decoration: isEnabled
+                  ? TextDecoration.underline
+                  : TextDecoration.none,
             ),
-            recognizer: TapGestureRecognizer()..onTap = onTap,
+            recognizer: isEnabled
+                ? (TapGestureRecognizer()..onTap = onTap)
+                : null,
           ),
         ],
       ),

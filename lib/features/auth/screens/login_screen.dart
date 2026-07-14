@@ -124,12 +124,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 AppLinkText(
                   prefixText: 'パスワードをお忘れの方は',
                   linkText: 'こちら',
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      AppConstants.routeForgotPassword,
-                    );
-                  },
+                  onTap: isLoading
+                      ? null
+                      : () {
+                          Navigator.pushNamed(
+                            context,
+                            AppConstants.routeForgotPassword,
+                          );
+                        },
                 ),
 
                 const SizedBox(height: 40),
