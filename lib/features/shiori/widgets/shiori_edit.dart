@@ -1,4 +1,4 @@
-import 'package:AniTrail/features/search/screens/search_screen.dart';
+import 'package:anitrail/features/search/screens/search_screen.dart';
 import 'package:flutter/material.dart';
 import '../../../core/styles/app_styles.dart';
 import '../../../core/widgets/main_buttom_nav.dart';

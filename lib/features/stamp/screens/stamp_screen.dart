@@ -1,324 +1,342 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/styles/app_dimens.dart';
 import '../../../core/styles/app_styles.dart';
-import '../../stamp/widgets/stamp_detail.dart';
+import '../../../core/styles/app_text.dart';
+import '../../../core/widgets/loading_screen.dart';
+import '../../map/models/anime_spot.dart';
+import '../../map/services/spot_api.dart';
+import '../widgets/stamp_badge.dart';
+import 'all_stamp_collections_screen.dart';
+import 'stamp_collection_detail_screen.dart';
 
-class StampScreen extends StatelessWidget {
-  const StampScreen({super.key});
+class StampScreen extends StatefulWidget {
+  final String? cardId;
+  final String? animeId;
+  final String? animeTitle;
+  final String? recentlyObtainedSpotId;
+  final bool showBackButton;
 
-  // ダミーのスタンプカードリスト
-  static const List<Map<String, dynamic>> _stampCards = [
-    {
-      'title': 'しおりタイトル',
-      'collected': 1,
-      'total': 3,
-      'remaining': 2,
-      'hasStamp': true,
-    },
-    {
-      'title': 'しおりタイトル',
-      'collected': 1,
-      'total': 3,
-      'remaining': 2,
-      'hasStamp': false,
-    },
-  ];
+  const StampScreen({
+    super.key,
+    this.cardId,
+    this.animeId,
+    this.animeTitle,
+    this.recentlyObtainedSpotId,
+    this.showBackButton = false,
+  });
+
+  @override
+  State<StampScreen> createState() => _StampScreenState();
+}
+
+class _StampScreenState extends State<StampScreen> {
+  final _api = SpotApi();
+  late final Future<List<_StampCollection>> _collectionsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _collectionsFuture = _loadCollections();
+  }
+
+  Future<List<_StampCollection>> _loadCollections() async {
+    final cards = widget.cardId == null
+        ? await _api.fetchStampCards()
+        : [await _api.fetchStampCard(widget.cardId!)];
+    final collections = <String, _StampCollection>{};
+
+    for (final card in cards) {
+      final full = card.spots.isNotEmpty
+          ? card
+          : await _api.fetchStampCard(card.cardId);
+      final visitStats = await _api.fetchStampVisitStats(card.cardId);
+
+      for (final spot in full.spots) {
+        final animeTitle = spot.animeTitle ?? full.title;
+        final matchesAnime = widget.animeId != null
+            ? spot.animeId == widget.animeId
+            : widget.animeTitle == null || animeTitle == widget.animeTitle;
+        if (!matchesAnime) continue;
+        final key = spot.animeId ?? animeTitle;
+        final collection = collections.putIfAbsent(
+          key,
+          () => _StampCollection(title: animeTitle),
+        );
+        var stats = visitStats[spot.spotId];
+        if (stats == null && spot.spotId == widget.recentlyObtainedSpotId) {
+          stats = StampVisitStats(count: 1, lastVisitedAt: DateTime.now());
+        }
+        collection.addSpot(spot, stats);
+      }
+    }
+
+    final list = collections.values.toList();
+    list.sort((a, b) => a.title.compareTo(b.title));
+    return list;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 40),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // ── タイトル ──────────────────────────────
-            const Text(
-              'スタンプカード',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // ── スタンプ数・しおり数カード ──────────────
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  // キャラクターアイコン
-                  SizedBox(
-                    width: 60,
-                    height: 60,
-                    child: Image.asset(
-                      'assets/images/itachi.png',
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          Icon(Icons.pets, size: 48, color: AppColors.primary),
-                    ),
-                  ),
-
-                  const SizedBox(width: 16),
-
-                  // 集めたスタンプ数
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '集めたスタンプ数',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade500,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Row(
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            Text(
-                              '10',
-                              style: TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              '個',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // しおり数
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'しおり数',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        '3',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 28),
-
-            // ── 作成したスタンプカード タイトル ──────────
-            const Text(
-              '作成したスタンプカード',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // ── スタンプカードリスト ──────────────────
-            ...List.generate(_stampCards.length, (index) {
-              final card = _stampCards[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: _buildStampCard(context, card),
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: FutureBuilder<List<_StampCollection>>(
+          future: _collectionsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const AppLoadingScreen(message: 'スタンプを読み込んでいます・・・');
+            }
+            if (snapshot.hasError) {
+              return Center(
+                child: Text('コレクションを読み込めませんでした', style: AppTextStyles.body),
               );
-            }),
-
-            // ── しおりを新規作成ボタン ────────────────
-            GestureDetector(
-              onTap: () {
-                // TODO: しおり新規作成画面へ遷移
-              },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 48),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.07),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.add, color: Colors.grey.shade600, size: 20),
-                    const SizedBox(width: 6),
-
-                    Text(
-                      'しおりを新規作成',
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: Colors.grey.shade600,
-                        fontWeight: FontWeight.w500,
+            }
+            final collections = snapshot.data ?? [];
+            if (collections.isEmpty) {
+              return Center(
+                child: Text('まだコレクションがありません', style: AppTextStyles.body),
+              );
+            }
+            final showPageBackButton =
+                widget.cardId != null || widget.showBackButton;
+            return Column(
+              children: [
+                if (showPageBackButton)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.sm),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new),
+                        onPressed: () => Navigator.of(context).pop(),
                       ),
                     ),
-                  ],
+                  ),
+                Expanded(
+                  child: ListView.separated(
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      showPageBackButton ? 0 : AppSpacing.lg,
+                      AppSpacing.lg,
+                      AppSpacing.xxl,
+                    ),
+                    itemCount: collections.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: AppSpacing.lg),
+                    itemBuilder: (context, index) =>
+                        _buildCollectionCard(collections[index]),
+                  ),
                 ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  // ── スタンプカード1枚 ─────────────────────────────
-  Widget _buildStampCard(BuildContext context, Map<String, dynamic> card) {
-    final int collected = card['collected'] as int;
-    final int total = card['total'] as int;
-    final int filledCount = collected;
-    final int remaining = card['remaining'] as int;
-
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => StampDetailScreen(title: card['title'] as String),
-          ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.07),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ヘッダー（タイトル + n/m + 矢印）
-            Row(
-              children: [
-                Text(
-                  card['title'] as String,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '$collected/$total',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade500,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.chevron_right,
-                  color: Colors.grey.shade400,
-                  size: 20,
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            // スタンプグリッド（3マス）
-            Row(
-              children: List.generate(total, (index) {
-                final hasThisStamp = index < filledCount;
-
-                return Padding(
-                  padding: EdgeInsets.only(right: index < total - 1 ? 10 : 0),
-                  child: Container(
-                    width: 90,
-                    height: 90,
-                    decoration: BoxDecoration(
-                      color: hasThisStamp
-                          ? Colors.transparent
-                          : Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(10),
+  Widget _buildCollectionCard(_StampCollection collection) {
+    final total = collection.spots.length;
+    final obtained = collection.obtainedSpots.length;
+    return Column(
+      children: [
+        SizedBox(
+          height: 190,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned(
+                left: 0,
+                right: 132,
+                top: AppSpacing.xl,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      collection.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.title.copyWith(
+                        color: const Color(0xFF12265A),
+                        fontSize: 30,
+                        height: 1.15,
+                      ),
                     ),
-                    child: hasThisStamp
-                        ? Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.grey, width: 1),
-                            ),
-                            child: Image.asset(
-                              'assets/images/stamp_sample.png',
-
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Icon(
-                                Icons.pets,
-                                color: AppColors.primary,
-                                size: 40,
-                              ),
-                            ),
-                          )
-                        : const SizedBox(),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      '$obtained/$total',
+                      style: AppTextStyles.heading.copyWith(
+                        color: const Color(0xFF12265A),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Positioned(
+                right: -8,
+                bottom: -8,
+                child: Image.asset(
+                  'assets/images/weasel02.png',
+                  width: 145,
+                  height: 170,
+                  fit: BoxFit.contain,
+                  alignment: Alignment.bottomCenter,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.xxl,
+            AppSpacing.lg,
+            AppSpacing.xxl,
+          ),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F8FC),
+            borderRadius: AppRadius.brLg,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.black.withValues(alpha: 0.1),
+                blurRadius: 12,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: AppSpacing.md,
+                  mainAxisSpacing: AppSpacing.lg,
+                  childAspectRatio: 0.78,
+                ),
+                itemCount: total,
+                itemBuilder: (context, index) {
+                  final spot = collection.spots[index];
+                  final obtained = collection.obtainedSpotIds.contains(
+                    spot.spotId,
+                  );
+                  return _buildStampItem(
+                    collection: collection,
+                    spot: spot,
+                    index: index,
+                    obtained: obtained,
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+        if (widget.cardId != null) ...[
+          const SizedBox(height: AppSpacing.xxl),
+          SizedBox(
+            width: 300,
+            height: AppSizes.buttonHeight,
+            child: FilledButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const AllStampCollectionsScreen(),
                   ),
                 );
-              }),
+              },
+              child: const Text('全てのコレクションを見る'),
             ),
+          ),
+        ],
+      ],
+    );
+  }
 
-            const SizedBox(height: 10),
-
-            // あと〇箇所でコンプリート！
-            Text(
-              'あと$remaining箇所でコンプリート!',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-            ),
-          ],
-        ),
+  Widget _buildStampItem({
+    required _StampCollection collection,
+    required Spot spot,
+    required int index,
+    required bool obtained,
+  }) {
+    return InkWell(
+      borderRadius: AppRadius.brSm,
+      onTap: obtained
+          ? () {
+              showDialog<void>(
+                context: context,
+                barrierColor: AppColors.black.withValues(alpha: 0.45),
+                builder: (_) => StampCollectionDetailDialog(
+                  spot: spot,
+                  animeTitle: collection.title,
+                  stampIndex: index + 1,
+                  stampTotal: collection.spots.length,
+                  imageUrl: spot.streetViewProxyUrl ?? spot.streetViewImageUrl,
+                  arrivalPhotoUrls:
+                      collection.visitStats[spot.spotId]?.arrivalPhotoUrls,
+                  visitCount: collection.visitStats[spot.spotId]?.count ?? 0,
+                  obtainedAt: collection.visitStats[spot.spotId]?.lastVisitedAt,
+                ),
+              );
+            }
+          : null,
+      child: Column(
+        children: [
+          AspectRatio(
+            aspectRatio: 1,
+            child: obtained
+                ? StampBadge(label: spot.name)
+                : const LockedStampBadge(),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            '${index + 1}'.padLeft(2, '0'),
+            style: AppTextStyles.caption.copyWith(fontSize: 10),
+          ),
+        ],
       ),
     );
+  }
+}
+
+class _StampCollection {
+  final String title;
+  final List<Spot> spots = [];
+  final Set<String> obtainedSpotIds = {};
+  final Map<String, StampVisitStats> visitStats = {};
+
+  _StampCollection({required this.title});
+
+  List<Spot> get obtainedSpots =>
+      spots.where((spot) => obtainedSpotIds.contains(spot.spotId)).toList();
+
+  void addSpot(Spot spot, StampVisitStats? stats) {
+    if (spots.any((item) => item.spotId == spot.spotId)) {
+      if (stats != null) _mergeStats(spot.spotId, stats);
+      return;
+    }
+    spots.add(spot);
+    if (stats != null) _mergeStats(spot.spotId, stats);
+  }
+
+  void _mergeStats(String spotId, StampVisitStats incoming) {
+    final current = visitStats[spotId];
+    final currentDate = current?.lastVisitedAt;
+    final incomingDate = incoming.lastVisitedAt;
+    final latest = currentDate == null
+        ? incomingDate
+        : incomingDate == null || currentDate.isAfter(incomingDate)
+        ? currentDate
+        : incomingDate;
+    visitStats[spotId] = StampVisitStats(
+      count: (current?.count ?? 0) + incoming.count,
+      lastVisitedAt: latest,
+      arrivalPhotoUrls: {
+        ...?current?.arrivalPhotoUrls,
+        ...incoming.arrivalPhotoUrls,
+      }.toList(),
+    );
+    obtainedSpotIds.add(spotId);
   }
 }

@@ -24,6 +24,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>GoogleMapsApiKey</key>
+	<string>$(MAPS_API_KEY)</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -41,8 +43,16 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>現在地を地図に表示するために位置情報を使用します</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>現在地を地図に表示するために位置情報を使用します</string>
+		<key>NSCameraUsageDescription</key>
+		<string>聖地到着時の記念写真を撮影するためにカメラを使用します</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>撮影した記念写真を確認するために写真ライブラリを使用します</string>
+		<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

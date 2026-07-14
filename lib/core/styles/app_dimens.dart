@@ -38,4 +38,22 @@ class AppSizes {
 
   /// アイコンボタンなどの最小タップ領域。
   static const double minTapTarget = 44;
+
+  /// マップシート内の聖地カード高さ。
+  static const double mapSpotCardHeight = 112;
+
+  /// マップシート内の聖地カード画像幅の下限。
+  static const double mapSpotImageMinWidth = 116;
+
+  /// マップシート内の聖地カード画像幅の上限。
+  static const double mapSpotImageMaxWidth = 220;
+
+  /// マップシート内の丸い詳細ボタンサイズ。
+  static const double mapSpotActionSize = 40;
+
+  /// マップシートのドラッグハンドル幅。
+  static const double sheetHandleWidth = 40;
+
+  /// マップシートのドラッグハンドル高さ。
+  static const double sheetHandleHeight = 4;
 }

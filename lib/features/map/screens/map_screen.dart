@@ -200,6 +200,7 @@ class _MapScreenState extends State<MapScreen>
 
             if (_shioriVisible && !searchVisible && !resultsVisible)
               MapShioriSheet(
+                currentLocation: hasFix ? currentLatLng : null,
                 onClose: () {
                   clearSpotPins();
                   setState(() {

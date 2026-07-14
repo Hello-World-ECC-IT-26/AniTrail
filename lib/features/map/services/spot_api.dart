@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -181,7 +183,10 @@ class SpotApi {
     final prefs = await SharedPreferences.getInstance();
     unawaited(prefs.setString(_stampCardListCacheKey, jsonEncode(list)));
     return list
-        .map((e) => StampCard.fromJson(e as Map<String, dynamic>))
+        .map(
+          (e) =>
+              StampCard.fromJson(e as Map<String, dynamic>, baseUrl: _baseUrl),
+        )
         .toList();
   }
 
@@ -193,7 +198,12 @@ class SpotApi {
     try {
       final list = jsonDecode(raw) as List<dynamic>;
       return list
-          .map((item) => StampCard.fromJson(item as Map<String, dynamic>))
+          .map(
+            (item) => StampCard.fromJson(
+              item as Map<String, dynamic>,
+              baseUrl: _baseUrl,
+            ),
+          )
           .toList();
     } catch (_) {
       await prefs.remove(_stampCardListCacheKey);
@@ -317,18 +327,172 @@ class SpotApi {
 
   /// 指定しおり（カード）でスタンプ取得済みの spot_id 集合を返す。
   Future<Set<String>> fetchVisitedSpotIds(String cardId) async {
+    final stats = await fetchStampVisitStats(cardId);
+    return stats.keys.toSet();
+  }
+
+  /// 訪問履歴をスポット単位の回数・最終訪問日時に集計する。
+  Future<Map<String, StampVisitStats>> fetchStampVisitStats(
+    String cardId,
+  ) async {
     final token = _accessToken;
     final res = await _client.get(
       Uri.parse('$_baseUrl/stamp-cards/$cardId/stamps'),
       headers: {if (token != null) 'Authorization': 'Bearer $token'},
     );
-    if (res.statusCode != 200) return {};
+    if (res.statusCode != 200) return const {};
     final body = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
     final list = (body['data'] as List? ?? []);
-    return list
-        .map((e) => (e as Map<String, dynamic>)['spot_id'] as String?)
-        .whereType<String>()
-        .toSet();
+    final stats = <String, StampVisitStats>{};
+    for (final value in list) {
+      final row = value as Map<String, dynamic>;
+      final spotId = row['spot_id'] as String?;
+      if (spotId == null) continue;
+      final obtainedAt = DateTime.tryParse(row['obtained_at'] as String? ?? '');
+      final arrivalPhotoUrl = row['arrival_photo_url'] as String?;
+      final current = stats[spotId];
+      final currentDate = current?.lastVisitedAt;
+      final photoUrls = {
+        ...?current?.arrivalPhotoUrls,
+        if (arrivalPhotoUrl != null && arrivalPhotoUrl.isNotEmpty)
+          arrivalPhotoUrl,
+      }.toList();
+      stats[spotId] = StampVisitStats(
+        count: (current?.count ?? 0) + 1,
+        lastVisitedAt: currentDate == null
+            ? obtainedAt
+            : obtainedAt == null || currentDate.isAfter(obtainedAt)
+            ? currentDate
+            : obtainedAt,
+        arrivalPhotoUrls: photoUrls,
+      );
+    }
+    return stats;
+  }
+
+  Future<String> createStamp({
+    required String cardId,
+    required String spotId,
+  }) async {
+    final token = _accessToken;
+    final res = await _client.post(
+      Uri.parse('$_baseUrl/stamps'),
+      headers: {
+        if (token != null) 'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'card_id': cardId, 'spot_id': spotId}),
+    );
+    if (res.statusCode != 200) {
+      String detail = '';
+      try {
+        final body = jsonDecode(utf8.decode(res.bodyBytes));
+        detail = body is Map ? (body['error']?.toString() ?? '') : '';
+      } catch (_) {
+        detail = utf8.decode(res.bodyBytes);
+      }
+      throw Exception(
+        'スタンプの記録に失敗しました (${res.statusCode})'
+        '${detail.isEmpty ? '' : ': $detail'}',
+      );
+    }
+    final body = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+    final data = body['data'] as Map<String, dynamic>;
+    final stampId = data['stamp_id'] as String?;
+    if (stampId == null || stampId.isEmpty) {
+      throw Exception('作成したスタンプIDを取得できませんでした');
+    }
+    await _clearStampCardCache(cardId);
+    return stampId;
+  }
+
+  Future<String> uploadArrivalPhoto({
+    required String spotId,
+    required String stampId,
+    required List<int> bytes,
+    required String filename,
+    String? contentType,
+  }) async {
+    final resolvedContentType = _resolveImageContentType(
+      filename: filename,
+      bytes: bytes,
+      mimeType: contentType,
+    );
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$_baseUrl/spot-posts'),
+    );
+    final token = _accessToken;
+    if (token != null) request.headers['Authorization'] = 'Bearer $token';
+    request.fields['spot_id'] = spotId;
+    request.fields['stamp_id'] = stampId;
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'image',
+        bytes,
+        filename: _ensureImageFilename(filename, resolvedContentType),
+        contentType: MediaType.parse(resolvedContentType),
+      ),
+    );
+    final streamed = await _client.send(request);
+    final response = await http.Response.fromStream(streamed);
+    if (response.statusCode != 200) {
+      String detail = '';
+      try {
+        final errorBody =
+            jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        final error = errorBody['error']?.toString() ?? '';
+        final code = errorBody['code']?.toString() ?? '';
+        detail = [
+          if (error.isNotEmpty) error,
+          if (code.isNotEmpty) code,
+        ].join(' / ');
+      } catch (_) {
+        detail = utf8.decode(response.bodyBytes);
+      }
+      throw Exception(
+        '到着写真の保存に失敗しました (${response.statusCode})'
+        '${detail.isEmpty ? '' : ': $detail'}',
+      );
+    }
+    final body =
+        jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+    final data = body['data'] as Map<String, dynamic>;
+    return data['image_url'] as String;
+  }
+
+  String _resolveImageContentType({
+    required String filename,
+    required List<int> bytes,
+    String? mimeType,
+  }) {
+    final normalized = mimeType?.trim().toLowerCase();
+    if (_isSupportedImageMime(normalized)) return normalized!;
+
+    final detected = lookupMimeType(
+      filename,
+      headerBytes: bytes,
+    )?.toLowerCase();
+    if (_isSupportedImageMime(detected)) return detected!;
+
+    return 'image/jpeg';
+  }
+
+  bool _isSupportedImageMime(String? mimeType) {
+    return mimeType == 'image/jpeg' ||
+        mimeType == 'image/png' ||
+        mimeType == 'image/webp' ||
+        mimeType == 'image/gif';
+  }
+
+  String _ensureImageFilename(String filename, String contentType) {
+    final extension = switch (contentType) {
+      'image/png' => 'png',
+      'image/webp' => 'webp',
+      'image/gif' => 'gif',
+      _ => 'jpg',
+    };
+    return 'arrival_photo.$extension';
   }
 
   /// 指定アニメの聖地一覧。lat/lng 指定で距離（distance_m）付き・距離昇順。
@@ -382,4 +546,19 @@ class SpotApi {
         .map((e) => Spot.fromJson(e as Map<String, dynamic>, baseUrl: _baseUrl))
         .toList();
   }
+}
+
+class StampVisitStats {
+  final int count;
+  final DateTime? lastVisitedAt;
+  final List<String> arrivalPhotoUrls;
+
+  String? get arrivalPhotoUrl =>
+      arrivalPhotoUrls.isEmpty ? null : arrivalPhotoUrls.first;
+
+  const StampVisitStats({
+    required this.count,
+    required this.lastVisitedAt,
+    this.arrivalPhotoUrls = const [],
+  });
 }

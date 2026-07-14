@@ -1,4 +1,4 @@
-import 'package:AniTrail/features/coupon/screens/coupon_screen.dart';
+import 'package:anitrail/features/coupon/screens/coupon_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/styles/app_styles.dart';
@@ -11,7 +11,7 @@ import '../../../core/widgets/main_buttom_nav.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../map/screens/map_screen.dart';
-import '../../stamp/screens/stamp_screen.dart';
+import '../../stamp/screens/all_stamp_collections_screen.dart';
 import '../../search/screens/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _pages = [
       _HomeBody(onSearchTap: _onSearchTap),
       const MapScreen(),
-      const StampScreen(),
+      const AllStampCollectionsScreen(showBackButton: false),
       const CouponScreen(),
     ];
   }

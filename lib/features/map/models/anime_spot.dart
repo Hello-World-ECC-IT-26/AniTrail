@@ -88,6 +88,21 @@ class Spot {
     episode: episode,
   );
 
+  static String? _resolveImageUrl(String? value, String? baseUrl) {
+    if (value == null || value.isEmpty) return value;
+    final uri = Uri.tryParse(value);
+    if (uri != null && uri.hasScheme && uri.hasAuthority) return value;
+    if (baseUrl == null || baseUrl.isEmpty) return value;
+    final normalizedBase = baseUrl.endsWith('/')
+        ? baseUrl.substring(0, baseUrl.length - 1)
+        : baseUrl;
+    final normalizedPath = value.startsWith('/') ? value.substring(1) : value;
+    if (normalizedPath.startsWith('spot-posts/image/')) {
+      return '$normalizedBase/$normalizedPath';
+    }
+    return '$normalizedBase/spot-posts/image/$normalizedPath';
+  }
+
   factory Spot.fromJson(Map<String, dynamic> json, {String? baseUrl}) {
     double? toDouble(dynamic v) => v == null ? null : (v as num).toDouble();
     final lat = toDouble(json['latitude']);
@@ -107,9 +122,12 @@ class Spot {
       distanceM: toDouble(json['distance_m']),
       city: json['city'] as String?,
       address: json['address'] as String?,
-      image: json['image'] as String?,
+      image: _resolveImageUrl(json['image'] as String?, baseUrl),
       streetViewUrl: json['street_view_url'] as String?,
-      streetViewImageUrl: json['street_view_image_url'] as String?,
+      streetViewImageUrl: _resolveImageUrl(
+        json['street_view_image_url'] as String?,
+        baseUrl,
+      ),
       streetViewProxyUrl: proxyUrl,
       visited: (json['visited'] as bool?) ?? false,
       episode: (json['episode'] as num?)?.toInt(),
@@ -192,6 +210,7 @@ class StampCard {
       spotImageUrls: ((json['spot_image_urls'] as List?) ?? [])
           .map((e) => e as String?)
           .whereType<String>()
+          .map((url) => Spot._resolveImageUrl(url, baseUrl) ?? url)
           .toList(),
       keyVisualUrls: ((json['key_visual_urls'] as List?) ?? [])
           .whereType<String>()
