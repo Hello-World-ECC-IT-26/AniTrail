@@ -1,9 +1,10 @@
-import 'package:AniTrail/features/home/screens/home_screen.dart';
+import 'package:anitrail/features/home/screens/home_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/styles/app_styles.dart';
 import '../../../core/styles/app_text.dart';
+import '../../../core/widgets/loading_screen.dart';
 import '../../../core/styles/app_dimens.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/app_card.dart';
@@ -156,7 +157,7 @@ class _SpotListState extends State<SpotList> {
               _buildSliverAppBar(),
               if (_loading)
                 const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
+                  child: AppLoadingScreen(message: '聖地を読み込んでいます・・・'),
                 )
               else if (_error != null)
                 SliverFillRemaining(
@@ -276,7 +277,8 @@ class _SpotListState extends State<SpotList> {
                     ? CachedNetworkImage(
                         imageUrl: widget.bannerImageUrl!,
                         fit: BoxFit.cover,
-                        errorWidget: (_, __, ___) => _bannerPlaceholder(),
+                        errorWidget: (context, imageUrl, error) =>
+                            _bannerPlaceholder(),
                       )
                     : _bannerPlaceholder(),
                 const DecoratedBox(
@@ -346,8 +348,9 @@ class _SpotListState extends State<SpotList> {
       return CachedNetworkImage(
         imageUrl: image,
         fit: BoxFit.cover,
-        placeholder: (_, __) => _placeholderImage(),
-        errorWidget: (_, __, ___) => _streetViewOrPlaceholder(spot),
+        placeholder: (context, imageUrl) => _placeholderImage(),
+        errorWidget: (context, imageUrl, error) =>
+            _streetViewOrPlaceholder(spot),
       );
     }
     return _streetViewOrPlaceholder(spot);
@@ -360,8 +363,8 @@ class _SpotListState extends State<SpotList> {
         imageUrl: url,
         httpHeaders: _authHeaders,
         fit: BoxFit.cover,
-        placeholder: (_, __) => _placeholderImage(),
-        errorWidget: (_, __, ___) => _placeholderImage(),
+        placeholder: (context, imageUrl) => _placeholderImage(),
+        errorWidget: (context, imageUrl, error) => _placeholderImage(),
       );
     }
     return _placeholderImage();

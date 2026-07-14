@@ -8,6 +8,7 @@ import '../../../core/styles/app_dimens.dart';
 import '../../../core/styles/app_shadows.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/main_buttom_nav.dart';
+import '../../../core/widgets/loading_screen.dart';
 import '../../home/screens/home_screen.dart';
 import '../../map/models/anime_spot.dart';
 import '../../map/services/spot_api.dart';
@@ -283,7 +284,7 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
             icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           ),
         ),
-        body: Center(child: _buildLoadingAnimation(size: 160)),
+        body: const AppLoadingScreen(message: 'しおりを読み込んでいます・・・'),
       );
     }
 
@@ -294,7 +295,11 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
           SliverToBoxAdapter(child: _buildHeader(card)),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              0,
+            ),
             sliver: SliverToBoxAdapter(child: _buildStampCard(card)),
           ),
           SliverToBoxAdapter(child: _buildListHeader()),
@@ -302,17 +307,24 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.only(
-                    top: AppSpacing.sm, bottom: AppSpacing.xxxl),
+                  top: AppSpacing.sm,
+                  bottom: AppSpacing.xxxl,
+                ),
                 child: _buildLoadingAnimation(size: 110),
               ),
             )
           else
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.xxl),
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.xxl,
+              ),
               sliver: SliverList.separated(
                 itemCount: _spots.length,
-                separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
+                separatorBuilder: (_, _) =>
+                    const SizedBox(height: AppSpacing.md),
                 itemBuilder: (_, index) => _buildSpotCard(_spots[index]),
               ),
             ),
@@ -509,7 +521,11 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
     final stampTotal = card.spotCount < 1 ? 1 : card.spotCount;
     return Container(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.xxl, AppSpacing.lg, AppSpacing.xxl, AppSpacing.xxl),
+        AppSpacing.xxl,
+        AppSpacing.lg,
+        AppSpacing.xxl,
+        AppSpacing.xxl,
+      ),
       decoration: const BoxDecoration(
         color: AppColors.surface,
         borderRadius: AppRadius.brLg,
@@ -519,8 +535,10 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
         children: [
           Row(
             children: [
-              Text('スタンプカード',
-                  style: AppTextStyles.subtitle.copyWith(fontSize: 17)),
+              Text(
+                'スタンプカード',
+                style: AppTextStyles.subtitle.copyWith(fontSize: 17),
+              ),
               const Spacer(),
               Text(
                 '${_visitedSpotIds.length}/${card.spotCount}',
@@ -577,7 +595,11 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
 
   Widget _buildListHeader() => Padding(
     padding: const EdgeInsets.fromLTRB(
-        AppSpacing.xl, AppSpacing.lg, AppSpacing.xl, AppSpacing.sm),
+      AppSpacing.xl,
+      AppSpacing.lg,
+      AppSpacing.xl,
+      AppSpacing.sm,
+    ),
     child: Stack(
       alignment: Alignment.center,
       children: [
@@ -667,7 +689,11 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.md, AppSpacing.sm, AppSpacing.sm, AppSpacing.sm),
+                AppSpacing.md,
+                AppSpacing.sm,
+                AppSpacing.sm,
+                AppSpacing.sm,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -689,7 +715,9 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
                         visited ? '訪問済み' : '未訪問',
                         style: TextStyle(
                           fontSize: 11,
-                          color: visited ? AppColors.textMuted : AppColors.error,
+                          color: visited
+                              ? AppColors.textMuted
+                              : AppColors.error,
                         ),
                       ),
                     ],

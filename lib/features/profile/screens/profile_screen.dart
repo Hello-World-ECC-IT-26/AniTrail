@@ -1,7 +1,15 @@
+import 'dart:typed_data';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import '../../../core/widgets/app_bar.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../core/styles/app_styles.dart';
+import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/main_buttom_nav.dart';
+import '../../auth/services/auth_service.dart';
+import '../../profile/services/profile_service.dart';
 import '../../profile/widgets/subscription.dart';
 
 class MyPageScreen extends StatefulWidget {
@@ -14,10 +22,22 @@ class MyPageScreen extends StatefulWidget {
 class _MyPageScreenState extends State<MyPageScreen> {
   // 編集モードフラグ
   bool _isEditing = false;
+  bool _saving = false;
+  final _imagePicker = ImagePicker();
+  XFile? _selectedAvatar;
+  Uint8List? _selectedAvatarBytes;
+  UserProfile? _profile;
 
   // ユーザー情報
-  final _nameController = TextEditingController(text: 'まーくん');
-  final String _email = 'xxxxxxxxxx@ecc.ac.jp';
+  final _nameController = TextEditingController();
+
+  String get _email => Supabase.instance.client.auth.currentUser?.email ?? '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
 
   @override
   void dispose() {
@@ -25,10 +45,75 @@ class _MyPageScreenState extends State<MyPageScreen> {
     super.dispose();
   }
 
+  Future<void> _loadProfile() async {
+    try {
+      await AuthService().ensureProfile();
+      final profile = await ProfileService().fetchMyProfile();
+      if (!mounted) return;
+      setState(() {
+        _profile = profile;
+        if (!_isEditing) _nameController.text = profile.username ?? '';
+      });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('プロフィールを読み込めませんでした: $error')));
+    }
+  }
+
   // 保存処理
-  void _saveEdit() {
-    setState(() => _isEditing = false);
-    // TODO: Supabaseへ保存
+  Future<void> _saveEdit() async {
+    if (_saving) return;
+    final username = _nameController.text.trim();
+    if (username.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('ユーザー名を入力してください')));
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      final avatar = _selectedAvatar;
+      if (avatar != null) {
+        await AuthService().uploadAvatar(avatar);
+      }
+      final profile = await ProfileService().updateUsername(username);
+      if (!mounted) return;
+      setState(() {
+        _profile = profile;
+        _selectedAvatar = null;
+        _isEditing = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('プロフィール写真を保存できませんでした: $error')));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _selectAvatar() async {
+    try {
+      final image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+      if (image == null || !mounted) return;
+      final bytes = await image.readAsBytes();
+      if (!mounted) return;
+      setState(() {
+        _selectedAvatar = image;
+        _selectedAvatarBytes = bytes;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('写真を選択できませんでした: $error')));
+    }
   }
 
   // ログアウト確認ダイアログ
@@ -80,6 +165,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final avatarUrl = _profile?.avatarUrl;
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
 
@@ -112,11 +198,17 @@ class _MyPageScreenState extends State<MyPageScreen> {
                   ),
                   // 編集 / 保存ボタン
                   TextButton(
-                    onPressed: _isEditing
+                    onPressed: _saving
+                        ? null
+                        : _isEditing
                         ? _saveEdit
                         : () => setState(() => _isEditing = true),
                     child: Text(
-                      _isEditing ? '保存' : '編集',
+                      _saving
+                          ? '保存中'
+                          : _isEditing
+                          ? '保存'
+                          : '編集',
                       style: const TextStyle(
                         fontSize: 14,
                         color: AppColors.primary,
@@ -144,15 +236,23 @@ class _MyPageScreenState extends State<MyPageScreen> {
                     border: Border.all(color: Colors.grey.shade300, width: 1),
                   ),
                   child: ClipOval(
-                    child: Image.asset(
-                      'assets/images/avatar_sample.png',
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Icon(
-                        Icons.person,
-                        size: 50,
-                        color: Colors.grey.shade400,
-                      ),
-                    ),
+                    child: _selectedAvatarBytes != null
+                        ? Image.memory(_selectedAvatarBytes!, fit: BoxFit.cover)
+                        : avatarUrl != null && avatarUrl.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: avatarUrl,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, _, _) => Icon(
+                              Icons.person,
+                              size: 50,
+                              color: Colors.grey.shade400,
+                            ),
+                          )
+                        : Icon(
+                            Icons.person,
+                            size: 50,
+                            color: Colors.grey.shade400,
+                          ),
                   ),
                 ),
 
@@ -163,7 +263,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
                     right: 0,
                     child: GestureDetector(
                       onTap: () {
-                        // TODO: 画像選択
+                        _selectAvatar();
                       },
                       child: Container(
                         width: 32,
@@ -215,7 +315,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
                             ),
                           )
                         : Text(
-                            _nameController.text,
+                            _profile?.username ?? '',
                             style: const TextStyle(
                               fontSize: 14,
                               color: Colors.black87,
@@ -236,6 +336,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
                       ),
                     ),
                   ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
                 ],
               ),
             ),

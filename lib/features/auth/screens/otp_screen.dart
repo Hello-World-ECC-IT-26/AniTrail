@@ -26,6 +26,8 @@ class _OtpScreenState extends State<OtpScreen> {
 
   Timer? _timer;
   int _seconds = 60;
+  bool _isSubmitting = false;
+  bool _isResending = false;
 
   @override
   void initState() {
@@ -87,10 +89,6 @@ class _OtpScreenState extends State<OtpScreen> {
       _focusNodes[index - 1].requestFocus();
     }
     setState(() {});
-
-    if (_isComplete) {
-      _handleNext();
-    }
   }
 
   void _handlePaste(String value) {
@@ -101,23 +99,26 @@ class _OtpScreenState extends State<OtpScreen> {
     }
 
     setState(() {});
-
-    if (_isComplete) {
-      _handleNext();
-    }
   }
 
   // OTP検証
   Future<void> _handleNext() async {
-    if (!_isComplete) return;
-
     final auth = context.read<AuthProvider>();
+    if (!_isComplete || _isSubmitting || _isResending || auth.isLoading) {
+      return;
+    }
 
-    await auth.verifyOtp(
-      email: widget.email,
-      otp: _otp,
-      purpose: auth.otpPurpose,
-    );
+    setState(() => _isSubmitting = true);
+
+    try {
+      await auth.verifyOtp(
+        email: widget.email,
+        otp: _otp,
+        purpose: auth.otpPurpose,
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
 
     if (!mounted) return;
 
@@ -147,24 +148,42 @@ class _OtpScreenState extends State<OtpScreen> {
 
   // OTP再送信
   Future<void> _handleResend() async {
-    if (!_canResend) return;
-
     final auth = context.read<AuthProvider>();
+    if (!_canResend || _isSubmitting || _isResending || auth.isLoading) {
+      return;
+    }
 
-    await auth.sendPasswordResetOtp(email: widget.email);
+    setState(() => _isResending = true);
 
-    _startTimer();
+    try {
+      await auth.resendOtp(email: widget.email, purpose: auth.otpPurpose);
+    } finally {
+      if (mounted) setState(() => _isResending = false);
+    }
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('OTPを再送信しました')));
+    if (auth.status == AuthStatus.success) {
+      _startTimer();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('認証コードを再送信しました')));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(auth.errorMessage ?? '認証コードの再送信に失敗しました'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 
   // UI
   @override
   Widget build(BuildContext context) {
+    final isProviderLoading = context.watch<AuthProvider>().isLoading;
+    final isBusy = _isSubmitting || _isResending || isProviderLoading;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const AuthAppBar(title: 'メールアドレス認証'),
@@ -179,10 +198,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
             const SizedBox(height: AppSpacing.sm),
 
-            Text(
-              'コードは ${widget.email} に送信されました',
-              style: AppTextStyles.caption,
-            ),
+            Text('コードは ${widget.email} に送信されました', style: AppTextStyles.caption),
 
             const SizedBox(height: AppSpacing.xxl),
 
@@ -208,9 +224,7 @@ class _OtpScreenState extends State<OtpScreen> {
                     ),
                     onChanged: (v) => _onChanged(v, i),
                     decoration: const InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: AppRadius.brMd,
-                      ),
+                      border: OutlineInputBorder(borderRadius: AppRadius.brMd),
                     ),
                   ),
                 );
@@ -221,19 +235,31 @@ class _OtpScreenState extends State<OtpScreen> {
 
             // ───── OTP再送信 ─────
             GestureDetector(
-              onTap: _handleResend,
+              onTap: _canResend && !isBusy ? _handleResend : null,
               child: Text(
-                _canResend ? 'コードを再送信' : 'あと $_seconds 秒で再送信できます',
+                _isResending
+                    ? '再送信中...'
+                    : _canResend
+                    ? 'コードを再送信'
+                    : 'あと $_seconds 秒で再送信できます',
                 style: TextStyle(
-                  color: _canResend ? AppColors.primary : AppColors.textMuted,
-                  decoration: TextDecoration.underline,
+                  color: _canResend && !isBusy
+                      ? AppColors.primary
+                      : AppColors.textMuted,
+                  decoration: _canResend && !isBusy
+                      ? TextDecoration.underline
+                      : TextDecoration.none,
                 ),
               ),
             ),
 
             const SizedBox(height: 40),
 
-            PrimaryButton(label: '認証する', onPressed: _handleNext),
+            PrimaryButton(
+              label: _isSubmitting ? '認証中...' : '認証する',
+              onPressed: isBusy ? null : _handleNext,
+              isLoading: _isSubmitting,
+            ),
           ],
         ),
       ),

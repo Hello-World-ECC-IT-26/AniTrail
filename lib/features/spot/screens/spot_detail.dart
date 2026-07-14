@@ -157,7 +157,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                     ClipRRect(
                       borderRadius: AppRadius.brSm,
                       child: AspectRatio(
-                        aspectRatio: 16 / 11,
+                        aspectRatio: 4 / 3,
                         child: _buildImage(),
                       ),
                     ),
@@ -179,8 +179,10 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
 
               // ── アニメタイトル ──
               Center(
-                child: Text('「${widget.animeTitle}」',
-                    style: AppTextStyles.subtitle),
+                child: Text(
+                  '「${widget.animeTitle}」',
+                  style: AppTextStyles.subtitle,
+                ),
               ),
 
               if (spot.sceneText.isNotEmpty) ...[
@@ -208,8 +210,9 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                 const SizedBox(height: AppSpacing.xs),
                 Center(
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xxl,
+                    ),
                     child: Text(
                       spot.addressText,
                       textAlign: TextAlign.center,
@@ -240,7 +243,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
               bottom: 80,
               child: ValueListenableBuilder<List<Spot>>(
                 valueListenable: _draft.spots,
-                builder: (context, spots, __) {
+                builder: (context, spots, child) {
                   return Stack(
                     clipBehavior: Clip.none,
                     children: [
@@ -298,7 +301,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
               right: 0,
               child: ValueListenableBuilder<List<Spot>>(
                 valueListenable: _draft.spots,
-                builder: (context, _, __) {
+                builder: (context, spots, child) {
                   final added = _draft.contains(spot.spotId);
                   return AppBottomActionBar(
                     icon: added ? Icons.check : Icons.add,
@@ -315,9 +318,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
         onTap: (index) {
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(
-              builder: (_) => HomeScreen(initialIndex: index),
-            ),
+            MaterialPageRoute(builder: (_) => HomeScreen(initialIndex: index)),
             (route) => false,
           );
         },
@@ -337,8 +338,9 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
       imageUrl: url,
       httpHeaders: _authHeaders,
       fit: BoxFit.cover,
-      placeholder: (_, __) => Container(color: AppColors.placeholder),
-      errorWidget: (_, __, ___) => Container(
+      placeholder: (context, imageUrl) =>
+          Container(color: AppColors.placeholder),
+      errorWidget: (context, imageUrl, error) => Container(
         color: AppColors.placeholder,
         child: const Icon(Icons.image_outlined, color: AppColors.iconMuted),
       ),

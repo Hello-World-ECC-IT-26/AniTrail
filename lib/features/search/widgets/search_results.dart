@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/styles/app_styles.dart';
 import '../../../core/styles/app_text.dart';
+import '../../../core/widgets/loading_screen.dart';
 import '../../../core/styles/app_dimens.dart';
 import '../../map/models/anime_spot.dart';
 import '../../map/services/spot_api.dart';
@@ -67,9 +68,7 @@ class _SearchResultsState extends State<SearchResults> {
       if (!mounted) return;
       for (final anime in results.take(3)) {
         unawaited(
-          _api
-              .fetchSpots(anime.animeId)
-              .then<void>((_) {}, onError: (_, _) {}),
+          _api.fetchSpots(anime.animeId).then<void>((_) {}, onError: (_, _) {}),
         );
       }
       setState(() {
@@ -88,35 +87,19 @@ class _SearchResultsState extends State<SearchResults> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/images/loading.gif',
-              width: 200,
-              height: 200,
-              fit: BoxFit.contain,
-              errorBuilder: (context, err, stack) =>
-                  const CircularProgressIndicator(),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text('検索中・・・', style: AppTextStyles.subtitle),
-          ],
-        ),
-      );
+      return const AppLoadingScreen(message: '検索中・・・');
     }
     if (_error != null) {
       return Center(
-        child: Text(_error!, style: const TextStyle(color: AppColors.textMuted)),
+        child: Text(
+          _error!,
+          style: const TextStyle(color: AppColors.textMuted),
+        ),
       );
     }
     if (_results.isEmpty) {
       return const Center(
-        child: Text(
-          '該当するアニメが見つかりませんでした',
-          style: AppTextStyles.hint,
-        ),
+        child: Text('該当するアニメが見つかりませんでした', style: AppTextStyles.hint),
       );
     }
 
@@ -131,7 +114,11 @@ class _SearchResultsState extends State<SearchResults> {
 
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.lg),
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.lg,
+      ),
       itemCount: _results.length + 1,
       itemBuilder: (_, index) {
         if (index == 0) {
