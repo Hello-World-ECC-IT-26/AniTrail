@@ -91,4 +91,23 @@ void main() {
     expect(api.stampIds.first, api.stampIds.last);
     expect(find.text('スタンプ獲得！'), findsOneWidget);
   });
+
+  testWidgets('スタンプ獲得画面の背景が端末幅いっぱいに表示される', (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(_app(_FakeSpotApi()));
+    await tester.ensureVisible(find.text('写真なしで獲得'));
+    await tester.tap(find.text('写真なしで獲得'));
+    await tester.pumpAndSettle();
+
+    final background = tester.getSize(
+      find.byKey(const ValueKey('arrival-earned-background')),
+    );
+    expect(background.width, 360);
+    expect(background.height, 800);
+    expect(tester.takeException(), isNull);
+  });
 }

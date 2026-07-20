@@ -395,92 +395,95 @@ class _ArrivalScreenState extends State<ArrivalScreen> {
   }
 
   Widget _buildEarned() {
-    return ColoredBox(
-      color: const Color(0xFF172238),
-      child: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final stampSize = math.min(constraints.maxWidth * 0.78, 330.0);
-            return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.xxl,
-                AppSpacing.lg,
-                AppSpacing.lg,
-              ),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight:
-                      constraints.maxHeight - AppSpacing.xxl - AppSpacing.lg,
+    return SizedBox.expand(
+      key: const ValueKey('arrival-earned-background'),
+      child: ColoredBox(
+        color: const Color(0xFF172238),
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final stampSize = math.min(constraints.maxWidth * 0.78, 330.0);
+              return SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.xxl,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'スタンプ獲得！',
-                      style: AppTextStyles.title.copyWith(
-                        color: AppColors.white,
-                        fontSize: 34,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    StampBadge(label: widget.spot.name, size: stampSize),
-                    const SizedBox(height: AppSpacing.md),
-                    if ((widget.spot.animeTitle ?? '').isNotEmpty)
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight:
+                        constraints.maxHeight - AppSpacing.xxl - AppSpacing.lg,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                       Text(
-                        'アニメ「${widget.spot.animeTitle}」',
-                        textAlign: TextAlign.center,
-                        style: AppTextStyles.body.copyWith(
+                        'スタンプ獲得！',
+                        style: AppTextStyles.title.copyWith(
                           color: AppColors.white,
+                          fontSize: 34,
                         ),
                       ),
-                    const SizedBox(height: AppSpacing.xxl),
-                    SizedBox(
-                      width: 280,
-                      child: AppButton(
-                        label: 'コレクションを見る',
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => StampScreen(
-                              cardId: widget.cardId,
-                              animeId: widget.spot.animeId,
-                              animeTitle: widget.spot.animeTitle,
-                              recentlyObtainedSpotId: widget.spot.spotId,
+                      const SizedBox(height: AppSpacing.xl),
+                      StampBadge(label: widget.spot.name, size: stampSize),
+                      const SizedBox(height: AppSpacing.md),
+                      if ((widget.spot.animeTitle ?? '').isNotEmpty)
+                        Text(
+                          'アニメ「${widget.spot.animeTitle}」',
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.white,
+                          ),
+                        ),
+                      const SizedBox(height: AppSpacing.xxl),
+                      SizedBox(
+                        width: 280,
+                        child: AppButton(
+                          label: 'コレクションを見る',
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => StampScreen(
+                                cardId: widget.cardId,
+                                animeId: widget.spot.animeId,
+                                animeTitle: widget.spot.animeTitle,
+                                recentlyObtainedSpotId: widget.spot.spotId,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    SizedBox(
-                      width: 280,
-                      child: AppButton(
-                        label: 'コメントする',
-                        variant: AppButtonVariant.secondary,
-                        icon: Icons.edit_outlined,
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => SpotCommentsScreen(
-                              spot: widget.spot,
-                              animeTitle: widget.spot.animeTitle ?? '',
+                      const SizedBox(height: AppSpacing.md),
+                      SizedBox(
+                        width: 280,
+                        child: AppButton(
+                          label: 'コメントする',
+                          variant: AppButtonVariant.secondary,
+                          icon: Icons.edit_outlined,
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => SpotCommentsScreen(
+                                spot: widget.spot,
+                                animeTitle: widget.spot.animeTitle ?? '',
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(true),
-                      child: const Text(
-                        '閉じる',
-                        style: TextStyle(color: AppColors.white),
+                      const SizedBox(height: AppSpacing.md),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: const Text(
+                          '閉じる',
+                          style: TextStyle(color: AppColors.white),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
