@@ -2,23 +2,26 @@ import 'package:anitrail/features/coupon/screens/coupon_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../core/data/app_data_repository.dart';
 import '../../../core/styles/app_styles.dart';
 import '../../../core/styles/app_text.dart';
 import '../../../core/styles/app_dimens.dart';
-import '../widgets/event_section.dart';
-import '../widgets/user_section.dart';
-import '../widgets/stamp_card_section.dart';
-import '../../../core/widgets/main_buttom_nav.dart';
 import '../../../core/widgets/app_bar.dart';
+import '../../../core/widgets/main_buttom_nav.dart';
 import '../../../features/auth/providers/auth_provider.dart';
-import '../../map/screens/map_screen.dart';
-import '../../stamp/screens/all_stamp_collections_screen.dart';
-import '../../search/screens/search_screen.dart';
-import '../../../core/data/app_data_repository.dart';
 import '../../coupon/data/coupon_repository.dart';
 import '../../coupon/models/coupon.dart';
 import '../../coupon/widgets/coupon_detail.dart';
 import '../../coupon/widgets/coupon_grant_dialog.dart';
+import '../../map/screens/map_screen.dart';
+import '../../search/screens/search_screen.dart';
+import '../../stamp/screens/all_stamp_collections_screen.dart';
+import '../widgets/event_section.dart';
+import '../widgets/home_tutorial.dart';
+import '../widgets/stamp_card_section.dart';
+import '../widgets/user_section.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.initialIndex = 0})
@@ -46,7 +49,9 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       final repository = context.read<AppDataRepository>();
-      await repository.load();
+      final load = repository.load();
+      await _showTutorial();
+      await load;
       if (mounted) await _prefetchHomeImages(repository);
       if (mounted) {
         await _showPendingCouponGrants(repository.pendingCouponGrants);
@@ -163,6 +168,19 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _showTutorial() async {
+    final prefs = await SharedPreferences.getInstance();
+    final shown = prefs.getBool('tutorialShown') ?? false;
+    if (shown || !mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const TutorialDialog(),
+    );
+    await prefs.setBool('tutorialShown', true);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -247,7 +265,7 @@ class _SearchBar extends StatelessWidget {
           borderRadius: AppRadius.brSm,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
