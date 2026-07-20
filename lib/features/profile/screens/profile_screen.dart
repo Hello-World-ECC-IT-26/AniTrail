@@ -3,11 +3,13 @@ import 'dart:typed_data';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/styles/app_styles.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/main_buttom_nav.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../auth/services/auth_service.dart';
 import '../../profile/services/profile_service.dart';
 import '../../profile/widgets/subscription.dart';
@@ -23,6 +25,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
   // 編集モードフラグ
   bool _isEditing = false;
   bool _saving = false;
+  bool _loggingOut = false;
   final _imagePicker = ImagePicker();
   XFile? _selectedAvatar;
   Uint8List? _selectedAvatarBytes;
@@ -116,8 +119,9 @@ class _MyPageScreenState extends State<MyPageScreen> {
   }
 
   // ログアウト確認ダイアログ
-  void _showLogoutDialog() {
-    showDialog(
+  Future<void> _showLogoutDialog() async {
+    if (_loggingOut) return;
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -135,7 +139,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
         actions: [
           // キャンセル
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () => Navigator.pop(ctx, false),
             child: const Text(
               'キャンセル',
               style: TextStyle(fontSize: 14, color: Colors.black54),
@@ -144,10 +148,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
 
           // ログアウト
           TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              // TODO: ログアウト処理 → ログイン画面へ遷移
-            },
+            onPressed: () => Navigator.pop(ctx, true),
             child: const Text(
               'ログアウト',
               style: TextStyle(
@@ -160,6 +161,28 @@ class _MyPageScreenState extends State<MyPageScreen> {
         ],
       ),
     );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _loggingOut = true);
+    final authProvider = context.read<AuthProvider>();
+    try {
+      await authProvider.logout();
+      if (!mounted) return;
+      if (authProvider.isAuthenticated) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(authProvider.errorMessage ?? 'ログアウトに失敗しました')),
+        );
+        return;
+      }
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('ログアウトに失敗しました: $error')));
+    } finally {
+      if (mounted) setState(() => _loggingOut = false);
+    }
   }
 
   @override
@@ -276,7 +299,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 4,
                             ),
                           ],
@@ -377,13 +400,13 @@ class _MyPageScreenState extends State<MyPageScreen> {
               color: Colors.white,
               width: double.infinity,
               child: TextButton(
-                onPressed: _showLogoutDialog,
+                onPressed: _loggingOut ? null : _showLogoutDialog,
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text(
-                  'ログアウト',
-                  style: TextStyle(
+                child: Text(
+                  _loggingOut ? 'ログアウト中…' : 'ログアウト',
+                  style: const TextStyle(
                     fontSize: 15,
                     color: Colors.red,
                     fontWeight: FontWeight.w600,
