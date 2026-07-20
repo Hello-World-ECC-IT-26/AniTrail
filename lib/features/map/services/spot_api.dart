@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/network/api_http_client.dart';
 import '../models/anime_spot.dart';
+import '../../coupon/models/coupon.dart';
 
 /// Hono バックエンド（anitrail-back）の /animes・/spots を叩くクライアント。
 /// /spots は Bearer 認証必須なので Supabase セッションのトークンを付与する。
@@ -667,7 +668,7 @@ class SpotApi {
     return stats;
   }
 
-  Future<String> createStamp({
+  Future<StampCreationResult> createStamp({
     required String cardId,
     required String spotId,
   }) async {
@@ -700,7 +701,14 @@ class SpotApi {
       throw Exception('作成したスタンプIDを取得できませんでした');
     }
     await _clearStampCardCache(cardId);
-    return stampId;
+    final rawGrants = body['newly_granted_coupons'];
+    if (rawGrants is! List) {
+      throw const FormatException('クーポン獲得結果の形式が不正です');
+    }
+    final grants = rawGrants
+        .map((item) => CouponGrant.fromJson(item as Map<String, dynamic>))
+        .toList();
+    return StampCreationResult(stampId: stampId, newGrants: grants);
   }
 
   Future<String> uploadArrivalPhoto({

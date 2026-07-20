@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../features/map/models/anime_spot.dart';
 import '../../features/map/services/spot_api.dart';
 import '../../features/profile/services/profile_service.dart';
+import '../../features/coupon/models/coupon.dart';
 
 class AppDataRepository extends ChangeNotifier {
   AppDataRepository(this._api);
@@ -14,6 +15,7 @@ class AppDataRepository extends ChangeNotifier {
   UserProfile? profile;
   int? collectedStampCount;
   List<StampCard> stampCards = const [];
+  List<CouponGrant> pendingCouponGrants = const [];
   bool loading = false;
   Object? error;
   Future<void>? _loadRequest;
@@ -35,10 +37,11 @@ class AppDataRepository extends ChangeNotifier {
       profile = null;
       collectedStampCount = null;
       stampCards = const [];
+      pendingCouponGrants = const [];
     }
     if (!refresh && profile == null && stampCards.isEmpty) {
       final cached = await _api.readCachedAppBootstrap();
-      if (cached != null) _apply(cached);
+      if (cached != null) _apply(cached, includePendingCouponGrants: false);
     }
     loading = profile == null && stampCards.isEmpty;
     error = null;
@@ -55,13 +58,21 @@ class AppDataRepository extends ChangeNotifier {
     }
   }
 
-  void _apply(Map<String, dynamic> data) {
+  void _apply(
+    Map<String, dynamic> data, {
+    bool includePendingCouponGrants = true,
+  }) {
     final profileData = data['profile'] as Map<String, dynamic>?;
     profile = profileData == null ? null : UserProfile.fromJson(profileData);
     collectedStampCount = (data['collected_stamp_count'] as num?)?.toInt() ?? 0;
     stampCards = (data['stamp_cards'] as List? ?? const [])
         .map((item) => StampCard.fromJson(item as Map<String, dynamic>))
         .toList();
+    if (includePendingCouponGrants) {
+      pendingCouponGrants = (data['pending_coupon_grants'] as List? ?? const [])
+          .map((item) => CouponGrant.fromJson(item as Map<String, dynamic>))
+          .toList();
+    }
     notifyListeners();
   }
 
@@ -70,7 +81,16 @@ class AppDataRepository extends ChangeNotifier {
     profile = null;
     collectedStampCount = null;
     stampCards = const [];
+    pendingCouponGrants = const [];
     await _api.clearUserCaches();
+    notifyListeners();
+  }
+
+  void removePendingCouponGrants(Iterable<String> grantIds) {
+    final ids = grantIds.toSet();
+    pendingCouponGrants = pendingCouponGrants
+        .where((grant) => !ids.contains(grant.grantId))
+        .toList();
     notifyListeners();
   }
 }

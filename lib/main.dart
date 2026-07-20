@@ -14,6 +14,7 @@ import 'features/auth/screens/password_change_screen.dart';
 import 'features/home/screens/home_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/data/app_data_repository.dart';
+import 'features/coupon/data/coupon_repository.dart';
 import 'features/map/services/spot_api.dart';
 
 Future<void> main() async {
@@ -48,6 +49,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => AppDataRepository(SpotApi())),
+        ChangeNotifierProvider(create: (_) => CouponRepository()),
       ],
       child: MaterialApp(
         title: AppConstants.appName,
