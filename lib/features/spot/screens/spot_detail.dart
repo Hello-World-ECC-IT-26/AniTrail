@@ -43,6 +43,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
 
   bool _bookmarked = false;
   bool _bookmarkLoading = true;
+  SpotDetailPayload? _detail;
 
   Spot get spot => widget.spot;
   Spot get _draftSpot => spot.withAnime(
@@ -59,15 +60,16 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _loadBookmark();
+    _loadDetail();
   }
 
-  Future<void> _loadBookmark() async {
+  Future<void> _loadDetail() async {
     try {
-      final result = await _api.isBookmarked(spot.spotId);
+      final result = await _api.fetchSpotDetail(spot.spotId);
       if (mounted) {
         setState(() {
-          _bookmarked = result;
+          _detail = result;
+          _bookmarked = result.bookmarked;
           _bookmarkLoading = false;
         });
       }
@@ -106,6 +108,8 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
   }
 
   String? get _imageUrl {
+    final userPhoto = _detail?.photoUrls.firstOrNull;
+    if (userPhoto != null && userPhoto.isNotEmpty) return userPhoto;
     final proxyUrl = spot.streetViewProxyUrl;
     if (proxyUrl != null && proxyUrl.isNotEmpty) return proxyUrl;
     final imageUrl = spot.streetViewImageUrl;
@@ -238,7 +242,12 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
               const SizedBox(height: AppSpacing.xxl),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                child: SpotCommentsSection(spotId: spot.spotId),
+                child: _detail == null
+                    ? const Center(child: CircularProgressIndicator())
+                    : SpotCommentsSection(
+                        spotId: spot.spotId,
+                        initialDetail: _detail,
+                      ),
               ),
             ],
           ),

@@ -4,9 +4,14 @@ import 'dart:math' as math;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 
+import '../../../core/network/api_http_client.dart';
 import '../models/navigation_route.dart';
 
 class NavigationRouteService {
+  NavigationRouteService({http.Client? client})
+    : _client = client ?? ApiHttpClient.shared;
+
+  final http.Client _client;
   static const _valhallaEndpoint = 'https://valhalla1.openstreetmap.de/route';
   static const _walkingSpeedMetersPerSecond = 1.25;
 
@@ -14,7 +19,7 @@ class NavigationRouteService {
     required LatLng origin,
     required LatLng destination,
   }) async {
-    final response = await http.post(
+    final response = await _client.post(
       Uri.parse(_valhallaEndpoint),
       headers: const {'content-type': 'application/json'},
       body: jsonEncode({

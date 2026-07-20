@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../../map/services/spot_api.dart';
 
 enum AuthStatus { idle, loading, success, error }
 
@@ -84,6 +85,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> logout() async {
     if (!_startRequest()) return;
     try {
+      await SpotApi().clearUserCaches();
       await authService.signOut();
       _setSuccess();
     } catch (e) {

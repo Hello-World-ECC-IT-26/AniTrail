@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -55,6 +54,7 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
 
   // しおり一覧
   List<StampCard> _cards = [];
+  Map<String, Map<String, StampVisitStats>> _visitStatsByCard = {};
   bool _loading = true;
   Object? _error;
 
@@ -75,13 +75,15 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
 
   Future<void> _load() async {
     try {
-      final cards = await _api.fetchStampCards();
+      final collections = await _api.fetchStampCollections();
       if (mounted) {
         setState(() {
-          _cards = cards;
+          _cards = collections.map((item) => item.card).toList();
+          _visitStatsByCard = {
+            for (final item in collections) item.card.cardId: item.visitStats,
+          };
           _loading = false;
         });
-        unawaited(_hydrateCards(cards.take(4).toList()));
       }
     } catch (e) {
       if (mounted) {
@@ -91,35 +93,6 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
         });
       }
     }
-  }
-
-  Future<void> _hydrateCards(List<StampCard> cards) async {
-    final cached = await Future.wait(
-      cards.map((card) => _api.readCachedStampCard(card.cardId)),
-    );
-    for (final card in cached.whereType<StampCard>()) {
-      _replaceCard(card);
-    }
-
-    final details = await Future.wait(
-      cards.map((card) async {
-        try {
-          return await _api.fetchStampCard(card.cardId);
-        } catch (_) {
-          return null;
-        }
-      }),
-    );
-    for (final card in details.whereType<StampCard>()) {
-      _replaceCard(card);
-    }
-  }
-
-  void _replaceCard(StampCard card) {
-    if (!mounted) return;
-    final index = _cards.indexWhere((item) => item.cardId == card.cardId);
-    if (index < 0) return;
-    setState(() => _cards[index] = card);
   }
 
   Map<String, String> get _authHeaders {
@@ -141,10 +114,8 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
     widget.onDetailVisibilityChanged(true);
     // 聖地（lat/lng 付き）を取得してピン表示
     try {
-      final full = card.spots.isNotEmpty
-          ? card
-          : await _api.fetchStampCard(card.cardId);
-      final visited = await _api.fetchVisitedSpotIds(card.cardId);
+      final full = card;
+      final visited = (_visitStatsByCard[card.cardId] ?? const {}).keys.toSet();
       if (!mounted || _selected?.cardId != card.cardId) return;
       setState(() {
         _selected = full;
