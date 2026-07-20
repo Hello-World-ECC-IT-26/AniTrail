@@ -113,13 +113,7 @@ class CouponRepository extends ChangeNotifier {
         final detail = body is Map ? body['error']?.toString() : null;
         throw Exception(detail ?? 'クーポンを利用できませんでした');
       }
-      final now = DateTime.now();
-      coupons = coupons
-          .map(
-            (coupon) =>
-                coupon.id == couponId ? coupon.copyWith(usedAt: now) : coupon,
-          )
-          .toList();
+      await load(refresh: true);
     } finally {
       _usingCouponIds.remove(couponId);
       notifyListeners();

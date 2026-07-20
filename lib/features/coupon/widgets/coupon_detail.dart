@@ -89,6 +89,12 @@ class _CouponDetailScreenState extends State<CouponDetailScreen> {
                 '獲得進捗　${coupon.visitedCount}/${coupon.totalSpotCount}（あと${coupon.remainingCount}か所）',
               ),
             ],
+            if (coupon.repeatable && coupon.unlocked) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                '所持枚数　${coupon.availableCount}枚（累計${coupon.acquiredCount}枚獲得）',
+              ),
+            ],
           ],
         ),
       ),
@@ -145,7 +151,10 @@ class _CouponDetailScreenState extends State<CouponDetailScreen> {
                             : const Color(0xFF173F86),
                         shape: const RoundedRectangleBorder(),
                       ),
-                      onPressed: !coupon.unlocked || coupon.isUsed || using
+                      onPressed:
+                          !coupon.unlocked ||
+                              coupon.availableCount == 0 ||
+                              using
                           ? null
                           : () => _useCoupon(coupon),
                       icon: using
@@ -165,7 +174,9 @@ class _CouponDetailScreenState extends State<CouponDetailScreen> {
                         coupon.isUsed
                             ? '利用済み'
                             : coupon.unlocked
-                            ? '利用する'
+                            ? coupon.repeatable
+                                  ? '利用する（残り${coupon.availableCount}枚）'
+                                  : '利用する'
                             : 'あと${coupon.remainingCount}か所',
                       ),
                     ),

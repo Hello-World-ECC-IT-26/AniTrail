@@ -253,6 +253,31 @@ class CouponTicketCard extends StatelessWidget {
                   ),
                 ),
               ),
+            if (coupon.repeatable && coupon.availableCount > 0)
+              Positioned(
+                left: 14,
+                top: 10,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    child: Text(
+                      '残り${coupon.availableCount}枚',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

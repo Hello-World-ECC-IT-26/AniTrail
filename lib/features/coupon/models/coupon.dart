@@ -17,6 +17,9 @@ class Coupon {
     required this.requiredVisitCount,
     required this.remainingCount,
     required this.progressPercent,
+    this.repeatable = false,
+    this.acquiredCount = 0,
+    this.availableCount = 0,
     this.unlockSpotName,
     this.unlockAnimeTitle,
     this.grantId,
@@ -37,13 +40,16 @@ class Coupon {
   final int requiredVisitCount;
   final int remainingCount;
   final int progressPercent;
+  final bool repeatable;
+  final int acquiredCount;
+  final int availableCount;
   final String? unlockSpotName;
   final String? unlockAnimeTitle;
   final String? grantId;
   final DateTime? grantedAt;
   final DateTime? usedAt;
 
-  bool get isUsed => usedAt != null;
+  bool get isUsed => unlocked && availableCount == 0 && usedAt != null;
   bool get isAnimeGoods => category == CouponCategory.animeGoods;
   String get categoryLabel => isAnimeGoods ? 'ANIME GOODS' : 'DRINK FOOD';
 
@@ -61,6 +67,9 @@ class Coupon {
     requiredVisitCount: (json['required_visit_count'] as num?)?.toInt() ?? 0,
     remainingCount: (json['remaining_count'] as num?)?.toInt() ?? 0,
     progressPercent: (json['progress_percent'] as num?)?.toInt() ?? 0,
+    repeatable: json['repeatable'] == true,
+    acquiredCount: (json['acquired_count'] as num?)?.toInt() ?? 0,
+    availableCount: (json['available_count'] as num?)?.toInt() ?? 0,
     unlockSpotName: json['unlock_spot_name'] as String?,
     unlockAnimeTitle: json['unlock_anime_title'] as String?,
     grantId: json['grant_id'] as String?,
@@ -82,6 +91,9 @@ class Coupon {
     requiredVisitCount: requiredVisitCount,
     remainingCount: remainingCount,
     progressPercent: progressPercent,
+    repeatable: repeatable,
+    acquiredCount: acquiredCount,
+    availableCount: availableCount,
     unlockSpotName: unlockSpotName,
     unlockAnimeTitle: unlockAnimeTitle,
     grantId: grantId,
