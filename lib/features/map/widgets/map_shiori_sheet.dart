@@ -73,9 +73,9 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
     _load();
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool force = false}) async {
     try {
-      final collections = await _api.fetchStampCollections();
+      final collections = await _api.fetchStampCollections(force: force);
       if (mounted) {
         setState(() {
           _cards = collections.map((item) => item.card).toList();
@@ -633,7 +633,7 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
         : selected.spots.length;
     final photos = _photoUrls(spot);
     final imageUrl = photos.isEmpty ? null : photos.first;
-    await Navigator.push(
+    final acquired = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (_) => NavigationScreen(
@@ -646,6 +646,18 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
         ),
       ),
     );
+    if (acquired == true && mounted) {
+      await _load(force: true);
+      final refreshed = _cards
+          .where((card) => card.cardId == selected.cardId)
+          .firstOrNull;
+      if (!mounted || refreshed == null) return;
+      await _openShiori(refreshed);
+      final refreshedSpot = refreshed.spots
+          .where((item) => item.spotId == spot.spotId)
+          .firstOrNull;
+      if (refreshedSpot != null) await _openSpotDetail(refreshedSpot);
+    }
   }
 
   List<String> _photoUrls(Spot spot) {

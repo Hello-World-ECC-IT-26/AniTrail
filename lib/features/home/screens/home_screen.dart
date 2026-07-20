@@ -110,9 +110,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-    });
-  }
-
   Future<void> _prefetchHomeImages(AppDataRepository repository) async {
     final urls = repository.stampCards
         .expand((card) => [...card.keyVisualUrls, ...card.spotImageUrls])
