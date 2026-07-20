@@ -225,6 +225,53 @@ class StampCard {
   }
 }
 
+class StampCollection {
+  final StampCard card;
+  final Map<String, StampVisitStats> visitStats;
+
+  const StampCollection({required this.card, required this.visitStats});
+
+  factory StampCollection.fromJson(
+    Map<String, dynamic> json, {
+    String? baseUrl,
+  }) {
+    final rawStats = json['visit_stats'] as Map<String, dynamic>? ?? const {};
+    return StampCollection(
+      card: StampCard.fromJson(json, baseUrl: baseUrl),
+      visitStats: rawStats.map((spotId, value) {
+        final item = value as Map<String, dynamic>;
+        return MapEntry(
+          spotId,
+          StampVisitStats(
+            count: (item['visit_count'] as num?)?.toInt() ?? 0,
+            lastVisitedAt: DateTime.tryParse(
+              item['last_visited_at'] as String? ?? '',
+            ),
+            arrivalPhotoUrls: (item['arrival_photo_urls'] as List? ?? const [])
+                .whereType<String>()
+                .toList(),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+class StampVisitStats {
+  final int count;
+  final DateTime? lastVisitedAt;
+  final List<String> arrivalPhotoUrls;
+
+  String? get arrivalPhotoUrl =>
+      arrivalPhotoUrls.isEmpty ? null : arrivalPhotoUrls.first;
+
+  const StampVisitStats({
+    required this.count,
+    required this.lastVisitedAt,
+    this.arrivalPhotoUrls = const [],
+  });
+}
+
 /// アニメ作品（検索結果の1件）
 class AnimeResult {
   final String animeId;

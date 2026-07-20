@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/network/api_http_client.dart';
 
 class UserProfile {
   final String userId;
@@ -19,7 +20,8 @@ class UserProfile {
 }
 
 class ProfileService {
-  ProfileService({http.Client? client}) : _client = client ?? http.Client();
+  ProfileService({http.Client? client})
+    : _client = client ?? ApiHttpClient.shared;
 
   final http.Client _client;
 

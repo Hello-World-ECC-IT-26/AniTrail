@@ -9,8 +9,13 @@ import '../../map/services/spot_api.dart';
 /// 聖地詳細で共有する公開コメント一覧と投稿導線。
 class SpotCommentsSection extends StatefulWidget {
   final String spotId;
+  final SpotDetailPayload? initialDetail;
 
-  const SpotCommentsSection({super.key, required this.spotId});
+  const SpotCommentsSection({
+    super.key,
+    required this.spotId,
+    this.initialDetail,
+  });
 
   @override
   State<SpotCommentsSection> createState() => _SpotCommentsSectionState();
@@ -26,13 +31,29 @@ class _SpotCommentsSectionState extends State<SpotCommentsSection> {
   @override
   void initState() {
     super.initState();
-    _load();
+    final initial = widget.initialDetail;
+    if (initial == null) {
+      _load();
+    } else {
+      _comments = initial.comments;
+      _canPost = initial.canPostComment;
+      _loading = false;
+    }
   }
 
   @override
   void didUpdateWidget(SpotCommentsSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.spotId != widget.spotId) _load();
+    if (oldWidget.spotId != widget.spotId) {
+      _load();
+    } else if (!identical(oldWidget.initialDetail, widget.initialDetail) &&
+        widget.initialDetail != null) {
+      setState(() {
+        _comments = widget.initialDetail!.comments;
+        _canPost = widget.initialDetail!.canPostComment;
+        _loading = false;
+      });
+    }
   }
 
   Future<void> _load() async {
@@ -41,14 +62,11 @@ class _SpotCommentsSectionState extends State<SpotCommentsSection> {
       _errorMessage = null;
     });
     try {
-      final results = await Future.wait([
-        _api.fetchSpotComments(widget.spotId),
-        _api.canPostSpotComment(widget.spotId),
-      ]);
+      final result = await _api.fetchSpotComments(widget.spotId);
       if (!mounted) return;
       setState(() {
-        _comments = results[0] as List<SpotComment>;
-        _canPost = results[1] as bool;
+        _comments = result.comments;
+        _canPost = result.canPost;
         _loading = false;
       });
     } catch (_) {

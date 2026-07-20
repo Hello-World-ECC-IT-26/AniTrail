@@ -34,12 +34,10 @@ class _CreatingShioriScreenState extends State<CreatingShioriScreen> {
 
   Future<void> _createShiori() async {
     try {
-      // loading アニメーションを最低2秒見せつつ作成
-      final results = await Future.wait([
-        _api.createStampCard(title: widget.title, spotIds: widget.spotIds),
-        Future.delayed(const Duration(seconds: 2)),
-      ]);
-      final cardId = results[0] as String?;
+      final cardId = await _api.createStampCard(
+        title: widget.title,
+        spotIds: widget.spotIds,
+      );
       if (!mounted) return;
       if (cardId == null) {
         _showError();
