@@ -642,7 +642,9 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
     final visited = _visitedSpotIds.contains(spot.spotId);
     final imageUrl = spot.streetViewProxyUrl;
     return Container(
-      height: 122,
+      // コンパクトボタンと3行のテキストを、端末ごとの文字描画差も
+      // 含めて収めるため、内容領域に余裕を持たせる。
+      height: 124,
       clipBehavior: Clip.antiAlias,
       decoration: const BoxDecoration(
         color: AppColors.surface,

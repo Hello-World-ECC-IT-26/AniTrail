@@ -16,6 +16,7 @@ import '../../map/models/anime_spot.dart';
 import '../../map/services/spot_api.dart';
 import '../../shiori/models/shiori_draft.dart';
 import '../../shiori/screens/shiori_list.dart';
+import '../widgets/spot_comments_section.dart';
 
 /// 聖地詳細画面。画像・アニメ情報・住所を表示し、しおりに追加できる。
 class SpotDetailScreen extends StatefulWidget {
@@ -232,6 +233,12 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                   icon: Icons.location_on_outlined,
                   fullWidth: false,
                 ),
+              ),
+
+              const SizedBox(height: AppSpacing.xxl),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: SpotCommentsSection(spotId: spot.spotId),
               ),
             ],
           ),
