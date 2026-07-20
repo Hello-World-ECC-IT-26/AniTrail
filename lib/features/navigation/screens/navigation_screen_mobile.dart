@@ -15,6 +15,7 @@ import '../../../core/styles/app_text.dart';
 import '../../../core/widgets/loading_screen.dart';
 import '../../map/models/anime_spot.dart';
 import '../../map/services/spot_api.dart';
+import '../../spot/screens/spot_comments_screen.dart';
 import '../../stamp/screens/stamp_screen.dart';
 import '../models/arrival_step.dart';
 import '../services/navigation_route_service.dart';
@@ -1302,6 +1303,32 @@ class _NavigationScreenState extends State<NavigationScreen> {
                       );
                     },
                     child: const Text('コレクションを見る'),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                SizedBox(
+                  width: 252,
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.white,
+                      side: const BorderSide(color: AppColors.white),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => SpotCommentsScreen(
+                            spot: spot,
+                            animeTitle: spot.animeTitle ?? '',
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    label: const Text('コメントする'),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),

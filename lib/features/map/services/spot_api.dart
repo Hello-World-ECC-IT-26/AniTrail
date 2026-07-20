@@ -123,6 +123,99 @@ class SpotApi {
         .toList();
   }
 
+  /// 聖地に寄せられた公開コメントを新しい順で取得する。
+  Future<List<SpotComment>> fetchSpotComments(String spotId) async {
+    final uri = Uri.parse(
+      '$_baseUrl/spot-comments',
+    ).replace(queryParameters: {'spot_id': spotId, 'limit': '50'});
+    final token = _accessToken;
+    final res = await _client.get(
+      uri,
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
+    );
+    if (res.statusCode != 200) {
+      throw Exception('コメントの取得に失敗しました (${res.statusCode})');
+    }
+    final body = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+    final list = body['data'] as List? ?? [];
+    return list
+        .map((item) => SpotComment.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// 現在のユーザーが、指定聖地へコメントを投稿できるかを返す。
+  Future<bool> canPostSpotComment(String spotId) async {
+    final token = _accessToken;
+    if (token == null) return false;
+    final uri = Uri.parse(
+      '$_baseUrl/spot-comments/permission',
+    ).replace(queryParameters: {'spot_id': spotId});
+    final res = await _client.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (res.statusCode != 200) return false;
+    final body = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+    return body['can_post'] as bool? ?? false;
+  }
+
+  /// 訪問済みの聖地へコメントを投稿する。
+  Future<SpotComment> createSpotComment({
+    required String spotId,
+    required String comment,
+  }) async {
+    final token = _accessToken;
+    final res = await _client.post(
+      Uri.parse('$_baseUrl/spot-comments'),
+      headers: {
+        if (token != null) 'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'spot_id': spotId, 'comment': comment}),
+    );
+    if (res.statusCode != 200) {
+      String detail = '';
+      try {
+        final body =
+            jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+        detail = body['error']?.toString() ?? '';
+      } catch (_) {
+        detail = utf8.decode(res.bodyBytes);
+      }
+      throw Exception(
+        'コメントの投稿に失敗しました (${res.statusCode})'
+        '${detail.isEmpty ? '' : ': $detail'}',
+      );
+    }
+    final body = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+    return SpotComment.fromJson(body['data'] as Map<String, dynamic>);
+  }
+
+  /// 自分が投稿したコメントを削除する。
+  Future<void> deleteSpotComment(String commentId) async {
+    final token = _accessToken;
+    if (token == null) throw StateError('ログインが必要です');
+
+    final res = await _client.delete(
+      Uri.parse('$_baseUrl/spot-comments/$commentId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (res.statusCode == 200) return;
+
+    String detail = '';
+    try {
+      final body =
+          jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+      detail = body['error']?.toString() ?? '';
+    } catch (_) {
+      detail = utf8.decode(res.bodyBytes);
+    }
+    throw Exception(
+      'コメントを削除できませんでした (${res.statusCode})'
+      '${detail.isEmpty ? '' : ': $detail'}',
+    );
+  }
+
   Future<void> removeBookmark(String spotId) async {
     final token = _accessToken;
     await _client.delete(
@@ -575,4 +668,42 @@ class StampVisitStats {
     required this.lastVisitedAt,
     this.arrivalPhotoUrls = const [],
   });
+}
+
+class SpotComment {
+  final String id;
+  final String spotId;
+  final String userId;
+  final String? username;
+  final String? avatarUrl;
+  final String? imageUrl;
+  final bool? _canDelete;
+  final String comment;
+  final DateTime? createdAt;
+
+  bool get canDelete => _canDelete ?? false;
+
+  const SpotComment({
+    required this.id,
+    required this.spotId,
+    required this.userId,
+    this.username,
+    this.avatarUrl,
+    this.imageUrl,
+    bool? canDelete,
+    required this.comment,
+    this.createdAt,
+  }) : _canDelete = canDelete;
+
+  factory SpotComment.fromJson(Map<String, dynamic> json) => SpotComment(
+    id: json['id'] as String,
+    spotId: json['spot_id'] as String,
+    userId: json['user_id'] as String,
+    username: json['username'] as String?,
+    avatarUrl: json['avatar_url'] as String?,
+    imageUrl: json['image_url'] as String?,
+    canDelete: json['can_delete'] as bool? ?? false,
+    comment: json['comment'] as String? ?? '',
+    createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
+  );
 }
