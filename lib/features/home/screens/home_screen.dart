@@ -15,6 +15,10 @@ import '../../map/screens/map_screen.dart';
 import '../../stamp/screens/all_stamp_collections_screen.dart';
 import '../../search/screens/search_screen.dart';
 import '../../../core/data/app_data_repository.dart';
+import '../../coupon/data/coupon_repository.dart';
+import '../../coupon/models/coupon.dart';
+import '../../coupon/widgets/coupon_detail.dart';
+import '../../coupon/widgets/coupon_grant_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.initialIndex = 0})
@@ -30,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late int _currentIndex;
 
   late final List<Widget?> _pages;
+  bool _pendingCouponDialogShown = false;
 
   @override
   void initState() {
@@ -43,6 +48,68 @@ class _HomeScreenState extends State<HomeScreen> {
       final repository = context.read<AppDataRepository>();
       await repository.load();
       if (mounted) await _prefetchHomeImages(repository);
+      if (mounted) {
+        await _showPendingCouponGrants(repository.pendingCouponGrants);
+      }
+    });
+  }
+
+  Future<void> _showPendingCouponGrants(List<CouponGrant> grants) async {
+    if (_pendingCouponDialogShown || grants.isEmpty) return;
+    _pendingCouponDialogShown = true;
+    final viewCoupons = await showCouponGrantDialog(context, grants);
+    if (!mounted) return;
+    final couponRepository = context.read<CouponRepository>();
+    try {
+      await Future.wait(
+        grants.map((grant) => couponRepository.markGrantSeen(grant.grantId)),
+      );
+      if (!mounted) return;
+      context.read<AppDataRepository>().removePendingCouponGrants(
+        grants.map((grant) => grant.grantId),
+      );
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('獲得通知の確認に失敗しました: $error')));
+      }
+    }
+    if (!viewCoupons || !mounted) return;
+    try {
+      if (couponRepository.category != null) {
+        await couponRepository.setCategory(null);
+      } else {
+        await couponRepository.load(refresh: true);
+      }
+      if (!mounted) return;
+      if (grants.length == 1) {
+        final couponId = grants.single.couponId;
+        final coupon = couponRepository.coupons
+            .where((item) => item.id == couponId)
+            .firstOrNull;
+        if (coupon != null) {
+          await Navigator.of(context).push<void>(
+            MaterialPageRoute(
+              builder: (_) => CouponDetailScreen(coupon: coupon),
+            ),
+          );
+          return;
+        }
+      }
+      setState(() {
+        _ensurePage(3);
+        _currentIndex = 3;
+      });
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('クーポンを開けませんでした: $error')));
+      }
+    }
+  }
+
     });
   }
 
