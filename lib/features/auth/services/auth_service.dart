@@ -6,9 +6,13 @@ import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/network/api_http_client.dart';
 
 class AuthService {
+  AuthService({http.Client? client}) : _client = client ?? ApiHttpClient.shared;
+
   final supabase = Supabase.instance.client;
+  final http.Client _client;
 
   /// メールアドレス＋パスワードでログイン
   Future<void> login({required String email, required String password}) async {
@@ -68,7 +72,7 @@ class AuthService {
     final normalizedBaseUrl = baseUrl.endsWith('/')
         ? baseUrl.substring(0, baseUrl.length - 1)
         : baseUrl;
-    final response = await http.post(
+    final response = await _client.post(
       Uri.parse('$normalizedBaseUrl/profiles'),
       headers: {
         'Authorization': 'Bearer $token',
@@ -140,7 +144,9 @@ class AuthService {
         contentType: MediaType.parse(contentType),
       ),
     );
-    final response = await http.Response.fromStream(await request.send());
+    final response = await http.Response.fromStream(
+      await _client.send(request),
+    );
     if (response.statusCode != 200) {
       var detail = '';
       try {

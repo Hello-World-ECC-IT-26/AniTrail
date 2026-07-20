@@ -71,7 +71,7 @@ class _SearchOverlayState extends State<SearchOverlay> {
       return;
     }
     setState(() => _loading = true);
-    _debounce = Timer(const Duration(milliseconds: 250), () async {
+    _debounce = Timer(const Duration(milliseconds: 300), () async {
       final suggestions = await _api.searchAnimeSuggestions(query);
       if (!mounted || requestId != _requestId) return;
       setState(() {

@@ -8,12 +8,13 @@ import 'package:mime/mime.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/network/api_http_client.dart';
 import '../models/anime_spot.dart';
 
 /// Hono バックエンド（anitrail-back）の /animes・/spots を叩くクライアント。
 /// /spots は Bearer 認証必須なので Supabase セッションのトークンを付与する。
 class SpotApi {
-  SpotApi({http.Client? client}) : _client = client ?? http.Client();
+  SpotApi({http.Client? client}) : _client = client ?? ApiHttpClient.shared;
 
   final http.Client _client;
   static final Map<String, ({DateTime cachedAt, Future<List<Spot>> request})>
@@ -21,6 +22,20 @@ class SpotApi {
   static final Map<String, StampCard> _stampCardSnapshots = {};
   static final Map<String, ({DateTime cachedAt, Future<StampCard> request})>
   _stampCardRequests = {};
+  static final Map<
+    String,
+    ({DateTime cachedAt, Future<List<AnimeResult>> request})
+  >
+  _animeSearchRequests = {};
+  static final Map<String, ({DateTime cachedAt, Future<List<String>> request})>
+  _suggestionRequests = {};
+  static final Map<String, Future<Map<String, dynamic>>> _bootstrapRequests =
+      {};
+  static final Map<
+    String,
+    ({DateTime cachedAt, Future<List<StampCollection>> request})
+  >
+  _collectionRequests = {};
 
   String _stampCardCacheKey(String cardId) {
     final userId = Supabase.instance.client.auth.currentUser?.id ?? 'anonymous';
@@ -45,6 +60,27 @@ class SpotApi {
 
   /// アニメ名で検索（部分一致）。各件に spot_count を含む。
   Future<List<AnimeResult>> searchAnimes(String query) async {
+    final normalized = '$_userCacheScope:${query.trim().toLowerCase()}';
+    final cached = _animeSearchRequests[normalized];
+    if (cached != null &&
+        DateTime.now().difference(cached.cachedAt) <
+            const Duration(minutes: 5)) {
+      return cached.request;
+    }
+    final request = _searchAnimes(query.trim());
+    _animeSearchRequests[normalized] = (
+      cachedAt: DateTime.now(),
+      request: request,
+    );
+    try {
+      return await request;
+    } catch (_) {
+      _animeSearchRequests.remove(normalized);
+      rethrow;
+    }
+  }
+
+  Future<List<AnimeResult>> _searchAnimes(String query) async {
     final uri = Uri.parse(
       '$_baseUrl/animes',
     ).replace(queryParameters: {'title': query});
@@ -68,6 +104,27 @@ class SpotApi {
   Future<List<String>> searchAnimeSuggestions(String query) async {
     final trimmed = query.trim();
     if (trimmed.isEmpty) return [];
+    final normalized = '$_userCacheScope:${trimmed.toLowerCase()}';
+    final cached = _suggestionRequests[normalized];
+    if (cached != null &&
+        DateTime.now().difference(cached.cachedAt) <
+            const Duration(minutes: 10)) {
+      return cached.request;
+    }
+    final request = _searchAnimeSuggestions(trimmed);
+    _suggestionRequests[normalized] = (
+      cachedAt: DateTime.now(),
+      request: request,
+    );
+    try {
+      return await request;
+    } catch (_) {
+      _suggestionRequests.remove(normalized);
+      rethrow;
+    }
+  }
+
+  Future<List<String>> _searchAnimeSuggestions(String trimmed) async {
     final uri = Uri.parse(
       '$_baseUrl/animes/summary',
     ).replace(queryParameters: {'title': trimmed});
@@ -123,8 +180,36 @@ class SpotApi {
         .toList();
   }
 
+  Future<SpotDetailPayload> fetchSpotDetail(String spotId) async {
+    final token = _accessToken;
+    final res = await _client.get(
+      Uri.parse('$_baseUrl/spots/$spotId/detail'),
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
+    );
+    if (res.statusCode != 200) {
+      throw Exception('聖地詳細の取得に失敗しました (${res.statusCode})');
+    }
+    final body = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+    final data = body['data'] as Map<String, dynamic>;
+    return SpotDetailPayload(
+      spot: Spot.fromJson(
+        data['spot'] as Map<String, dynamic>,
+        baseUrl: _baseUrl,
+      ),
+      photoUrls: (data['photo_urls'] as List? ?? const [])
+          .whereType<String>()
+          .toList(),
+      comments: (data['comments'] as List? ?? const [])
+          .map((item) => SpotComment.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      canPostComment: data['can_post_comment'] as bool? ?? false,
+      visited: data['visited'] as bool? ?? false,
+      bookmarked: data['bookmarked'] as bool? ?? false,
+    );
+  }
+
   /// 聖地に寄せられた公開コメントを新しい順で取得する。
-  Future<List<SpotComment>> fetchSpotComments(String spotId) async {
+  Future<SpotCommentsPayload> fetchSpotComments(String spotId) async {
     final uri = Uri.parse(
       '$_baseUrl/spot-comments',
     ).replace(queryParameters: {'spot_id': spotId, 'limit': '50'});
@@ -138,9 +223,13 @@ class SpotApi {
     }
     final body = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
     final list = body['data'] as List? ?? [];
-    return list
+    final comments = list
         .map((item) => SpotComment.fromJson(item as Map<String, dynamic>))
         .toList();
+    return SpotCommentsPayload(
+      comments: comments,
+      canPost: body['can_post'] as bool? ?? false,
+    );
   }
 
   /// 現在のユーザーが、指定聖地へコメントを投稿できるかを返す。
@@ -283,6 +372,97 @@ class SpotApi {
         .toList();
   }
 
+  String get _userCacheScope =>
+      Supabase.instance.client.auth.currentUser?.id ?? 'anonymous';
+
+  Future<Map<String, dynamic>> fetchAppBootstrap() {
+    final scope = _userCacheScope;
+    return _bootstrapRequests.putIfAbsent(scope, () async {
+      try {
+        final token = _accessToken;
+        final res = await _client.get(
+          Uri.parse('$_baseUrl/app/bootstrap'),
+          headers: {if (token != null) 'Authorization': 'Bearer $token'},
+        );
+        if (res.statusCode != 200) {
+          throw Exception('ホーム情報の取得に失敗しました (${res.statusCode})');
+        }
+        final body =
+            jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+        final data = body['data'] as Map<String, dynamic>;
+        final prefs = await SharedPreferences.getInstance();
+        unawaited(prefs.setString('app_bootstrap:v1:$scope', jsonEncode(data)));
+        return data;
+      } finally {
+        _bootstrapRequests.remove(scope);
+      }
+    });
+  }
+
+  Future<Map<String, dynamic>?> readCachedAppBootstrap() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('app_bootstrap:v1:$_userCacheScope');
+    if (raw == null) return null;
+    try {
+      return jsonDecode(raw) as Map<String, dynamic>;
+    } catch (_) {
+      await prefs.remove('app_bootstrap:v1:$_userCacheScope');
+      return null;
+    }
+  }
+
+  Future<List<StampCollection>> fetchStampCollections({
+    bool force = false,
+  }) async {
+    final scope = _userCacheScope;
+    final cached = _collectionRequests[scope];
+    if (!force &&
+        cached != null &&
+        DateTime.now().difference(cached.cachedAt) <
+            const Duration(seconds: 15)) {
+      return cached.request;
+    }
+    final request = _fetchStampCollections();
+    _collectionRequests[scope] = (cachedAt: DateTime.now(), request: request);
+    try {
+      return await request;
+    } catch (_) {
+      _collectionRequests.remove(scope);
+      rethrow;
+    }
+  }
+
+  Future<List<StampCollection>> _fetchStampCollections() async {
+    final token = _accessToken;
+    final res = await _client.get(
+      Uri.parse('$_baseUrl/stamp-collections'),
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
+    );
+    if (res.statusCode != 200) {
+      throw Exception('コレクションの取得に失敗しました (${res.statusCode})');
+    }
+    final body = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+    return (body['data'] as List? ?? const [])
+        .map(
+          (item) => StampCollection.fromJson(
+            item as Map<String, dynamic>,
+            baseUrl: _baseUrl,
+          ),
+        )
+        .toList();
+  }
+
+  Future<void> clearUserCaches() async {
+    final scope = _userCacheScope;
+    _bootstrapRequests.remove(scope);
+    _collectionRequests.remove(scope);
+    final prefs = await SharedPreferences.getInstance();
+    for (final key
+        in prefs.getKeys().where((key) => key.contains(scope)).toList()) {
+      await prefs.remove(key);
+    }
+  }
+
   /// 起動時表示用の保存済みしおり一覧。通信は行わない。
   Future<List<StampCard>> readCachedStampCards() async {
     final prefs = await SharedPreferences.getInstance();
@@ -411,11 +591,21 @@ class SpotApi {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('stamp_card_detail:$key');
     await prefs.remove(_stampCardListCacheKey);
+    await _invalidateAggregateCaches();
   }
 
   Future<void> _clearStampCardListCache() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_stampCardListCacheKey);
+    await _invalidateAggregateCaches();
+  }
+
+  Future<void> _invalidateAggregateCaches() async {
+    final scope = _userCacheScope;
+    _bootstrapRequests.remove(scope);
+    _collectionRequests.remove(scope);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('app_bootstrap:v1:$scope');
   }
 
   /// 指定しおり（カード）でスタンプ取得済みの spot_id 集合を返す。
@@ -655,21 +845,6 @@ class SpotApi {
   }
 }
 
-class StampVisitStats {
-  final int count;
-  final DateTime? lastVisitedAt;
-  final List<String> arrivalPhotoUrls;
-
-  String? get arrivalPhotoUrl =>
-      arrivalPhotoUrls.isEmpty ? null : arrivalPhotoUrls.first;
-
-  const StampVisitStats({
-    required this.count,
-    required this.lastVisitedAt,
-    this.arrivalPhotoUrls = const [],
-  });
-}
-
 class SpotComment {
   final String id;
   final String spotId;
@@ -706,4 +881,29 @@ class SpotComment {
     comment: json['comment'] as String? ?? '',
     createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
   );
+}
+
+class SpotCommentsPayload {
+  final List<SpotComment> comments;
+  final bool canPost;
+
+  const SpotCommentsPayload({required this.comments, required this.canPost});
+}
+
+class SpotDetailPayload {
+  final Spot spot;
+  final List<String> photoUrls;
+  final List<SpotComment> comments;
+  final bool canPostComment;
+  final bool visited;
+  final bool bookmarked;
+
+  const SpotDetailPayload({
+    required this.spot,
+    required this.photoUrls,
+    required this.comments,
+    required this.canPostComment,
+    required this.visited,
+    required this.bookmarked,
+  });
 }
