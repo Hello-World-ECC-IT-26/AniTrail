@@ -7,6 +7,7 @@ import '../../features/map/models/anime_spot.dart';
 import '../../features/map/services/spot_api.dart';
 import '../../features/profile/services/profile_service.dart';
 import '../../features/coupon/models/coupon.dart';
+import '../../features/home/models/app_event.dart';
 
 class AppDataRepository extends ChangeNotifier {
   AppDataRepository(this._api);
@@ -16,6 +17,7 @@ class AppDataRepository extends ChangeNotifier {
   int? collectedStampCount;
   List<StampCard> stampCards = const [];
   List<CouponGrant> pendingCouponGrants = const [];
+  List<AppEvent> activeEvents = const [];
   bool loading = false;
   Object? error;
   Future<void>? _loadRequest;
@@ -38,6 +40,7 @@ class AppDataRepository extends ChangeNotifier {
       collectedStampCount = null;
       stampCards = const [];
       pendingCouponGrants = const [];
+      activeEvents = const [];
     }
     if (!refresh && profile == null && stampCards.isEmpty) {
       final cached = await _api.readCachedAppBootstrap();
@@ -68,6 +71,9 @@ class AppDataRepository extends ChangeNotifier {
     stampCards = (data['stamp_cards'] as List? ?? const [])
         .map((item) => StampCard.fromJson(item as Map<String, dynamic>))
         .toList();
+    activeEvents = (data['active_events'] as List? ?? const [])
+        .map((item) => AppEvent.fromJson(item as Map<String, dynamic>))
+        .toList();
     if (includePendingCouponGrants) {
       pendingCouponGrants = (data['pending_coupon_grants'] as List? ?? const [])
           .map((item) => CouponGrant.fromJson(item as Map<String, dynamic>))
@@ -82,6 +88,7 @@ class AppDataRepository extends ChangeNotifier {
     collectedStampCount = null;
     stampCards = const [];
     pendingCouponGrants = const [];
+    activeEvents = const [];
     await _api.clearUserCaches();
     notifyListeners();
   }

@@ -10,7 +10,6 @@ import '../../../core/styles/app_text.dart';
 import '../../../core/styles/app_dimens.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/main_buttom_nav.dart';
-import '../../../features/auth/providers/auth_provider.dart';
 import '../../coupon/data/coupon_repository.dart';
 import '../../coupon/models/coupon.dart';
 import '../../coupon/widgets/coupon_detail.dart';
@@ -186,16 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: _currentIndex != 0,
       backgroundColor: AppColors.background,
-      appBar: _currentIndex == 1
-          ? null
-          : AniTrailAppBar(
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.logout, color: AppColors.white),
-                  onPressed: () => context.read<AuthProvider>().logout(),
-                ),
-              ],
-            ),
+      appBar: _currentIndex == 1 ? null : const AniTrailAppBar(),
       body: IndexedStack(
         index: _currentIndex,
         children: List.generate(
