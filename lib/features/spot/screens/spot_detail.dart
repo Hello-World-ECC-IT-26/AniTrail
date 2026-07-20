@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -17,6 +16,7 @@ import '../../map/services/spot_api.dart';
 import '../../shiori/models/shiori_draft.dart';
 import '../../shiori/screens/shiori_list.dart';
 import '../widgets/spot_comments_section.dart';
+import '../widgets/spot_photo_gallery.dart';
 
 /// 聖地詳細画面。画像・アニメ情報・住所を表示し、しおりに追加できる。
 class SpotDetailScreen extends StatefulWidget {
@@ -107,14 +107,8 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
     }
   }
 
-  String? get _imageUrl {
-    final userPhoto = _detail?.photoUrls.firstOrNull;
-    if (userPhoto != null && userPhoto.isNotEmpty) return userPhoto;
-    final proxyUrl = spot.streetViewProxyUrl;
-    if (proxyUrl != null && proxyUrl.isNotEmpty) return proxyUrl;
-    final imageUrl = spot.streetViewImageUrl;
-    return imageUrl != null && imageUrl.isNotEmpty ? imageUrl : null;
-  }
+  String? get _streetViewImageUrl =>
+      spot.streetViewProxyUrl ?? spot.streetViewImageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -159,15 +153,13 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Stack(
                   children: [
-                    ClipRRect(
-                      borderRadius: AppRadius.brSm,
-                      child: AspectRatio(
-                        aspectRatio: 4 / 3,
-                        child: _buildImage(),
-                      ),
+                    SpotPhotoGallery(
+                      streetViewUrl: _streetViewImageUrl,
+                      userPhotoUrls: _detail?.photoUrls ?? const [],
+                      streetViewHeaders: _authHeaders,
                     ),
                     Positioned(
-                      top: AppSpacing.sm,
+                      top: 40,
                       right: AppSpacing.sm,
                       child: AppCircleIconButton(
                         icon: _bookmarked
@@ -338,27 +330,6 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
             (route) => false,
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildImage() {
-    final url = _imageUrl;
-    if (url == null || url.isEmpty) {
-      return Container(
-        color: AppColors.placeholder,
-        child: const Icon(Icons.image_outlined, color: AppColors.iconMuted),
-      );
-    }
-    return CachedNetworkImage(
-      imageUrl: url,
-      httpHeaders: _authHeaders,
-      fit: BoxFit.cover,
-      placeholder: (context, imageUrl) =>
-          Container(color: AppColors.placeholder),
-      errorWidget: (context, imageUrl, error) => Container(
-        color: AppColors.placeholder,
-        child: const Icon(Icons.image_outlined, color: AppColors.iconMuted),
       ),
     );
   }

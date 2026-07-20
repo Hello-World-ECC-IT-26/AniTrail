@@ -1,8 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/styles/app_styles.dart';
 import '../../../core/styles/app_text.dart';
@@ -10,8 +9,10 @@ import '../../../core/styles/app_dimens.dart';
 import '../../../core/styles/app_shadows.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/app_chip.dart';
+import '../../navigation/screens/navigation_screen.dart';
 import '../../search/widgets/search_result_card.dart';
 import '../../spot/widgets/spot_comments_section.dart';
+import '../../spot/widgets/spot_photo_gallery.dart';
 import '../models/anime_spot.dart';
 import '../services/spot_api.dart';
 import 'spot_list_item.dart';
@@ -36,6 +37,8 @@ class MapResultsSheet extends StatefulWidget {
   final ValueChanged<Spot>? onSpotTap;
   final VoidCallback? onDetailClose;
   final ValueChanged<double>? onSheetSizeChanged;
+  final LatLng? currentLocation;
+  final Future<void> Function()? onArrivalRecorded;
 
   const MapResultsSheet({
     super.key,
@@ -50,6 +53,8 @@ class MapResultsSheet extends StatefulWidget {
     this.onSpotTap,
     this.onDetailClose,
     this.onSheetSizeChanged,
+    this.currentLocation,
+    this.onArrivalRecorded,
     this.loading = false,
     this.spotsLoading = false,
     this.error,
@@ -346,6 +351,8 @@ class _MapResultsSheetState extends State<MapResultsSheet> {
           spot: _detailSpot!,
           animeTitle: widget.selectedAnime?.title ?? '',
           onBack: _closeDetail,
+          currentLocation: widget.currentLocation,
+          onArrivalRecorded: widget.onArrivalRecorded,
         ),
       ),
     ];
@@ -357,12 +364,16 @@ class _SpotDetailContent extends StatefulWidget {
   final Spot spot;
   final String animeTitle;
   final VoidCallback onBack;
+  final LatLng? currentLocation;
+  final Future<void> Function()? onArrivalRecorded;
 
   const _SpotDetailContent({
     super.key,
     required this.spot,
     required this.animeTitle,
     required this.onBack,
+    this.currentLocation,
+    this.onArrivalRecorded,
   });
 
   @override
@@ -374,6 +385,7 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
   bool _bookmarked = false;
   bool _bookmarkLoading = true;
   List<String> _postUrls = [];
+  bool _openingNavigation = false;
 
   Spot get spot => widget.spot;
 
@@ -441,43 +453,59 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
   }
 
   Future<void> _openDirections() async {
+    if (_openingNavigation) return;
     final lat = spot.latitude;
     final lng = spot.longitude;
-    if (lat == null || lng == null) return;
-    final uri = Uri.parse(
-      'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng',
-    );
-    if (await canLaunchUrl(uri)) await launchUrl(uri);
+    if (lat == null || lng == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('目的地の位置情報がありません')));
+      return;
+    }
+    setState(() => _openingNavigation = true);
+    try {
+      final collections = await _api.fetchStampCollections(force: true);
+      final collection = collections
+          .where(
+            (item) => item.card.spots.any(
+              (candidate) => candidate.spotId == spot.spotId,
+            ),
+          )
+          .firstOrNull;
+      if (collection == null) {
+        throw StateError('この聖地を含むしおりがありません。先にしおりへ追加してください');
+      }
+      if (!mounted) return;
+      final acquired = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => NavigationScreen(
+            spot: spot,
+            cardId: collection.card.cardId,
+            stampCount: collection.visitStats.length,
+            stampTotal: collection.card.spotCount > 0
+                ? collection.card.spotCount
+                : collection.card.spots.length,
+            imageUrl: _streetViewUrl,
+            origin: widget.currentLocation,
+          ),
+        ),
+      );
+      if (acquired == true && mounted) {
+        widget.onBack();
+        await widget.onArrivalRecorded?.call();
+      }
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('ナビを開始できませんでした: $error')));
+    } finally {
+      if (mounted) setState(() => _openingNavigation = false);
+    }
   }
 
   String? get _streetViewUrl =>
       spot.streetViewProxyUrl ?? spot.streetViewImageUrl;
-
-  // Street View を先頭固定、続いてユーザー投稿写真
-  List<String> get _photoUrls {
-    final urls = <String>[];
-    final sv = _streetViewUrl;
-    if (sv != null && sv.isNotEmpty) urls.add(sv);
-    urls.addAll(_postUrls);
-    return urls;
-  }
-
-  Widget _imageWidget(String url) {
-    final isProxy =
-        url == spot.streetViewProxyUrl || url == spot.streetViewImageUrl;
-    return CachedNetworkImage(
-      imageUrl: url,
-      httpHeaders: isProxy ? _authHeaders : {},
-      fit: BoxFit.cover,
-      placeholder: (_, _) => _placeholder(),
-      errorWidget: (_, _, _) => _placeholder(),
-    );
-  }
-
-  Widget _placeholder() => Container(
-    color: AppColors.grey,
-    child: const Icon(Icons.image, color: AppColors.textHint, size: 32),
-  );
 
   @override
   Widget build(BuildContext context) {
@@ -567,17 +595,17 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
             AppSpacing.lg,
             0,
           ),
-          child: AppButton(label: '経路', onPressed: _openDirections),
+          child: AppButton(
+            label: _openingNavigation ? 'しおりを確認中・・・' : 'ナビ開始',
+            onPressed: _openingNavigation ? null : _openDirections,
+          ),
         ),
 
-        // 写真グリッド
-        if (_photoUrls.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-            child: _buildPhotoGrid(),
-          ),
-        ],
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+          child: _buildPhotoGrid(),
+        ),
 
         const SizedBox(height: AppSpacing.xl),
         Padding(
@@ -591,85 +619,10 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
   }
 
   Widget _buildPhotoGrid() {
-    final photos = _photoUrls;
-
-    if (photos.length == 1) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: AspectRatio(aspectRatio: 4 / 3, child: _imageWidget(photos[0])),
-      );
-    }
-
-    if (photos.length == 2) {
-      return SizedBox(
-        height: 200,
-        child: Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  bottomLeft: Radius.circular(10),
-                ),
-                child: _imageWidget(photos[0]),
-              ),
-            ),
-            const SizedBox(width: 3),
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(10),
-                  bottomRight: Radius.circular(10),
-                ),
-                child: _imageWidget(photos[1]),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return SizedBox(
-      height: 200,
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(10),
-                bottomLeft: Radius.circular(10),
-              ),
-              child: _imageWidget(photos[0]),
-            ),
-          ),
-          const SizedBox(width: 3),
-          Expanded(
-            child: Column(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topRight: Radius.circular(10),
-                    ),
-                    child: _imageWidget(photos[1]),
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      bottomRight: Radius.circular(10),
-                    ),
-                    child: _imageWidget(photos[2]),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return SpotPhotoGallery(
+      streetViewUrl: _streetViewUrl,
+      userPhotoUrls: _postUrls,
+      streetViewHeaders: _authHeaders,
     );
   }
 }

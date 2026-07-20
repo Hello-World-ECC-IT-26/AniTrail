@@ -232,6 +232,7 @@ class _MapScreenState extends State<MapScreen>
 
             if (resultsVisible)
               MapResultsSheet(
+                currentLocation: hasFix ? currentLatLng : null,
                 results: results,
                 loading: loading,
                 spotsLoading: spotsLoading,
@@ -245,6 +246,12 @@ class _MapScreenState extends State<MapScreen>
                 onSortChange: (i) => setState(() => sortIndex = i),
                 onSpotTap: _onSpotTap,
                 onDetailClose: clearPin,
+                onArrivalRecorded: () async {
+                  final anime = selectedAnime;
+                  if (anime == null) return;
+                  anime.spots = [];
+                  await selectAnime(anime);
+                },
                 onSheetSizeChanged: (size) {
                   _sheetSize = size;
                   recenterCamera(); // ドラッグ追従は即時（moveCamera）

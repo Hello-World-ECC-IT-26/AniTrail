@@ -133,10 +133,15 @@ class CouponGrant {
 }
 
 class StampCreationResult {
-  const StampCreationResult({required this.stampId, required this.newGrants});
+  const StampCreationResult({
+    required this.stampId,
+    required this.newGrants,
+    this.arrivalPhotoUrl,
+  });
 
   final String stampId;
   final List<CouponGrant> newGrants;
+  final String? arrivalPhotoUrl;
 }
 
 CouponCategory couponCategoryFromApi(String? value) => switch (value) {

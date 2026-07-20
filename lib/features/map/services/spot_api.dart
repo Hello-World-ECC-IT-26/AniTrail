@@ -609,6 +609,11 @@ class SpotApi {
     await prefs.remove('app_bootstrap:v1:$scope');
   }
 
+  void _invalidateSpotCaches() {
+    final prefix = '$_userCacheScope:';
+    _spotsCache.removeWhere((key, _) => key.startsWith(prefix));
+  }
+
   /// 指定しおり（カード）でスタンプ取得済みの spot_id 集合を返す。
   Future<Set<String>> fetchVisitedSpotIds(String cardId) async {
     final stats = await fetchStampVisitStats(cardId);
@@ -701,6 +706,7 @@ class SpotApi {
       throw Exception('作成したスタンプIDを取得できませんでした');
     }
     await _clearStampCardCache(cardId);
+    _invalidateSpotCaches();
     final rawGrants = body['newly_granted_coupons'];
     if (rawGrants is! List) {
       throw const FormatException('クーポン獲得結果の形式が不正です');
@@ -709,6 +715,85 @@ class SpotApi {
         .map((item) => CouponGrant.fromJson(item as Map<String, dynamic>))
         .toList();
     return StampCreationResult(stampId: stampId, newGrants: grants);
+  }
+
+  Future<StampCreationResult> createArrivalStamp({
+    required String cardId,
+    required String spotId,
+    required String stampId,
+    required DateTime obtainedAt,
+    List<int>? imageBytes,
+    String? imageFilename,
+    String? imageContentType,
+  }) async {
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$_baseUrl/stamps/arrivals'),
+    );
+    final token = _accessToken;
+    if (token != null) request.headers['Authorization'] = 'Bearer $token';
+    request.fields.addAll({
+      'card_id': cardId,
+      'spot_id': spotId,
+      'stamp_id': stampId,
+      'obtained_at': obtainedAt.toUtc().toIso8601String(),
+    });
+    if (imageBytes != null) {
+      final contentType = _resolveImageContentType(
+        filename: imageFilename ?? 'arrival_photo.jpg',
+        bytes: imageBytes,
+        mimeType: imageContentType,
+      );
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'image',
+          imageBytes,
+          filename: _ensureImageFilename(
+            imageFilename ?? 'arrival_photo.jpg',
+            contentType,
+          ),
+          contentType: MediaType.parse(contentType),
+        ),
+      );
+    }
+
+    final streamed = await _client.send(request);
+    final response = await http.Response.fromStream(streamed);
+    if (response.statusCode != 200) {
+      String detail = '';
+      try {
+        final body =
+            jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        detail = body['error']?.toString() ?? '';
+      } catch (_) {
+        detail = utf8.decode(response.bodyBytes);
+      }
+      throw Exception(
+        '到着処理に失敗しました (${response.statusCode})'
+        '${detail.isEmpty ? '' : ': $detail'}',
+      );
+    }
+
+    final body =
+        jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+    final data = body['data'] as Map<String, dynamic>;
+    final returnedStampId = data['stamp_id'] as String?;
+    if (returnedStampId == null || returnedStampId.isEmpty) {
+      throw const FormatException('作成したスタンプIDを取得できませんでした');
+    }
+    final rawGrants = body['newly_granted_coupons'];
+    if (rawGrants is! List) {
+      throw const FormatException('クーポン獲得結果の形式が不正です');
+    }
+    await _clearStampCardCache(cardId);
+    _invalidateSpotCaches();
+    return StampCreationResult(
+      stampId: returnedStampId,
+      arrivalPhotoUrl: data['arrival_photo_url'] as String?,
+      newGrants: rawGrants
+          .map((item) => CouponGrant.fromJson(item as Map<String, dynamic>))
+          .toList(),
+    );
   }
 
   Future<String> uploadArrivalPhoto({
