@@ -8,6 +8,7 @@ import '../widgets/map_results_sheet.dart';
 import '../widgets/map_search_bar.dart';
 import '../widgets/map_search_panel.dart';
 import '../widgets/map_shiori_sheet.dart';
+import '../widgets/map_tutorial.dart';
 import '../../spot/screens/spot_detail.dart';
 import 'map_location_mixin.dart';
 import 'map_search_mixin.dart';
@@ -27,6 +28,7 @@ class _MapScreenState extends State<MapScreen>
   // しおり一覧シートの表示状態
   bool _shioriVisible = false;
   bool _shioriDetailVisible = false;
+  bool _tutorialRequested = false;
 
   @override
   double get currentLat => currentLatLng.latitude;
@@ -73,6 +75,15 @@ class _MapScreenState extends State<MapScreen>
     super.initState();
     loadHistory();
     startLocationTracking();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showTutorial();
+    });
+  }
+
+  Future<void> _showTutorial() async {
+    if (_tutorialRequested || !mounted) return;
+    _tutorialRequested = true;
+    await showMapTutorialIfNeeded(context);
   }
 
   @override
