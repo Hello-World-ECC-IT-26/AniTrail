@@ -41,16 +41,15 @@ class _StampScreenState extends State<StampScreen> {
   }
 
   Future<List<_StampCollection>> _loadCollections() async {
+    final loaded = await _api.fetchStampCollections();
     final cards = widget.cardId == null
-        ? await _api.fetchStampCards()
-        : [await _api.fetchStampCard(widget.cardId!)];
+        ? loaded
+        : loaded.where((item) => item.card.cardId == widget.cardId);
     final collections = <String, _StampCollection>{};
 
-    for (final card in cards) {
-      final full = card.spots.isNotEmpty
-          ? card
-          : await _api.fetchStampCard(card.cardId);
-      final visitStats = await _api.fetchStampVisitStats(card.cardId);
+    for (final item in cards) {
+      final full = item.card;
+      final visitStats = item.visitStats;
 
       for (final spot in full.spots) {
         final animeTitle = spot.animeTitle ?? full.title;

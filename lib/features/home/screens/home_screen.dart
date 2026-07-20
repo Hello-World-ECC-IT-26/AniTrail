@@ -1,4 +1,5 @@
 import 'package:anitrail/features/coupon/screens/coupon_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/styles/app_styles.dart';
@@ -13,6 +14,11 @@ import '../../../features/auth/providers/auth_provider.dart';
 import '../../map/screens/map_screen.dart';
 import '../../stamp/screens/all_stamp_collections_screen.dart';
 import '../../search/screens/search_screen.dart';
+import '../../../core/data/app_data_repository.dart';
+import '../../coupon/data/coupon_repository.dart';
+import '../../coupon/models/coupon.dart';
+import '../../coupon/widgets/coupon_detail.dart';
+import '../../coupon/widgets/coupon_grant_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.initialIndex = 0})
@@ -27,24 +33,123 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late int _currentIndex;
 
-  // 各タブの画面リスト
-  late final List<Widget> _pages;
+  late final List<Widget?> _pages;
+  bool _pendingCouponDialogShown = false;
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
-    _pages = [
-      _HomeBody(onSearchTap: _onSearchTap),
-      const MapScreen(),
-      const AllStampCollectionsScreen(showBackButton: false),
-      const CouponScreen(),
-    ];
+    _pages = List<Widget?>.filled(4, null);
+    _pages[0] = _HomeBody(onSearchTap: _onSearchTap);
+    _ensurePage(_currentIndex);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final repository = context.read<AppDataRepository>();
+      await repository.load();
+      if (mounted) await _prefetchHomeImages(repository);
+      if (mounted) {
+        await _showPendingCouponGrants(repository.pendingCouponGrants);
+      }
+    });
+  }
+
+  Future<void> _showPendingCouponGrants(List<CouponGrant> grants) async {
+    if (_pendingCouponDialogShown || grants.isEmpty) return;
+    _pendingCouponDialogShown = true;
+    final viewCoupons = await showCouponGrantDialog(context, grants);
+    if (!mounted) return;
+    final couponRepository = context.read<CouponRepository>();
+    try {
+      await Future.wait(
+        grants.map((grant) => couponRepository.markGrantSeen(grant.grantId)),
+      );
+      if (!mounted) return;
+      context.read<AppDataRepository>().removePendingCouponGrants(
+        grants.map((grant) => grant.grantId),
+      );
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('獲得通知の確認に失敗しました: $error')));
+      }
+    }
+    if (!viewCoupons || !mounted) return;
+    try {
+      if (couponRepository.category != null) {
+        await couponRepository.setCategory(null);
+      } else {
+        await couponRepository.load(refresh: true);
+      }
+      if (!mounted) return;
+      if (grants.length == 1) {
+        final couponId = grants.single.couponId;
+        final coupon = couponRepository.coupons
+            .where((item) => item.id == couponId)
+            .firstOrNull;
+        if (coupon != null) {
+          await Navigator.of(context).push<void>(
+            MaterialPageRoute(
+              builder: (_) => CouponDetailScreen(coupon: coupon),
+            ),
+          );
+          return;
+        }
+      }
+      setState(() {
+        _ensurePage(3);
+        _currentIndex = 3;
+      });
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('クーポンを開けませんでした: $error')));
+      }
+    }
+  }
+
+    });
+  }
+
+  Future<void> _prefetchHomeImages(AppDataRepository repository) async {
+    final urls = repository.stampCards
+        .expand((card) => [...card.keyVisualUrls, ...card.spotImageUrls])
+        .where((url) => url.isNotEmpty)
+        .toSet()
+        .take(4)
+        .toList();
+    var next = 0;
+    Future<void> worker() async {
+      while (next < urls.length && mounted) {
+        final url = urls[next++];
+        try {
+          await precacheImage(CachedNetworkImageProvider(url), context);
+        } catch (_) {
+          // 先読みは表示時の通常エラー処理を変更しない。
+        }
+      }
+    }
+
+    await Future.wait([worker(), worker()]);
+  }
+
+  void _ensurePage(int index) {
+    _pages[index] ??= switch (index) {
+      0 => _HomeBody(onSearchTap: _onSearchTap),
+      1 => const MapScreen(),
+      2 => const AllStampCollectionsScreen(showBackButton: false),
+      _ => const CouponScreen(),
+    };
   }
 
   // ボトムナビゲーションタップ時の処理
   void _onNavTap(int index) {
-    setState(() => _currentIndex = index);
+    setState(() {
+      _ensurePage(index);
+      _currentIndex = index;
+    });
   }
 
   // 検索画面へ遷移し、戻り値でタブを切り替える
@@ -54,7 +159,10 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute(builder: (_) => const SearchScreen()),
     );
     if (index != null) {
-      setState(() => _currentIndex = index);
+      setState(() {
+        _ensurePage(index);
+        _currentIndex = index;
+      });
     }
   }
 
@@ -73,7 +181,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-      body: IndexedStack(index: _currentIndex, children: _pages),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: List.generate(
+          _pages.length,
+          (index) => _pages[index] ?? const SizedBox.shrink(),
+        ),
+      ),
       bottomNavigationBar: MainBottomNav(
         currentIndex: _currentIndex,
         onTap: _onNavTap,

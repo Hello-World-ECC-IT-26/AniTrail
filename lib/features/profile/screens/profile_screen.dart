@@ -47,7 +47,6 @@ class _MyPageScreenState extends State<MyPageScreen> {
 
   Future<void> _loadProfile() async {
     try {
-      await AuthService().ensureProfile();
       final profile = await ProfileService().fetchMyProfile();
       if (!mounted) return;
       setState(() {

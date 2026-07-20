@@ -31,16 +31,7 @@ class _AllStampCollectionsScreenState extends State<AllStampCollectionsScreen> {
   }
 
   Future<List<_AnimeCollectionSummary>> _loadCollections() async {
-    final cards = await _api.fetchStampCards();
-    final cardCollections = await Future.wait(
-      cards.map((card) async {
-        final fullCard = card.spots.isNotEmpty
-            ? card
-            : await _api.fetchStampCard(card.cardId);
-        final visitStats = await _api.fetchStampVisitStats(card.cardId);
-        return (card: fullCard, visitStats: visitStats);
-      }),
-    );
+    final cardCollections = await _api.fetchStampCollections();
     final collections = <String, _AnimeCollectionSummary>{};
 
     for (final item in cardCollections) {

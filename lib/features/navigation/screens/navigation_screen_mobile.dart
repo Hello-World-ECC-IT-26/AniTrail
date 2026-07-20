@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/styles/app_dimens.dart';
 import '../../../core/styles/app_styles.dart';
@@ -15,6 +16,12 @@ import '../../../core/styles/app_text.dart';
 import '../../../core/widgets/loading_screen.dart';
 import '../../map/models/anime_spot.dart';
 import '../../map/services/spot_api.dart';
+import '../../coupon/data/coupon_repository.dart';
+import '../../coupon/models/coupon.dart';
+import '../../coupon/widgets/coupon_detail.dart';
+import '../../coupon/widgets/coupon_grant_dialog.dart';
+import '../../home/screens/home_screen.dart';
+import '../../spot/screens/spot_comments_screen.dart';
 import '../../stamp/screens/stamp_screen.dart';
 import '../models/arrival_step.dart';
 import '../services/navigation_route_service.dart';
@@ -207,7 +214,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
       _arrivalStep = ArrivalStep.creatingStamp;
     });
     try {
-      final stampId = await _spotApi.createStamp(
+      final stampResult = await _spotApi.createStamp(
         cardId: widget.cardId,
         spotId: spot.spotId,
       );
@@ -217,7 +224,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
         try {
           await _spotApi.uploadArrivalPhoto(
             spotId: spot.spotId,
-            stampId: stampId,
+            stampId: stampResult.stampId,
             bytes: await photo.readAsBytes(),
             filename: photo.name,
             contentType: photo.mimeType,
@@ -235,6 +242,11 @@ class _NavigationScreenState extends State<NavigationScreen> {
           context,
         ).showSnackBar(SnackBar(content: Text('写真を保存できませんでした: $photoError')));
       }
+      if (stampResult.newGrants.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) unawaited(_showEarnedCoupons(stampResult.newGrants));
+        });
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -243,6 +255,55 @@ class _NavigationScreenState extends State<NavigationScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('スタンプの記録に失敗しました: $e')));
+    }
+  }
+
+  Future<void> _showEarnedCoupons(List<CouponGrant> grants) async {
+    final viewCoupons = await showCouponGrantDialog(context, grants);
+    if (!mounted) return;
+    final repository = context.read<CouponRepository>();
+    try {
+      await Future.wait(
+        grants.map((grant) => repository.markGrantSeen(grant.grantId)),
+      );
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('獲得通知の確認に失敗しました: $error')));
+      }
+    }
+    if (!viewCoupons || !mounted) return;
+    try {
+      if (repository.category != null) {
+        await repository.setCategory(null);
+      } else {
+        await repository.load(refresh: true);
+      }
+      if (!mounted) return;
+      if (grants.length == 1) {
+        final couponId = grants.single.couponId;
+        final coupon = repository.coupons
+            .where((item) => item.id == couponId)
+            .firstOrNull;
+        if (coupon != null) {
+          await Navigator.of(context).push<void>(
+            MaterialPageRoute(
+              builder: (_) => CouponDetailScreen(coupon: coupon),
+            ),
+          );
+          return;
+        }
+      }
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(builder: (_) => const HomeScreen(initialIndex: 3)),
+      );
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('クーポンを開けませんでした: $error')));
+      }
     }
   }
 
@@ -550,10 +611,13 @@ class _NavigationScreenState extends State<NavigationScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         // 方位表示に使える横幅を優先しつつ、案内パネルと重ならない最大径にする。
-        final compassSize = math.min(
-          constraints.maxWidth - AppSpacing.md * 2,
-          constraints.maxHeight - 226,
-        ).clamp(220.0, 440.0).toDouble();
+        final compassSize = math
+            .min(
+              constraints.maxWidth - AppSpacing.md * 2,
+              constraints.maxHeight - 226,
+            )
+            .clamp(220.0, 440.0)
+            .toDouble();
 
         return Stack(
           children: [
@@ -1302,6 +1366,32 @@ class _NavigationScreenState extends State<NavigationScreen> {
                       );
                     },
                     child: const Text('コレクションを見る'),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                SizedBox(
+                  width: 252,
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.white,
+                      side: const BorderSide(color: AppColors.white),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => SpotCommentsScreen(
+                            spot: spot,
+                            animeTitle: spot.animeTitle ?? '',
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    label: const Text('コメントする'),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),

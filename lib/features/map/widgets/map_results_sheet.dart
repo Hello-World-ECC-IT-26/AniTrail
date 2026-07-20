@@ -11,6 +11,7 @@ import '../../../core/styles/app_shadows.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/app_chip.dart';
 import '../../search/widgets/search_result_card.dart';
+import '../../spot/widgets/spot_comments_section.dart';
 import '../models/anime_spot.dart';
 import '../services/spot_api.dart';
 import 'spot_list_item.dart';
@@ -577,6 +578,12 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
             child: _buildPhotoGrid(),
           ),
         ],
+
+        const SizedBox(height: AppSpacing.xl),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          child: SpotCommentsSection(spotId: spot.spotId),
+        ),
 
         SizedBox(height: 24 + bottomInset),
       ],

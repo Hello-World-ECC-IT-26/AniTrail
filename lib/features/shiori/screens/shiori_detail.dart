@@ -51,17 +51,15 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
       _refreshing = true;
     });
     try {
-      final cached = await _api.readCachedStampCard(widget.cardId);
-      if (cached != null && mounted) setState(() => _card = cached);
-
-      final results = await Future.wait([
-        _api.fetchStampCard(widget.cardId),
-        _api.fetchVisitedSpotIds(widget.cardId),
-      ]);
+      final collections = await _api.fetchStampCollections(force: true);
+      final collection = collections
+          .where((item) => item.card.cardId == widget.cardId)
+          .firstOrNull;
+      if (collection == null) throw StateError('しおりが見つかりません');
       if (!mounted) return;
       setState(() {
-        _card = results[0] as StampCard;
-        _visitedSpotIds = results[1] as Set<String>;
+        _card = collection.card;
+        _visitedSpotIds = collection.visitStats.keys.toSet();
         _refreshing = false;
       });
     } catch (error) {
@@ -642,7 +640,9 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
     final visited = _visitedSpotIds.contains(spot.spotId);
     final imageUrl = spot.streetViewProxyUrl;
     return Container(
-      height: 122,
+      // コンパクトボタンと3行のテキストを、端末ごとの文字描画差も
+      // 含めて収めるため、内容領域に余裕を持たせる。
+      height: 124,
       clipBehavior: Clip.antiAlias,
       decoration: const BoxDecoration(
         color: AppColors.surface,

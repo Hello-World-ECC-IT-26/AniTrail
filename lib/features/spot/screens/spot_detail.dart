@@ -16,6 +16,7 @@ import '../../map/models/anime_spot.dart';
 import '../../map/services/spot_api.dart';
 import '../../shiori/models/shiori_draft.dart';
 import '../../shiori/screens/shiori_list.dart';
+import '../widgets/spot_comments_section.dart';
 
 /// 聖地詳細画面。画像・アニメ情報・住所を表示し、しおりに追加できる。
 class SpotDetailScreen extends StatefulWidget {
@@ -42,6 +43,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
 
   bool _bookmarked = false;
   bool _bookmarkLoading = true;
+  SpotDetailPayload? _detail;
 
   Spot get spot => widget.spot;
   Spot get _draftSpot => spot.withAnime(
@@ -58,15 +60,16 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _loadBookmark();
+    _loadDetail();
   }
 
-  Future<void> _loadBookmark() async {
+  Future<void> _loadDetail() async {
     try {
-      final result = await _api.isBookmarked(spot.spotId);
+      final result = await _api.fetchSpotDetail(spot.spotId);
       if (mounted) {
         setState(() {
-          _bookmarked = result;
+          _detail = result;
+          _bookmarked = result.bookmarked;
           _bookmarkLoading = false;
         });
       }
@@ -105,6 +108,8 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
   }
 
   String? get _imageUrl {
+    final userPhoto = _detail?.photoUrls.firstOrNull;
+    if (userPhoto != null && userPhoto.isNotEmpty) return userPhoto;
     final proxyUrl = spot.streetViewProxyUrl;
     if (proxyUrl != null && proxyUrl.isNotEmpty) return proxyUrl;
     final imageUrl = spot.streetViewImageUrl;
@@ -232,6 +237,17 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                   icon: Icons.location_on_outlined,
                   fullWidth: false,
                 ),
+              ),
+
+              const SizedBox(height: AppSpacing.xxl),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: _detail == null
+                    ? const Center(child: CircularProgressIndicator())
+                    : SpotCommentsSection(
+                        spotId: spot.spotId,
+                        initialDetail: _detail,
+                      ),
               ),
             ],
           ),

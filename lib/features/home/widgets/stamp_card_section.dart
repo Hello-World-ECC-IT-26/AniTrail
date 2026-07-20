@@ -1,15 +1,14 @@
-import 'dart:async';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/data/app_data_repository.dart';
 import '../../../core/styles/app_styles.dart';
 import '../../../core/styles/app_text.dart';
 import '../../../core/styles/app_dimens.dart';
 import '../../../core/styles/app_shadows.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../map/models/anime_spot.dart';
-import '../../map/services/spot_api.dart';
 import '../../search/screens/search_screen.dart';
 import '../../shiori/screens/shiori_detail.dart';
 
@@ -23,92 +22,42 @@ class StampCardSection extends StatefulWidget {
 }
 
 class _StampCardSectionState extends State<StampCardSection> {
-  final SpotApi _api = SpotApi();
-
   List<StampCard> _cards = [];
   bool _loading = true;
   Object? _error;
-  StreamSubscription<AuthState>? _authSubscription;
-  bool _loadInProgress = false;
-  bool _reloadPending = false;
-  bool _cacheLoaded = false;
+  AppDataRepository? _repository;
   _Filter _filter = _Filter.all;
   int? _expandedIndex;
 
   @override
-  void initState() {
-    super.initState();
-    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
-      state,
-    ) {
-      if (state.session != null) unawaited(_load());
-    });
-    unawaited(_load());
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final repository = context.read<AppDataRepository>();
+    if (identical(repository, _repository)) return;
+    _repository?.removeListener(_syncRepository);
+    _repository = repository..addListener(_syncRepository);
+    _cards = repository.stampCards;
+    _loading = repository.loading;
+    _error = repository.error;
   }
 
   Future<void> _load() async {
-    if (_loadInProgress) {
-      _reloadPending = true;
-      return;
-    }
-    _loadInProgress = true;
-    try {
-      do {
-        _reloadPending = false;
-        await _performLoad();
-      } while (_reloadPending && mounted);
-    } finally {
-      _loadInProgress = false;
-    }
+    await _repository?.load(refresh: true);
   }
 
-  Future<void> _performLoad() async {
-    if (!_cacheLoaded) {
-      _cacheLoaded = true;
-      List<StampCard> cached = [];
-      try {
-        cached = await _api.readCachedStampCards();
-      } catch (_) {
-        // 端末キャッシュが読めない場合もAPI取得は続行する。
-      }
-      if (cached.isNotEmpty && mounted) {
-        setState(() {
-          _cards = cached;
-          _loading = false;
-        });
-        unawaited(_hydrateCards(cached.take(4).toList()));
-      }
-    }
-
-    if (mounted) {
-      setState(() {
-        _error = null;
-        if (_cards.isEmpty) _loading = true;
-      });
-    }
-    try {
-      final cards = await _api.fetchStampCards();
-      if (mounted) {
-        setState(() {
-          _cards = cards;
-          _loading = false;
-          _error = null;
-        });
-        unawaited(_hydrateCards(cards.take(4).toList()));
-      }
-    } catch (error) {
-      if (mounted) {
-        setState(() {
-          _error = error;
-          _loading = false;
-        });
-      }
-    }
+  void _syncRepository() {
+    final repository = _repository;
+    if (!mounted || repository == null) return;
+    setState(() {
+      _cards = repository.stampCards;
+      _loading = repository.loading;
+      _error = repository.error;
+    });
   }
 
   @override
   void dispose() {
-    _authSubscription?.cancel();
+    _repository?.removeListener(_syncRepository);
     super.dispose();
   }
 
@@ -117,35 +66,6 @@ class _StampCardSectionState extends State<StampCardSection> {
     _Filter.incomplete => _cards.where((c) => c.complete != true).toList(),
     _Filter.all => _cards,
   };
-
-  Future<void> _hydrateCards(List<StampCard> cards) async {
-    final cached = await Future.wait(
-      cards.map((card) => _api.readCachedStampCard(card.cardId)),
-    );
-    for (final card in cached.whereType<StampCard>()) {
-      _replaceCard(card);
-    }
-
-    final details = await Future.wait(
-      cards.map((card) async {
-        try {
-          return await _api.fetchStampCard(card.cardId);
-        } catch (_) {
-          return null;
-        }
-      }),
-    );
-    for (final card in details.whereType<StampCard>()) {
-      _replaceCard(card);
-    }
-  }
-
-  void _replaceCard(StampCard card) {
-    if (!mounted) return;
-    final index = _cards.indexWhere((item) => item.cardId == card.cardId);
-    if (index < 0) return;
-    setState(() => _cards[index] = card);
-  }
 
   Map<String, String> get _authHeaders {
     final token = Supabase.instance.client.auth.currentSession?.accessToken;
