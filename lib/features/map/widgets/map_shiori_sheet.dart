@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,6 +12,7 @@ import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/app_chip.dart';
 import '../../navigation/screens/navigation_screen.dart';
 import '../../search/widgets/search_result_card.dart';
+import '../../spot/widgets/spot_photo_gallery.dart';
 import '../models/anime_spot.dart';
 import '../services/spot_api.dart';
 import 'spot_list_item.dart';
@@ -669,81 +669,10 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
   }
 
   Widget _buildPhotoGrid(Spot spot) {
-    final photos = _photoUrls(spot);
-    if (photos.isEmpty) return const SizedBox.shrink();
-    if (photos.length == 1) {
-      return ClipRRect(
-        borderRadius: AppRadius.brSm,
-        child: AspectRatio(
-          aspectRatio: 4 / 3,
-          child: _imageWidget(photos[0], spot),
-        ),
-      );
-    }
-    return SizedBox(
-      height: 360,
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: ClipRRect(
-              borderRadius: AppRadius.brSm,
-              child: _imageWidget(photos[0], spot),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.lg),
-          Expanded(
-            child: Column(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: AppRadius.brSm,
-                    child: _imageWidget(photos[1], spot),
-                  ),
-                ),
-                if (photos.length > 2) ...[
-                  const SizedBox(height: AppSpacing.lg),
-                  Expanded(
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        ClipRRect(
-                          borderRadius: AppRadius.brSm,
-                          child: _imageWidget(photos[2], spot),
-                        ),
-                        DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: AppColors.black.withValues(alpha: 0.5),
-                            borderRadius: AppRadius.brSm,
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'その他の写真',
-                              style: TextStyle(color: AppColors.white),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _imageWidget(String url, Spot spot) {
-    final isProxy =
-        url == spot.streetViewProxyUrl || url == spot.streetViewImageUrl;
-    return CachedNetworkImage(
-      imageUrl: url,
-      httpHeaders: isProxy ? _authHeaders : const {},
-      fit: BoxFit.cover,
-      placeholder: (_, _) => const ColoredBox(color: AppColors.placeholder),
-      errorWidget: (_, _, _) => const ColoredBox(color: AppColors.placeholder),
+    return SpotPhotoGallery(
+      streetViewUrl: spot.streetViewProxyUrl ?? spot.streetViewImageUrl,
+      userPhotoUrls: _detailPostUrls,
+      streetViewHeaders: _authHeaders,
     );
   }
 

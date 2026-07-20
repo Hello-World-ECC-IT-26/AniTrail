@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -13,6 +12,7 @@ import '../../../core/widgets/app_chip.dart';
 import '../../navigation/screens/navigation_screen.dart';
 import '../../search/widgets/search_result_card.dart';
 import '../../spot/widgets/spot_comments_section.dart';
+import '../../spot/widgets/spot_photo_gallery.dart';
 import '../models/anime_spot.dart';
 import '../services/spot_api.dart';
 import 'spot_list_item.dart';
@@ -507,32 +507,6 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
   String? get _streetViewUrl =>
       spot.streetViewProxyUrl ?? spot.streetViewImageUrl;
 
-  // Street View を先頭固定、続いてユーザー投稿写真
-  List<String> get _photoUrls {
-    final urls = <String>[];
-    final sv = _streetViewUrl;
-    if (sv != null && sv.isNotEmpty) urls.add(sv);
-    urls.addAll(_postUrls);
-    return urls;
-  }
-
-  Widget _imageWidget(String url) {
-    final isProxy =
-        url == spot.streetViewProxyUrl || url == spot.streetViewImageUrl;
-    return CachedNetworkImage(
-      imageUrl: url,
-      httpHeaders: isProxy ? _authHeaders : {},
-      fit: BoxFit.cover,
-      placeholder: (_, _) => _placeholder(),
-      errorWidget: (_, _, _) => _placeholder(),
-    );
-  }
-
-  Widget _placeholder() => Container(
-    color: AppColors.grey,
-    child: const Icon(Icons.image, color: AppColors.textHint, size: 32),
-  );
-
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
@@ -627,14 +601,11 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
           ),
         ),
 
-        // 写真グリッド
-        if (_photoUrls.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-            child: _buildPhotoGrid(),
-          ),
-        ],
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+          child: _buildPhotoGrid(),
+        ),
 
         const SizedBox(height: AppSpacing.xl),
         Padding(
@@ -648,85 +619,10 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
   }
 
   Widget _buildPhotoGrid() {
-    final photos = _photoUrls;
-
-    if (photos.length == 1) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: AspectRatio(aspectRatio: 4 / 3, child: _imageWidget(photos[0])),
-      );
-    }
-
-    if (photos.length == 2) {
-      return SizedBox(
-        height: 200,
-        child: Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  bottomLeft: Radius.circular(10),
-                ),
-                child: _imageWidget(photos[0]),
-              ),
-            ),
-            const SizedBox(width: 3),
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(10),
-                  bottomRight: Radius.circular(10),
-                ),
-                child: _imageWidget(photos[1]),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return SizedBox(
-      height: 200,
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(10),
-                bottomLeft: Radius.circular(10),
-              ),
-              child: _imageWidget(photos[0]),
-            ),
-          ),
-          const SizedBox(width: 3),
-          Expanded(
-            child: Column(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topRight: Radius.circular(10),
-                    ),
-                    child: _imageWidget(photos[1]),
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      bottomRight: Radius.circular(10),
-                    ),
-                    child: _imageWidget(photos[2]),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return SpotPhotoGallery(
+      streetViewUrl: _streetViewUrl,
+      userPhotoUrls: _postUrls,
+      streetViewHeaders: _authHeaders,
     );
   }
 }
