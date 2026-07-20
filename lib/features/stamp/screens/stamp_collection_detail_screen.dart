@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import '../../../core/styles/app_dimens.dart';
 import '../../../core/styles/app_styles.dart';
 import '../../../core/styles/app_text.dart';
 import '../../map/models/anime_spot.dart';
+import '../../spot/screens/spot_comments_screen.dart';
 import '../widgets/stamp_badge.dart';
 
 class StampCollectionDetailDialog extends StatelessWidget {
@@ -39,7 +41,7 @@ class StampCollectionDetailDialog extends StatelessWidget {
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
-        vertical: AppSpacing.xxl,
+        vertical: AppSpacing.md,
       ),
       backgroundColor: AppColors.surface,
       surfaceTintColor: AppColors.surface,
@@ -48,63 +50,109 @@ class StampCollectionDetailDialog extends StatelessWidget {
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: 400,
-          maxHeight: screenHeight * 0.9,
+          maxHeight: math.min(760, screenHeight - AppSpacing.xxl),
         ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: IconButton(
-                  tooltip: '閉じる',
-                  icon: const Icon(Icons.close, size: 20),
-                  color: AppColors.textSecondary,
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxHeight < 680;
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.xs,
+                AppSpacing.lg,
+                AppSpacing.lg,
               ),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final size = constraints.maxWidth.clamp(220.0, 300.0);
-                  return StampBadge(label: spot.name, size: size);
-                },
+              child: Column(
+                children: [
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: IconButton(
+                      tooltip: '閉じる',
+                      icon: const Icon(Icons.close, size: 20),
+                      color: AppColors.textSecondary,
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                  Expanded(child: _mediaSection(compact: compact)),
+                  SizedBox(height: compact ? AppSpacing.sm : AppSpacing.md),
+                  Text(
+                    'アニメ「$animeTitle」',
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.heading.copyWith(
+                      color: const Color(0xFF12265A),
+                      fontSize: compact ? 16 : null,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    '訪問回数: $visitCount回　|　最終訪問: ${_dateText(obtainedAt)}',
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.textSecondary,
+                      fontSize: 10,
+                    ),
+                  ),
+                  SizedBox(height: compact ? AppSpacing.sm : AppSpacing.md),
+                  SizedBox(
+                    width: double.infinity,
+                    height: compact ? 44 : AppSizes.buttonHeight,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        final navigator = Navigator.of(context);
+                        navigator.pop();
+                        navigator.push(
+                          MaterialPageRoute(
+                            builder: (_) => SpotCommentsScreen(
+                              spot: spot,
+                              animeTitle: animeTitle,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.edit_outlined, size: 16),
+                      label: const Text('コメントする'),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                'アニメ「$animeTitle」',
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.heading.copyWith(
-                  color: const Color(0xFF12265A),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                '訪問回数: $visitCount回　|　最終訪問: ${_dateText(obtainedAt)}',
-                textAlign: TextAlign.center,
-                style: AppTextStyles.caption.copyWith(
-                  color: AppColors.textSecondary,
-                  fontSize: 10,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              _photoSection(),
-              const SizedBox(height: AppSpacing.lg),
-              SizedBox(
-                width: double.infinity,
-                height: AppSizes.buttonHeight,
-                child: OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.edit_outlined, size: 16),
-                  label: const Text('コメントする'),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
+    );
+  }
+
+  Widget _mediaSection({required bool compact}) {
+    if (compact) {
+      return Row(
+        children: [
+          Expanded(child: _stampSection()),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(child: _photoSection()),
+        ],
+      );
+    }
+    return Column(
+      children: [
+        Expanded(flex: 6, child: _stampSection()),
+        const SizedBox(height: AppSpacing.sm),
+        Expanded(flex: 5, child: _photoSection()),
+      ],
+    );
+  }
+
+  Widget _stampSection() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = math.min(constraints.maxWidth, constraints.maxHeight);
+        return Center(
+          child: StampBadge(label: spot.name, size: size),
+        );
+      },
     );
   }
 
@@ -114,8 +162,8 @@ class StampCollectionDetailDialog extends StatelessWidget {
       if (photoPath != null && photoPath!.isNotEmpty) photoPath!,
     ];
     if (userPhotos.length > 1) {
-      return SizedBox(
-        height: 160,
+      return ClipRRect(
+        borderRadius: AppRadius.brSm,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           itemCount: userPhotos.length,
@@ -134,12 +182,16 @@ class StampCollectionDetailDialog extends StatelessWidget {
         ),
       );
     }
-    return AspectRatio(
-      aspectRatio: 4 / 3,
-      child: _ZoomablePhoto(
-        photo: userPhotos.isNotEmpty ? userPhotos.first : imageUrl,
-        borderRadius: AppRadius.brSm,
-        child: userPhotos.isNotEmpty ? _userPhoto(userPhotos.first) : _photo(),
+    return Center(
+      child: AspectRatio(
+        aspectRatio: 4 / 3,
+        child: _ZoomablePhoto(
+          photo: userPhotos.isNotEmpty ? userPhotos.first : imageUrl,
+          borderRadius: AppRadius.brSm,
+          child: userPhotos.isNotEmpty
+              ? _userPhoto(userPhotos.first)
+              : _photo(),
+        ),
       ),
     );
   }
