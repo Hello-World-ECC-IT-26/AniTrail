@@ -1,7 +1,10 @@
+import 'package:anitrail/features/coupon/data/coupon_repository.dart';
 import 'package:anitrail/features/coupon/models/coupon.dart';
+import 'package:anitrail/features/coupon/widgets/coupon_detail.dart';
 import 'package:anitrail/features/coupon/widgets/coupon_ticket.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 
 Coupon _coupon({bool unlocked = true, DateTime? usedAt}) => Coupon(
   id: 'coupon-1',
@@ -62,6 +65,16 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('訪問 2/5・あと1か所'), findsOneWidget);
+
+    final card = find.byType(CouponTicketCard);
+    final cardLeft = tester.getTopLeft(card).dx;
+    final cardWidth = tester.getSize(card).width;
+    final paws = find.byIcon(Icons.pets);
+    expect(paws, findsNWidgets(2));
+    expect(
+      tester.getTopLeft(paws.at(1)).dx,
+      closeTo(cardLeft + cardWidth * 0.64 + 7, 0.5),
+    );
   });
 
   testWidgets('利用済み券面を明示する', (tester) async {
@@ -76,5 +89,31 @@ void main() {
     );
 
     expect(find.text('利用済み'), findsOneWidget);
+  });
+
+  testWidgets('320px幅でも復元したクーポン詳細デザインが表示できる', (tester) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider(
+        create: (_) => CouponRepository(),
+        child: MaterialApp(home: CouponDetailScreen(coupon: _coupon())),
+      ),
+    );
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('DRINK FOOD'), findsOneWidget);
+    expect(find.text('COUPON'), findsOneWidget);
+    final couponLabel = tester.widget<Text>(find.text('COUPON'));
+    expect(couponLabel.maxLines, 1);
+    expect(couponLabel.softWrap, isFalse);
+    expect(couponLabel.style?.fontFamily, startsWith('Lunasima'));
+    expect(couponLabel.style?.fontWeight, FontWeight.bold);
+    expect(couponLabel.style?.fontSize, 40);
+    expect(find.text('クーポン内容'), findsOneWidget);
   });
 }
