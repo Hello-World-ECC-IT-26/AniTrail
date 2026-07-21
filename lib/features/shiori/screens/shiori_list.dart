@@ -259,54 +259,61 @@ class _ShioriListScreenState extends State<ShioriListScreen> {
     return unique.values.toList();
   }
 
-  Widget _buildAnimeVisuals() => SizedBox(
-    height: 140,
-    child: ListView.separated(
-      scrollDirection: Axis.horizontal,
-      itemCount: _animeVisualSpots.length,
-      separatorBuilder: (context, index) =>
-          const SizedBox(width: AppSpacing.sm),
-      itemBuilder: (context, index) {
-        final spot = _animeVisualSpots[index];
-        return SizedBox(
-          width: 240,
-          child: ClipRRect(
-            borderRadius: AppRadius.brMd,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (spot.keyVisualUrl != null && spot.keyVisualUrl!.isNotEmpty)
-                  CachedNetworkImage(
-                    imageUrl: spot.keyVisualUrl!,
-                    fit: BoxFit.cover,
-                    errorWidget: (context, imageUrl, error) =>
-                        _placeholderImage(),
-                  )
-                else
-                  _placeholderImage(),
-                const DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: AppColors.cardGradientSoft,
-                  ),
-                ),
-                Positioned(
-                  left: AppSpacing.md,
-                  right: AppSpacing.md,
-                  bottom: AppSpacing.md,
-                  child: Text(
-                    spot.animeTitle ?? '',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.subtitle.copyWith(
-                      color: AppColors.white,
-                    ),
-                  ),
-                ),
-              ],
+  Widget _buildAnimeVisuals() {
+    final animeVisualSpots = _animeVisualSpots;
+    if (animeVisualSpots.length == 1) {
+      return SizedBox(
+        height: 140,
+        child: Center(child: _buildAnimeVisual(animeVisualSpots.single, 0)),
+      );
+    }
+
+    return SizedBox(
+      height: 140,
+      child: ListView.separated(
+        key: const Key('shiori-anime-visual-list'),
+        scrollDirection: Axis.horizontal,
+        itemCount: animeVisualSpots.length,
+        separatorBuilder: (context, index) =>
+            const SizedBox(width: AppSpacing.sm),
+        itemBuilder: (context, index) =>
+            _buildAnimeVisual(animeVisualSpots[index], index),
+      ),
+    );
+  }
+
+  Widget _buildAnimeVisual(Spot spot, int index) => SizedBox(
+    key: ValueKey('shiori-anime-visual-$index'),
+    width: 240,
+    child: ClipRRect(
+      borderRadius: AppRadius.brMd,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (spot.keyVisualUrl != null && spot.keyVisualUrl!.isNotEmpty)
+            CachedNetworkImage(
+              imageUrl: spot.keyVisualUrl!,
+              fit: BoxFit.cover,
+              errorWidget: (context, imageUrl, error) => _placeholderImage(),
+            )
+          else
+            _placeholderImage(),
+          const DecoratedBox(
+            decoration: BoxDecoration(gradient: AppColors.cardGradientSoft),
+          ),
+          Positioned(
+            left: AppSpacing.md,
+            right: AppSpacing.md,
+            bottom: AppSpacing.md,
+            child: Text(
+              spot.animeTitle ?? '',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.subtitle.copyWith(color: AppColors.white),
             ),
           ),
-        );
-      },
+        ],
+      ),
     ),
   );
 
