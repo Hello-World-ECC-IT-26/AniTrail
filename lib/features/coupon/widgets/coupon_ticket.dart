@@ -11,7 +11,6 @@ String formatCouponDate(DateTime value) {
   final local = value.toLocal();
   return '${local.year}/${local.month.toString().padLeft(2, '0')}/${local.day.toString().padLeft(2, '0')}';
 }
-
 class CouponTicketCard extends StatelessWidget {
   const CouponTicketCard({super.key, required this.coupon});
 
@@ -34,8 +33,9 @@ class CouponTicketCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Stack(
-          children: [
+        child: LayoutBuilder(
+          builder: (context, constraints) => Stack(
+            children: [
             Row(
               children: [
                 Expanded(
@@ -180,11 +180,11 @@ class CouponTicketCard extends StatelessWidget {
               right: 8,
               child: Icon(Icons.pets, color: Colors.white, size: 18),
             ),
-            const Positioned(
-              bottom: 8,
-              right: 132,
-              child: Icon(Icons.pets, color: Colors.white, size: 18),
-            ),
+              Positioned(
+                bottom: 8,
+                left: constraints.maxWidth * 0.64 + 7,
+                child: const Icon(Icons.pets, color: Colors.white, size: 18),
+              ),
             Positioned(
               right: -13,
               top: 62,
@@ -278,7 +278,8 @@ class CouponTicketCard extends StatelessWidget {
                   ),
                 ),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );
