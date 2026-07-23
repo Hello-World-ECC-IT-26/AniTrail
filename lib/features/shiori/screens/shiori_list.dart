@@ -123,7 +123,7 @@ class _ShioriListScreenState extends State<ShioriListScreen> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.lg,
-                AppSpacing.lg,
+                AppSpacing.sm,
                 AppSpacing.lg,
                 120,
               ),
@@ -197,6 +197,7 @@ class _ShioriListScreenState extends State<ShioriListScreen> {
             right: 0,
             child: AppBottomActionBar(
               label: 'この内容で旅のしおりを作成する',
+              backgroundColor: AppColors.tabiShiori,
               onPressed: _create,
             ),
           ),
@@ -263,13 +264,13 @@ class _ShioriListScreenState extends State<ShioriListScreen> {
     final animeVisualSpots = _animeVisualSpots;
     if (animeVisualSpots.length == 1) {
       return SizedBox(
-        height: 140,
+        height: 160,
         child: Center(child: _buildAnimeVisual(animeVisualSpots.single, 0)),
       );
     }
 
     return SizedBox(
-      height: 140,
+      height: 160,
       child: ListView.separated(
         key: const Key('shiori-anime-visual-list'),
         scrollDirection: Axis.horizontal,
@@ -284,7 +285,7 @@ class _ShioriListScreenState extends State<ShioriListScreen> {
 
   Widget _buildAnimeVisual(Spot spot, int index) => SizedBox(
     key: ValueKey('shiori-anime-visual-$index'),
-    width: 240,
+    width: 360,
     child: ClipRRect(
       borderRadius: AppRadius.brMd,
       child: Stack(
@@ -329,77 +330,87 @@ class _ShioriListScreenState extends State<ShioriListScreen> {
 
           // ── テキスト情報 ──────────────────────────
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.sm,
-                AppSpacing.xs,
-                AppSpacing.sm,
-                AppSpacing.xs,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (spot.animeTitle?.isNotEmpty ?? false)
-                    Text(
-                      spot.animeTitle!,
-                      maxLines: 1,
-                      style: AppTextStyles.caption.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textSecondary,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    spot.name,
-                    style: AppTextStyles.subtitle,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-
-                  // 住所
-                  Text(
-                    spot.addressText,
-                    style: AppTextStyles.label.copyWith(fontSize: 13),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton.icon(
-                        onPressed: () => _deleteSpot(index),
-                        icon: const Icon(
-                          Icons.delete_outline,
-                          size: 14,
-                          color: AppColors.error,
+            child: SizedBox(
+              height: 130,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                  AppSpacing.sm,
+                  AppSpacing.sm,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: (spot.animeTitle?.isNotEmpty ?? false)
+                              ? Text(
+                                  spot.animeTitle!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTextStyles.caption.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
                         ),
-                        label: const Text(
-                          '削除',
-                          style: TextStyle(
-                            fontSize: 12,
+
+                        TextButton.icon(
+                          onPressed: () => _deleteSpot(index),
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            size: 14,
                             color: AppColors.error,
-                            fontWeight: FontWeight.bold,
+                          ),
+                          label: const Text(
+                            '削除',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.error,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            minimumSize: const Size(0, 28),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
                           ),
                         ),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 2),
-                          minimumSize: const Size(0, 28),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          visualDensity: VisualDensity.compact,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      AppButton(
+                      ],
+                    ),
+
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      spot.name,
+                      style: AppTextStyles.subtitle,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+
+                    // 住所
+                    Text(
+                      spot.addressText,
+                      style: AppTextStyles.label.copyWith(fontSize: 13),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: AppButton(
                         label: '詳細',
                         onPressed: () => _openDetail(spot),
                         size: AppButtonSize.compact,
                         fullWidth: false,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

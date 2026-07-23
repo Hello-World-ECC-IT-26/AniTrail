@@ -87,39 +87,41 @@ class _SearchOverlayState extends State<SearchOverlay> {
       bottomLeft: Radius.circular(AppRadius.md),
       bottomRight: Radius.circular(AppRadius.md),
     );
-    return Material(
-      elevation: 3,
-      borderRadius: radius,
-      child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: radius,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // ラベル（履歴 or 予測ワード）
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.md,
-                AppSpacing.lg,
-                AppSpacing.xs,
-              ),
-              child: Text(
-                _isTyping ? 'お好みのアニメはこちらですか？' : '検索履歴',
-                style: AppTextStyles.caption.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: radius,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Divider(
+            height: 1,
+            thickness: 0.3,
+            color: AppColors.borderDefault,
+          ),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.lg,
+              AppSpacing.xs,
+            ),
+            child: Text(
+              _isTyping ? 'お好みのアニメはこちらですか？' : '検索履歴',
+              style: AppTextStyles.caption.copyWith(
+                fontWeight: FontWeight.w500,
               ),
             ),
+          ),
 
-            _isTyping ? _buildSuggestions() : _buildHistory(),
+          _isTyping ? _buildSuggestions() : _buildHistory(),
 
-            const SizedBox(height: AppSpacing.sm),
-          ],
-        ),
+          const SizedBox(height: AppSpacing.sm),
+        ],
       ),
     );
   }

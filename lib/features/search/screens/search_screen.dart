@@ -97,14 +97,8 @@ class _SearchScreenState extends State<SearchScreen> {
 
       body: Column(
         children: [
-          // ── 検索バー
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.lg,
-              0,
-            ),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -117,72 +111,77 @@ class _SearchScreenState extends State<SearchScreen> {
                   ),
                 ],
               ),
-              child: TextField(
-                controller: controller,
-                focusNode: focusNode,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    onChanged: (v) => setState(() => query = v),
+                    onSubmitted: (v) {
+                      final submitted = v.trim();
+                      if (submitted.isEmpty) return;
+                      focusNode.unfocus();
+                      _addHistory(submitted);
+                      setState(() {
+                        query = submitted;
+                        isFocused = false;
+                      });
+                    },
+                    style: AppTextStyles.input,
+                    decoration: AppInputDecorations.filled(
+                      hintText: '検索',
+                      prefixIcon: Icons.search,
+                      fillColor: Colors.white,
+                      suffixIcon: query.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () {
+                                controller.clear();
+                                setState(() => query = '');
+                              },
+                            )
+                          : const Icon(
+                              Icons.search,
+                              color: AppColors.iconMuted,
+                            ),
+                    ),
+                  ),
 
-                onChanged: (v) => setState(() => query = v),
-
-                onSubmitted: (v) {
-                  final submitted = v.trim();
-                  if (submitted.isEmpty) return;
-                  focusNode.unfocus();
-                  _addHistory(submitted);
-                  setState(() {
-                    query = submitted;
-                    isFocused = false;
-                  });
-                },
-
-                style: AppTextStyles.input,
-
-                decoration: AppInputDecorations.filled(
-                  hintText: '検索',
-                  prefixIcon: Icons.search,
-                  fillColor: Colors.white,
-                  suffixIcon: query.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () {
-                            controller.clear();
-                            setState(() => query = '');
-                          },
-                        )
-                      : const Icon(Icons.search, color: AppColors.iconMuted),
-                ),
+                  if (isFocused)
+                    SearchOverlay(
+                      query: query,
+                      history: history,
+                      onSelect: _onSelect,
+                      onDeleteHistory: _deleteHistory,
+                    ),
+                ],
               ),
             ),
           ),
 
-          // ── 検索候補 / 検索結果 ─────────────────────
-          Expanded(
-            child: isFocused
-                ? SearchOverlay(
-                    query: query,
-                    history: history,
-                    onSelect: _onSelect,
-                    onDeleteHistory: _deleteHistory,
-                  )
-                : query.isNotEmpty
-                ? SearchResults(
-                    query: query,
-                    onViewSpots:
-                        (animeId, animeTitle, spotCount, keyVisualUrl) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => SpotList(
-                                animeId: animeId,
-                                animeTitle: animeTitle,
-                                spotCount: spotCount,
-                                bannerImageUrl: keyVisualUrl,
+          if (!isFocused)
+            Expanded(
+              child: query.isNotEmpty
+                  ? SearchResults(
+                      query: query,
+                      onViewSpots:
+                          (animeId, animeTitle, spotCount, keyVisualUrl) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => SpotList(
+                                  animeId: animeId,
+                                  animeTitle: animeTitle,
+                                  spotCount: spotCount,
+                                  bannerImageUrl: keyVisualUrl,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                  )
-                : const SizedBox(),
-          ),
+                            );
+                          },
+                    )
+                  : const SizedBox(),
+            ),
         ],
       ),
     );

@@ -51,7 +51,7 @@ class _EventCarouselState extends State<_EventCarousel> {
   static const _autoScrollInterval = Duration(seconds: 4);
   static const _autoScrollDuration = Duration(milliseconds: 700);
 
-  final PageController _controller = PageController();
+  final PageController _controller = PageController(viewportFraction: 0.75);
   final Set<String> _precacheRequestedUrls = {};
   Timer? _autoScrollTimer;
 
@@ -138,10 +138,15 @@ class _EventCarouselState extends State<_EventCarousel> {
       onPointerCancel: _resumeAutoScroll,
       child: PageView.builder(
         controller: _controller,
+        padEnds: true,
         physics: const BouncingScrollPhysics(parent: PageScrollPhysics()),
         itemCount: widget.events.length,
-        itemBuilder: (context, index) =>
-            Center(child: _EventBanner(event: widget.events[index])),
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: _EventBanner(event: widget.events[index]),
+          );
+        },
       ),
     );
   }
@@ -165,74 +170,72 @@ class _EventBannerState extends State<_EventBanner>
   Widget build(BuildContext context) {
     super.build(context);
     final bannerUrl = widget.event.bannerUrl?.trim();
-    return SizedBox(
-      width: 300,
-      child: Material(
-        color: AppColors.primary,
+    return Material(
+      color: AppColors.primary,
+      borderRadius: AppRadius.brSm,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
         borderRadius: AppRadius.brSm,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () => Navigator.of(context).push<void>(
-            MaterialPageRoute(
-              builder: (_) => EventDetailScreen(event: widget.event),
-            ),
+        onTap: () => Navigator.of(context).push<void>(
+          MaterialPageRoute(
+            builder: (_) => EventDetailScreen(event: widget.event),
           ),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (bannerUrl != null && bannerUrl.isNotEmpty)
-                CachedNetworkImage(
-                  imageUrl: bannerUrl,
-                  fit: BoxFit.cover,
-                  fadeInDuration: Duration.zero,
-                  fadeOutDuration: Duration.zero,
-                  useOldImageOnUrlChange: true,
-                  errorWidget: (_, _, _) => const Center(
-                    child: Icon(
-                      Icons.broken_image_outlined,
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (bannerUrl != null && bannerUrl.isNotEmpty)
+              CachedNetworkImage(
+                imageUrl: bannerUrl,
+                fit: BoxFit.cover,
+                fadeInDuration: Duration.zero,
+                fadeOutDuration: Duration.zero,
+                useOldImageOnUrlChange: true,
+                errorWidget: (_, _, _) => const Center(
+                  child: Icon(
+                    Icons.broken_image_outlined,
+                    color: AppColors.white,
+                  ),
+                ),
+              ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Color(0xCC000000)],
+                  stops: [0.35, 1],
+                ),
+              ),
+            ),
+            Positioned(
+              left: AppSpacing.md,
+              right: AppSpacing.md,
+              bottom: AppSpacing.md,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.event.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.subtitle.copyWith(
                       color: AppColors.white,
                     ),
                   ),
-                ),
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Color(0xCC000000)],
-                    stops: [0.35, 1],
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    formatEventPeriod(widget.event),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.white,
+                    ),
                   ),
-                ),
+                ],
               ),
-              Positioned(
-                left: AppSpacing.md,
-                right: AppSpacing.md,
-                bottom: AppSpacing.md,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.event.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.subtitle.copyWith(
-                        color: AppColors.white,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      formatEventPeriod(widget.event),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

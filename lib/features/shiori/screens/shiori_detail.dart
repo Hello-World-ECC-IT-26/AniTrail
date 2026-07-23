@@ -29,7 +29,6 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
   StampCard? _card;
   Set<String> _visitedSpotIds = {};
   Object? _error;
-  bool _nameOrder = false;
   bool _refreshing = true;
   bool _mutating = false;
 
@@ -73,7 +72,7 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
 
   List<Spot> get _spots {
     final spots = List<Spot>.from(_card?.spots ?? const []);
-    if (_nameOrder) spots.sort((a, b) => a.name.compareTo(b.name));
+    spots.sort((a, b) => a.name.compareTo(b.name));
     return spots;
   }
 
@@ -287,7 +286,7 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.surfaceVariant,
+      backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(child: _buildHeader(card)),
@@ -329,7 +328,6 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
         ],
       ),
       bottomNavigationBar: MainBottomNav(
-        currentIndex: 1,
         onTap: (index) {
           Navigator.pushAndRemoveUntil(
             context,
@@ -530,6 +528,7 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
         boxShadow: AppShadows.card,
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
@@ -553,7 +552,7 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
               final cellSize =
                   (constraints.maxWidth - spacing * (columns - 1)) / columns;
               return Wrap(
-                alignment: WrapAlignment.center,
+                alignment: WrapAlignment.start,
                 spacing: spacing,
                 runSpacing: spacing,
                 children: List.generate(stampTotal, (index) {
@@ -601,21 +600,8 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
     child: Stack(
       alignment: Alignment.center,
       children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<bool>(
-              value: _nameOrder,
-              isDense: true,
-              borderRadius: AppRadius.brMd,
-              items: const [
-                DropdownMenuItem(value: false, child: Text('追加順')),
-                DropdownMenuItem(value: true, child: Text('名前順')),
-              ],
-              onChanged: (value) => setState(() => _nameOrder = value ?? false),
-            ),
-          ),
-        ),
+        const SizedBox(),
+
         Text('行き先一覧', style: AppTextStyles.subtitle.copyWith(fontSize: 17)),
         Align(
           alignment: Alignment.centerRight,

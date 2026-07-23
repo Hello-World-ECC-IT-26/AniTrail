@@ -23,19 +23,19 @@ class MainBottomNav extends StatelessWidget {
 
       items: [
         BottomNavigationBarItem(
-          icon: _icon('assets/images/home.png', index == 0),
+          icon: _icon('assets/images/home.png', hasSelection && index == 0),
           label: 'ホーム',
         ),
         BottomNavigationBarItem(
-          icon: _icon('assets/images/map.png', index == 1),
+          icon: _icon('assets/images/map.png', hasSelection && index == 1),
           label: 'マップ',
         ),
         BottomNavigationBarItem(
-          icon: _icon('assets/images/stamp.png', index == 2),
+          icon: _icon('assets/images/stamp.png', hasSelection && index == 2),
           label: 'スタンプ',
         ),
         BottomNavigationBarItem(
-          icon: _icon('assets/images/coupon.png', index == 3),
+          icon: _icon('assets/images/coupon.png', hasSelection && index == 3),
           label: 'クーポン',
         ),
       ],
