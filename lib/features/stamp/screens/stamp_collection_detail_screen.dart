@@ -87,7 +87,7 @@ class StampCollectionDetailDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    '訪問回数: $visitCount回　|　最終訪問: ${_dateText(obtainedAt)}',
+                    '訪問回数: $visitCount回|最終訪問: ${_dateText(obtainedAt)}',
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

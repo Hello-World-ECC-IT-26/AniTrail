@@ -71,4 +71,7 @@ class AppColors {
     end: Alignment.centerRight,
     colors: [gradientStart, gradientEnd],
   );
+
+  /// 旅のしおり作成ボタンの背景色
+  static const tabiShiori = Color(0xFF13367C);
 }

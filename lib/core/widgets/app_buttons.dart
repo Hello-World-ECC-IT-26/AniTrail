@@ -37,6 +37,8 @@ class AppButton extends StatelessWidget {
   final IconData? icon;
   final bool isLoading;
   final double? height;
+  final Color? backgroundColor;
+  final bool dense;
 
   /// 横幅いっぱいに広げるか。false なら内容に合わせた幅。
   final bool fullWidth;
@@ -51,6 +53,8 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.fullWidth = true,
     this.height,
+    this.backgroundColor,
+    this.dense = false,
   });
 
   bool get _compact => size == AppButtonSize.compact;
@@ -61,15 +65,19 @@ class AppButton extends StatelessWidget {
 
   Size? get _minimumSize => _compact ? Size.zero : null;
 
-  EdgeInsets get _padding => _compact
-      ? const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
-        )
-      : const EdgeInsets.symmetric(
-          horizontal: AppSpacing.xl,
-          vertical: AppSpacing.md,
-        );
+  EdgeInsets get _padding {
+    if (dense) {
+      return const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.md,
+      );
+    }
+
+    return const EdgeInsets.symmetric(
+      horizontal: AppSpacing.md,
+      vertical: AppSpacing.md,
+    );
+  }
 
   TextStyle get _textStyle {
     final base = _compact
@@ -108,7 +116,7 @@ class AppButton extends StatelessWidget {
         button = ElevatedButton(
           onPressed: disabled,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
+            backgroundColor: backgroundColor ?? AppColors.primary,
             foregroundColor: AppColors.white,
             disabledBackgroundColor: AppColors.primaryLight,
             padding: _padding,

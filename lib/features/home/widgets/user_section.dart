@@ -53,7 +53,7 @@ class UserInfoSection extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.black),
+            icon: const Icon(Icons.notifications, color: Colors.black),
             onPressed: () {},
           ),
         ],
