@@ -12,8 +12,6 @@ import '../../map/models/anime_spot.dart';
 import '../../search/screens/search_screen.dart';
 import '../../shiori/screens/shiori_detail.dart';
 
-enum _Filter { all, incomplete, complete }
-
 class StampCardSection extends StatefulWidget {
   const StampCardSection({super.key});
 
@@ -26,7 +24,7 @@ class _StampCardSectionState extends State<StampCardSection> {
   bool _loading = true;
   Object? _error;
   AppDataRepository? _repository;
-  _Filter _filter = _Filter.all;
+  bool _newestFirst = true;
   int? _expandedIndex;
 
   @override
@@ -61,29 +59,27 @@ class _StampCardSectionState extends State<StampCardSection> {
     super.dispose();
   }
 
-  List<StampCard> get _filtered => switch (_filter) {
-    _Filter.complete => _cards.where((c) => c.complete == true).toList(),
-    _Filter.incomplete => _cards.where((c) => c.complete != true).toList(),
-    _Filter.all => _cards,
-  };
+  List<StampCard> get _sortedCards {
+    final list = [..._cards];
+
+    list.sort((a, b) {
+      final aDate = a.createdAt;
+      final bDate = b.createdAt;
+
+      if (aDate == null && bDate == null) return 0;
+      if (aDate == null) return 1;
+      if (bDate == null) return -1;
+
+      return _newestFirst ? bDate.compareTo(aDate) : aDate.compareTo(bDate);
+    });
+
+    return list;
+  }
 
   Map<String, String> get _authHeaders {
     final token = Supabase.instance.client.auth.currentSession?.accessToken;
     return token != null ? {'Authorization': 'Bearer $token'} : {};
   }
-
-  void _onFilterChanged(_Filter filter) {
-    setState(() {
-      _filter = filter;
-      _expandedIndex = null;
-    });
-  }
-
-  String _filterLabel(_Filter filter) => switch (filter) {
-    _Filter.all => '全て',
-    _Filter.incomplete => '未完了',
-    _Filter.complete => 'コンプリート',
-  };
 
   Future<void> _onCreate() async {
     await Navigator.push(
@@ -95,29 +91,32 @@ class _StampCardSectionState extends State<StampCardSection> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _filtered;
+    final sortedCards = _sortedCards;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: AppSpacing.xl),
 
-        // ヘッダー行: [フィルター] 作成した旅のしおり [+作成]
+        // ヘッダー行: [作成日順] 作成した旅のしおり [+作成]
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           child: Row(
             children: [
-              // 左: フィルタードロップダウン（固定幅で中央タイトルを揃える）
+              // 左: 作成日順ソートボタン
               SizedBox(
                 width: 96,
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: _cards.isEmpty
                       ? const SizedBox.shrink()
-                      : _FilterDropdown(
-                          current: _filter,
-                          label: _filterLabel(_filter),
-                          onChanged: _onFilterChanged,
+                      : _SortButton(
+                          newestFirst: _newestFirst,
+                          onTap: () {
+                            setState(() {
+                              _newestFirst = !_newestFirst;
+                            });
+                          },
                         ),
                 ),
               ),
@@ -202,7 +201,7 @@ class _StampCardSectionState extends State<StampCardSection> {
               ),
             ),
           )
-        else if (filtered.isEmpty)
+        else if (sortedCards.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.xxl),
             child: Center(
@@ -216,7 +215,7 @@ class _StampCardSectionState extends State<StampCardSection> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: _StackedCards(
-              cards: filtered,
+              cards: sortedCards,
               authHeaders: _authHeaders,
               expandedIndex: _expandedIndex,
               onExpand: (i) => setState(
@@ -373,7 +372,9 @@ class _ShioriCard extends StatelessWidget {
   }
 
   Widget _buildBanner() {
-    final bannerUrl = card.keyVisualUrls.firstOrNull;
+    final bannerUrl = card.keyVisualUrls.isNotEmpty
+        ? card.keyVisualUrls.first
+        : null;
 
     return ClipRRect(
       borderRadius: BorderRadius.only(
@@ -531,47 +532,17 @@ class _ShioriCard extends StatelessWidget {
 }
 
 // ── フィルタードロップダウン ──────────────────────────────────────────────
-class _FilterDropdown extends StatelessWidget {
-  final _Filter current;
-  final String label;
-  final void Function(_Filter) onChanged;
+class _SortButton extends StatelessWidget {
+  final bool newestFirst;
+  final VoidCallback onTap;
 
-  const _FilterDropdown({
-    required this.current,
-    required this.label,
-    required this.onChanged,
-  });
+  const _SortButton({required this.newestFirst, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<_Filter>(
-      initialValue: current,
-      onSelected: onChanged,
-      offset: const Offset(0, 36),
-      shape: const RoundedRectangleBorder(borderRadius: AppRadius.brMd),
-
-      itemBuilder: (context) => [
-        for (final f in _Filter.values)
-          PopupMenuItem(
-            value: f,
-            height: 40,
-            child: Row(
-              children: [
-                Icon(
-                  f == current ? Icons.check : null,
-                  size: 16,
-                  color: AppColors.primary,
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                Text(switch (f) {
-                  _Filter.all => '全て',
-                  _Filter.incomplete => '未完了',
-                  _Filter.complete => 'コンプリート',
-                }, style: const TextStyle(fontSize: 13)),
-              ],
-            ),
-          ),
-      ],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: AppRadius.brSm,
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.sm,
@@ -585,20 +556,18 @@ class _FilterDropdown extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
+            const Text(
+              '作成日順',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
               ),
             ),
-            const Icon(
-              Icons.keyboard_arrow_down_rounded,
+            Icon(
+              newestFirst
+                  ? Icons.keyboard_arrow_down_rounded
+                  : Icons.keyboard_arrow_up_rounded,
               size: 16,
               color: Colors.black,
             ),

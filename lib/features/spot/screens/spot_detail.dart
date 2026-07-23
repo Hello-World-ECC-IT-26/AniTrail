@@ -228,6 +228,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                   onPressed: _openMap,
                   icon: Icons.location_on_outlined,
                   fullWidth: false,
+                  height: 35,
                 ),
               ),
 
@@ -260,18 +261,18 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                         icon: Icons.location_on_outlined,
                         size: AppButtonSize.compact,
                         fullWidth: false,
-                        onPressed: spots.isEmpty
-                            ? null
-                            : () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ShioriListScreen(
-                                      spots: List.from(spots),
-                                    ),
-                                  ),
-                                );
-                              },
+                        backgroundColor: AppColors.tabiShiori,
+                        onPressed: () {
+                          if (spots.isEmpty) return;
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  ShioriListScreen(spots: List.from(spots)),
+                            ),
+                          );
+                        },
                       ),
                       if (spots.isNotEmpty)
                         Positioned(
@@ -315,6 +316,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                     icon: added ? Icons.check : Icons.add,
                     label: added ? 'しおりに追加済み' : 'しおりに追加',
                     onPressed: () => _draft.toggle(_draftSpot),
+                    backgroundColor: AppColors.tabiShiori,
                   );
                 },
               ),

@@ -149,7 +149,7 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
+                          color: Colors.black,
                         ),
                       ),
                     ],
@@ -208,6 +208,8 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
                 label: 'マップで確認',
                 icon: Icons.location_on_outlined,
                 fullWidth: false,
+                height: 36,
+                dense: true,
                 onPressed: () {
                   ScaffoldMessenger.of(
                     context,
@@ -275,56 +277,62 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
     return unique.values.toList();
   }
 
-  Widget _buildAnimeVisuals() => SizedBox(
-    height: 140,
-    child: ListView.separated(
-      scrollDirection: Axis.horizontal,
-      itemCount: _animeVisualSpots.length,
-      separatorBuilder: (context, index) =>
-          const SizedBox(width: AppSpacing.sm),
-      itemBuilder: (context, index) {
-        final spot = _animeVisualSpots[index];
-        return SizedBox(
-          width: 240,
-          child: ClipRRect(
-            borderRadius: AppRadius.brMd,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (spot.keyVisualUrl != null && spot.keyVisualUrl!.isNotEmpty)
-                  CachedNetworkImage(
-                    imageUrl: spot.keyVisualUrl!,
-                    fit: BoxFit.cover,
-                    errorWidget: (context, imageUrl, error) =>
-                        _placeholderImage(),
-                  )
-                else
-                  _placeholderImage(),
-                const DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: AppColors.cardGradientSoft,
-                  ),
-                ),
-                Positioned(
-                  left: AppSpacing.md,
-                  right: AppSpacing.md,
-                  bottom: AppSpacing.md,
-                  child: Text(
-                    spot.animeTitle ?? '',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.subtitle.copyWith(
-                      color: AppColors.white,
-                    ),
-                  ),
-                ),
-              ],
+  Widget _buildAnimeVisuals() {
+    final animeVisualSpots = _animeVisualSpots;
+
+    if (animeVisualSpots.length == 1) {
+      return SizedBox(
+        height: 160,
+        child: Center(child: _buildAnimeVisual(animeVisualSpots.single)),
+      );
+    }
+
+    return SizedBox(
+      height: 160,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: animeVisualSpots.length,
+        separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
+        itemBuilder: (_, index) => _buildAnimeVisual(animeVisualSpots[index]),
+      ),
+    );
+  }
+
+  Widget _buildAnimeVisual(Spot spot) {
+    return SizedBox(
+      width: 360,
+      child: ClipRRect(
+        borderRadius: AppRadius.brMd,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (spot.keyVisualUrl != null && spot.keyVisualUrl!.isNotEmpty)
+              CachedNetworkImage(
+                imageUrl: spot.keyVisualUrl!,
+                fit: BoxFit.cover,
+                errorWidget: (_, __, ___) => _placeholderImage(),
+              )
+            else
+              _placeholderImage(),
+            const DecoratedBox(
+              decoration: BoxDecoration(gradient: AppColors.cardGradientSoft),
             ),
-          ),
-        );
-      },
-    ),
-  );
+            Positioned(
+              left: AppSpacing.md,
+              right: AppSpacing.md,
+              bottom: AppSpacing.md,
+              child: Text(
+                spot.animeTitle ?? '',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.subtitle.copyWith(color: AppColors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   // ── 聖地の1行表示 ────────────────────────────────
   Widget _buildSpotRow(Spot spot) {
@@ -339,55 +347,67 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
           children: [
             SizedBox(width: 120, height: 100, child: _buildThumbnail(spot)),
 
-            // ── テキスト情報 ──────────────────────────
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (spot.animeTitle?.isNotEmpty ?? false) ...[
-                      Text(
-                        spot.animeTitle!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.caption.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textSecondary,
-                        ),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                  AppSpacing.sm,
+                  AppSpacing.sm,
+                ),
+                child: Transform.translate(
+                  offset: const Offset(0, -10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: spot.animeTitle?.isNotEmpty ?? false
+                                ? Text(
+                                    spot.animeTitle!,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTextStyles.caption.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  )
+                                : const SizedBox(),
+                          ),
+
+                          Text(
+                            visited ? '訪問済み' : '未訪問',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: visited
+                                  ? AppColors.textMuted
+                                  : AppColors.error,
+                            ),
+                          ),
+                        ],
                       ),
+
                       const SizedBox(height: AppSpacing.xs),
+
+                      Text(
+                        spot.name,
+                        style: AppTextStyles.subtitle,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+
+                      const SizedBox(height: AppSpacing.xs),
+
+                      Text(
+                        spot.addressText,
+                        style: AppTextStyles.label.copyWith(fontSize: 13),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            spot.name,
-                            style: AppTextStyles.subtitle,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Text(
-                          visited ? '訪問済み' : '未訪問',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: visited
-                                ? AppColors.textMuted
-                                : AppColors.error,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      spot.addressText,
-                      style: AppTextStyles.label.copyWith(fontSize: 13),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),

@@ -115,7 +115,7 @@ class _SearchResultsState extends State<SearchResults> {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
-        AppSpacing.md,
+        0,
         AppSpacing.lg,
         AppSpacing.lg,
       ),

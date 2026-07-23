@@ -210,6 +210,7 @@ class _SpotListState extends State<SpotList> {
                   icon: Icons.location_on_outlined,
                   size: AppButtonSize.compact,
                   fullWidth: false,
+                  backgroundColor: AppColors.tabiShiori,
                   onPressed: _createShiori,
                 ),
 
@@ -403,84 +404,94 @@ class _SpotListState extends State<SpotList> {
 
           // ── テキスト情報 ──────────────────────────
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.sm,
-                AppSpacing.xs,
-                AppSpacing.sm,
-                AppSpacing.xs,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    spot.animeTitle ?? widget.animeTitle,
-                    maxLines: 2,
-                    style: AppTextStyles.label.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  // 場所名
-                  Text(
-                    spot.name,
-                    style: AppTextStyles.subtitle,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-
-                  // 住所
-                  Text(
-                    spot.addressText,
-                    style: AppTextStyles.label.copyWith(fontSize: 13),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-
-                  const SizedBox(height: AppSpacing.xs),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton.icon(
-                        onPressed: () => _toggleSelect(spot),
-                        icon: Icon(
-                          isSelected ? Icons.check : Icons.add,
-                          size: 14,
-                          color: isSelected
-                              ? AppColors.primary
-                              : AppColors.textPrimary,
+            child: SizedBox(
+              height: 130,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                  AppSpacing.sm,
+                  AppSpacing.sm,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Anime + 追加
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            spot.animeTitle ?? widget.animeTitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.label.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
                         ),
-                        label: Text(
-                          isSelected ? '追加済み' : '追加',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+
+                        TextButton.icon(
+                          onPressed: () => _toggleSelect(spot),
+                          icon: Icon(
+                            isSelected ? Icons.check : Icons.add,
+                            size: 14,
                             color: isSelected
                                 ? AppColors.primary
                                 : AppColors.textPrimary,
                           ),
-                        ),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.xs,
+                          label: Text(
+                            isSelected ? '追加済み' : '追加',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : AppColors.textPrimary,
+                            ),
                           ),
-                          minimumSize: const Size(0, 32),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          visualDensity: VisualDensity.compact,
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      AppButton(
+                      ],
+                    ),
+
+                    const SizedBox(height: AppSpacing.xs),
+
+                    // 場所名
+                    Text(
+                      spot.name,
+                      style: AppTextStyles.subtitle,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    const SizedBox(height: AppSpacing.xs),
+
+                    // 住所
+                    Text(
+                      spot.addressText,
+                      style: AppTextStyles.label.copyWith(fontSize: 13),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    const Spacer(),
+
+                    // 詳細（右下）
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: AppButton(
                         label: '詳細',
                         onPressed: () => _openDetail(spot),
                         size: AppButtonSize.compact,
                         fullWidth: false,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
