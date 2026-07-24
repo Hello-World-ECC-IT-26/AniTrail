@@ -228,7 +228,6 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                   onPressed: _openMap,
                   icon: Icons.location_on_outlined,
                   fullWidth: false,
-                  height: 35,
                 ),
               ),
 

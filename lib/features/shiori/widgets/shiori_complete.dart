@@ -53,6 +53,24 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
     if (mounted) setState(() => _visited = visited);
   }
 
+  StampCard get _createdCard => StampCard(
+    cardId: widget.cardId,
+    title: widget.shioriTitle,
+    spotCount: widget.spots.length,
+    complete: false,
+    spotImageUrls: widget.spots
+        .map((spot) => spot.image)
+        .whereType<String>()
+        .toSet()
+        .toList(),
+    keyVisualUrls: widget.spots
+        .map((spot) => spot.keyVisualUrl)
+        .whereType<String>()
+        .toSet()
+        .toList(),
+    spots: widget.spots,
+  );
+
   @override
   Widget build(BuildContext context) {
     final spots = widget.spots;
@@ -208,12 +226,18 @@ class _ShioriCompleteScreenState extends State<ShioriCompleteScreen> {
                 label: 'マップで確認',
                 icon: Icons.location_on_outlined,
                 fullWidth: false,
-                height: 36,
                 dense: true,
                 onPressed: () {
-                  ScaffoldMessenger.of(
+                  Navigator.pushAndRemoveUntil(
                     context,
-                  ).showSnackBar(const SnackBar(content: Text('マップ確認は準備中です')));
+                    MaterialPageRoute(
+                      builder: (_) => HomeScreen(
+                        initialIndex: 1,
+                        initialMapShiori: _createdCard,
+                      ),
+                    ),
+                    (route) => false,
+                  );
                 },
               ),
             ),

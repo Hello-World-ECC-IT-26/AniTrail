@@ -14,6 +14,7 @@ import '../../coupon/data/coupon_repository.dart';
 import '../../coupon/models/coupon.dart';
 import '../../coupon/widgets/coupon_detail.dart';
 import '../../coupon/widgets/coupon_grant_dialog.dart';
+import '../../map/models/anime_spot.dart';
 import '../../map/screens/map_screen.dart';
 import '../../search/screens/search_screen.dart';
 import '../../stamp/screens/all_stamp_collections_screen.dart';
@@ -23,10 +24,11 @@ import '../widgets/stamp_card_section.dart';
 import '../widgets/user_section.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, this.initialIndex = 0})
+  const HomeScreen({super.key, this.initialIndex = 0, this.initialMapShiori})
     : assert(initialIndex >= 0 && initialIndex <= 3);
 
   final int initialIndex;
+  final StampCard? initialMapShiori;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -139,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _ensurePage(int index) {
     _pages[index] ??= switch (index) {
       0 => _HomeBody(onSearchTap: _onSearchTap),
-      1 => const MapScreen(),
+      1 => MapScreen(initialShiori: widget.initialMapShiori),
       2 => const AllStampCollectionsScreen(showBackButton: false),
       _ => const CouponScreen(),
     };
