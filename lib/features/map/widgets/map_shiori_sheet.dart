@@ -19,6 +19,9 @@ import 'spot_list_item.dart';
 
 const _kSpotFilters = ['すべて', '訪問済み', '未訪問'];
 
+typedef StampCollectionsLoader =
+    Future<List<StampCollection>> Function({bool force});
+
 /// マップ右上のしおりボタンで開くシート。
 /// しおり一覧（アニメ画像カード）→ タップで聖地一覧（同じシート内）へドリルダウン。
 /// 聖地一覧表示時はマップに聖地ピンを打つ。
@@ -33,6 +36,8 @@ class MapShioriSheet extends StatefulWidget {
   final VoidCallback onClearSpots;
   final ValueChanged<bool> onDetailVisibilityChanged;
   final LatLng? currentLocation;
+  final StampCard? initialCard;
+  final StampCollectionsLoader? loadCollections;
 
   const MapShioriSheet({
     super.key,
@@ -41,6 +46,8 @@ class MapShioriSheet extends StatefulWidget {
     required this.onClearSpots,
     required this.onDetailVisibilityChanged,
     this.currentLocation,
+    this.initialCard,
+    this.loadCollections,
   });
 
   @override
@@ -70,20 +77,47 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
   @override
   void initState() {
     super.initState();
+    _selected = widget.initialCard;
+    _spotsLoading = false;
+    final initialCard = widget.initialCard;
+    if (initialCard != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        widget.onDetailVisibilityChanged(true);
+        widget.onShowSpots(initialCard.spots);
+      });
+    }
     _load();
   }
 
   Future<void> _load({bool force = false}) async {
     try {
-      final collections = await _api.fetchStampCollections(force: force);
+      final collections =
+          await widget.loadCollections?.call(force: force) ??
+          await _api.fetchStampCollections(force: force);
       if (mounted) {
+        final selectedId = _selected?.cardId;
+        final refreshedSelected = selectedId == null
+            ? null
+            : collections
+                  .where((item) => item.card.cardId == selectedId)
+                  .firstOrNull;
         setState(() {
           _cards = collections.map((item) => item.card).toList();
           _visitStatsByCard = {
             for (final item in collections) item.card.cardId: item.visitStats,
           };
+          if (refreshedSelected != null) {
+            _selected = refreshedSelected.card;
+            _visitedSpotIds = refreshedSelected.visitStats.keys.toSet();
+            _spotsLoading = false;
+          }
           _loading = false;
         });
+        if (refreshedSelected != null) {
+          widget.onDetailVisibilityChanged(true);
+          widget.onShowSpots(refreshedSelected.card.spots);
+        }
       }
     } catch (e) {
       if (mounted) {

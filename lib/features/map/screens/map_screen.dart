@@ -14,7 +14,9 @@ import 'map_location_mixin.dart';
 import 'map_search_mixin.dart';
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  const MapScreen({super.key, this.initialShiori});
+
+  final StampCard? initialShiori;
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -73,6 +75,10 @@ class _MapScreenState extends State<MapScreen>
   @override
   void initState() {
     super.initState();
+    if (widget.initialShiori != null) {
+      _shioriVisible = true;
+      _shioriDetailVisible = true;
+    }
     loadHistory();
     startLocationTracking();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -211,6 +217,7 @@ class _MapScreenState extends State<MapScreen>
 
             if (_shioriVisible && !searchVisible && !resultsVisible)
               MapShioriSheet(
+                initialCard: widget.initialShiori,
                 currentLocation: hasFix ? currentLatLng : null,
                 onClose: () {
                   clearSpotPins();
