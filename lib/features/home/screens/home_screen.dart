@@ -5,9 +5,9 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/data/app_data_repository.dart';
+import '../../../core/styles/app_dimens.dart';
 import '../../../core/styles/app_styles.dart';
 import '../../../core/styles/app_text.dart';
-import '../../../core/styles/app_dimens.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/main_buttom_nav.dart';
 import '../../coupon/data/coupon_repository.dart';
