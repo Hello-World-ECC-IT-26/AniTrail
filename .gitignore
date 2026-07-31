@@ -16,6 +16,7 @@
 .github/
 .claude/
 migrate_working_dir/
+node_modules/
 
 # IntelliJ related
 *.iml
