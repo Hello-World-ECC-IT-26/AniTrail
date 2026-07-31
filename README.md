@@ -8,7 +8,7 @@ AniTrail のクライアントアプリ（Flutter）。
 
 AniTrail は、アニメの舞台となった場所を巡りながらスタンプを集める、聖地巡礼支援アプリです。スポットの検索や地図表示、しおりによる巡礼ルートの管理、現在地からのナビゲーション、スタンプ・クーポンの獲得などを一つのアプリで楽しめます。
 
-本リポジトリは Flutter 製のフロントエンドです。バックエンドは [AniTrail_Back](https://github.com/Hello-World-ECC-IT-26/AniTrail_Back) を参照してください。
+本リポジトリは Flutter 製のフロントエンドです。
 
 ![AniTrail サブビジュアル](image/sub.png)
 
