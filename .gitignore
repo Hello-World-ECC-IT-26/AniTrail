@@ -13,6 +13,7 @@
 .env
 .env.*
 .vscode/
+.mcp.json
 .github/
 .claude/
 migrate_working_dir/
