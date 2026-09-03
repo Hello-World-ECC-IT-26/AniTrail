@@ -6,12 +6,13 @@ class NavigationMascot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 112,
-      height: 132,
+      // GIFの透明な余白を含めて配置し、デザイン上の見た目の大きさを合わせる。
+      width: 226,
+      height: 320,
       child: Image.asset(
-        'assets/images/weasel.png',
+        'assets/images/weasel_walk.gif',
         fit: BoxFit.contain,
-        cacheWidth: 224,
+        cacheWidth: 452,
         filterQuality: FilterQuality.medium,
       ),
     );
