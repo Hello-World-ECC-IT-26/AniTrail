@@ -38,14 +38,13 @@ class DirectionArrow extends StatelessWidget {
             _buildNoHeadingState()
           else
             Transform.rotate(
-              angle:
-                  (-heading + _needleNorthOffsetDegrees) * math.pi / 180,
+              angle: (-heading + _needleNorthOffsetDegrees) * math.pi / 180,
               child: Image.asset(
                 'assets/images/compass_needle.png',
-                width: size * 0.46,
-                height: size * 0.46,
+                width: size * 0.35,
+                height: size * 0.35,
                 fit: BoxFit.contain,
-                cacheWidth: (size * 0.92).round(),
+                cacheWidth: (size * 0.7).round(),
                 filterQuality: FilterQuality.medium,
               ),
             ),

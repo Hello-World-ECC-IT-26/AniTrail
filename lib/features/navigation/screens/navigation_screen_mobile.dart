@@ -423,7 +423,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
             Positioned.fill(
               child: ColoredBox(color: AppColors.black.withValues(alpha: 0.58)),
             ),
-            SafeArea(child: _buildDirectionMode()),
+            // 下部バーとキャラクターをデザインどおり画面下端まで配置する。
+            SafeArea(bottom: false, child: _buildDirectionMode()),
             if (_showCompassSwitchNotice)
               SafeArea(
                 child: Align(
@@ -544,71 +545,60 @@ class _NavigationScreenState extends State<NavigationScreen> {
   }
 
   Widget _buildDirectionMode() {
-    final bearing = _bearingToDestination();
     final deviceHeading = _deviceHeadingDegrees;
+    final bearing = _bearingToDestination();
     final relativeBearing = deviceHeading == null
         ? null
         : _normalizeDegrees(bearing - deviceHeading);
     final distance = _distanceToDestinationMeters ?? _remainingDistanceMeters;
-    final statusText = distance != null && distance <= 30
-        ? 'まもなく聖地だよ！'
-        : 'あと ${_formatDistance(distance)}';
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // 方位表示に使える横幅を優先しつつ、案内パネルと重ならない最大径にする。
-        final compassSize = math
-            .min(
-              constraints.maxWidth - AppSpacing.md * 2,
-              constraints.maxHeight - 226,
-            )
-            .clamp(220.0, 440.0)
-            .toDouble();
+        const distanceCardTop = 96.0;
+        const compassTop = 246.0;
+        const bottomContentReserve = 178.0;
+        final distanceCardWidth = math.min(
+          346.0,
+          math.max(0.0, constraints.maxWidth - AppSpacing.xxl * 2),
+        );
+        final compassSize = math.max(
+          0.0,
+          math.min(
+            338.0,
+            math.min(
+              math.max(0.0, constraints.maxWidth - 102),
+              math.max(
+                0.0,
+                constraints.maxHeight - compassTop - bottomContentReserve,
+              ),
+            ),
+          ),
+        );
 
         return Stack(
           children: [
             Positioned(
-              left: AppSpacing.md,
-              top: AppSpacing.xs,
+              left: 28,
+              top: 36,
               child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.white),
+                icon: const Icon(
+                  Icons.chevron_left,
+                  color: AppColors.white,
+                  size: 36,
+                ),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ),
             Positioned(
-              top: AppSpacing.sm,
-              left: AppSpacing.xxxl,
-              right: AppSpacing.xxxl,
-              child: Column(
-                children: [
-                  Text(
-                    '目的地方向',
-                    style: AppTextStyles.subtitle.copyWith(
-                      color: AppColors.white.withValues(alpha: 0.82),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    deviceHeading == null
-                        ? _headingUnavailable
-                              ? '端末方位を取得できません'
-                              : '端末方位取得中'
-                        : '${bearing.round()}° ${_directionLabel(bearing)}',
-                    style: AppTextStyles.title.copyWith(
-                      color: AppColors.white,
-                      fontSize: 38,
-                      height: 1,
-                    ),
-                  ),
-                ],
-              ),
+              top: distanceCardTop,
+              left: (constraints.maxWidth - distanceCardWidth) / 2,
+              width: distanceCardWidth,
+              child: _buildDirectionDistanceCard(distance),
             ),
             Positioned(
-              top: 94,
+              top: compassTop,
               left: 0,
               right: 0,
-              bottom: 132,
               child: Center(
                 child: DirectionArrow(
                   deviceHeadingDegrees: deviceHeading,
@@ -617,69 +607,139 @@ class _NavigationScreenState extends State<NavigationScreen> {
               ),
             ),
             Positioned(
-              right: AppSpacing.md,
-              bottom: 108,
-              child: const NavigationMascot(),
-            ),
-            Positioned(
-              left: AppSpacing.md,
-              right: AppSpacing.md,
-              bottom: AppSpacing.md,
-              child: Material(
-                color: AppColors.black.withValues(alpha: 0.78),
-                borderRadius: AppRadius.brMd,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xl,
-                    vertical: AppSpacing.md,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 32,
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  border: Border(
+                    top: BorderSide(color: Color(0xFFFFB44C), width: 5),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '目的地まで',
-                        style: AppTextStyles.body.copyWith(
-                          color: AppColors.white.withValues(alpha: 0.78),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        statusText,
-                        style: AppTextStyles.title.copyWith(
-                          color: AppColors.white,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      if (relativeBearing != null) ...[
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          _relativeDirectionText(relativeBearing),
-                          style: AppTextStyles.body.copyWith(
-                            color: AppColors.white.withValues(alpha: 0.78),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ] else if (_headingUnavailable) ...[
-                        const SizedBox(height: AppSpacing.xs),
-                        TextButton(
-                          onPressed: () async {
-                            await _stopDeviceHeadingTracking();
-                            _startDeviceHeadingTracking();
-                          },
-                          child: const Text('方位を再取得'),
-                        ),
-                      ],
-                    ],
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0xFF9B4811), Color(0xFF0B0502)],
                   ),
                 ),
               ),
+            ),
+            Positioned(left: -14, bottom: -46, child: const NavigationMascot()),
+            Positioned(
+              right: 22,
+              bottom: 86,
+              width: math.min(210.0, math.max(0.0, constraints.maxWidth - 190)),
+              height: 128,
+              child: _buildDirectionSpeechBubble(relativeBearing),
             ),
           ],
         );
       },
     );
+  }
+
+  Widget _buildDirectionDistanceCard(double? distance) {
+    return Material(
+      color: AppColors.black.withValues(alpha: 0.86),
+      borderRadius: BorderRadius.circular(8),
+      child: SizedBox(
+        height: 112,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              '目的地まで',
+              style: TextStyle(
+                color: AppColors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                height: 1.15,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _formatDistance(distance),
+              style: const TextStyle(
+                color: AppColors.white,
+                fontSize: 58,
+                fontWeight: FontWeight.w700,
+                height: 0.95,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDirectionSpeechBubble(double? relativeBearing) {
+    final message = _directionMessageFor(relativeBearing);
+    return Material(
+      color: AppColors.white,
+      borderRadius: BorderRadius.circular(3),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+        child: _headingUnavailable
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    '方位を取得できません',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      await _stopDeviceHeadingTracking();
+                      _startDeviceHeadingTracking();
+                    },
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(0, 30),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text('方位を再取得'),
+                  ),
+                ],
+              )
+            : Align(
+                alignment: Alignment.centerLeft,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    message,
+                    softWrap: false,
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                      color: AppColors.black,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      height: 1.45,
+                    ),
+                  ),
+                ),
+              ),
+      ),
+    );
+  }
+
+  String _directionMessageFor(double? relativeBearing) {
+    if (relativeBearing == null) return '方角合ってるよ\nこのまま進もう！';
+
+    final signed = relativeBearing > 180
+        ? relativeBearing - 360
+        : relativeBearing;
+    final absolute = signed.abs();
+    if (absolute <= 20) return '方角合ってるよ\nこのまま進もう！';
+    if (absolute >= 160) return '後ろ方向だよ！\n向きを変えて進もう！';
+
+    final side = signed > 0 ? '右' : '左';
+    return '$side方向だよ！\n$sideへ向いて進もう！';
   }
 
   Widget _buildTopDistanceBar(BuildContext context) {
@@ -893,26 +953,6 @@ class _NavigationScreenState extends State<NavigationScreen> {
   double _normalizeDegrees(double degrees) {
     final normalized = degrees % 360;
     return normalized < 0 ? normalized + 360 : normalized;
-  }
-
-  String _directionLabel(double degrees) {
-    const labels = ['北', '北東', '東', '南東', '南', '南西', '西', '北西'];
-    final index = ((degrees + 22.5) / 45).floor() % labels.length;
-    return labels[index];
-  }
-
-  String _relativeDirectionText(double relativeDegrees) {
-    final signed = relativeDegrees > 180
-        ? relativeDegrees - 360
-        : relativeDegrees;
-    final abs = signed.abs().round();
-    if (abs <= 12) return 'そのまままっすぐ進んでください';
-    if (abs >= 168) return '後ろ方向に目的地があります';
-
-    final side = signed > 0 ? '右' : '左';
-    if (abs < 45) return '少し$sideへ向いて進んでください';
-    if (abs < 100) return '$side方向に進んでください';
-    return '$side後ろ方向に目的地があります';
   }
 
   double _distanceMeters(LatLng a, LatLng b) {
