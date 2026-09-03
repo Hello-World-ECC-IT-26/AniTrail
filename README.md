@@ -72,6 +72,54 @@ AniTrail は、アニメの舞台となった場所を巡りながらスタン�
 
 位置情報、カメラ、写真ライブラリを利用する機能では、端末上で権限の許可が必要です。
 
+## デバッグ実行とAPKのインストール
+
+### `flutter run` でデバッグする
+
+1. 接続されている実機・エミュレータのデバイスIDを確認します。
+
+   ```bash
+   flutter devices
+   ```
+
+2. デバイスIDを指定してデバッグ起動します。`flutter run` はデバッグモードで起動するため、起動中のターミナルでホットリロード（`r`）を利用できます。
+
+   ```bash
+   flutter run -d <device-id>
+   ```
+
+   例：
+
+   ```bash
+   flutter run -d emulator-5554
+   ```
+
+### `adb` でAPKをインストールする
+
+1. Android端末またはエミュレータがADBから認識されていることを確認します。
+
+   ```bash
+   adb devices
+   ```
+
+2. デバッグAPKをビルドします。
+
+   ```bash
+   flutter build apk --debug
+   ```
+
+3. ビルドしたAPKをインストールします。
+
+   ```bash
+   adb install -r build/app/outputs/flutter-apk/app-debug.apk
+   ```
+
+GitHub Releasesから取得したAPKをインストールする場合は、ダウンロードしたファイルを指定します。
+
+```bash
+adb install -r anitrail-v0.1.0.apk
+```
+
 ## 主要コマンド
 
 - `flutter run` — 接続中の実機またはエミュレータで起動
