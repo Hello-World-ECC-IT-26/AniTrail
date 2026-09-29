@@ -12,6 +12,7 @@ import '../../../core/styles/app_styles.dart';
 import '../../../core/styles/app_text.dart';
 import '../../../core/widgets/loading_screen.dart';
 import '../../map/models/anime_spot.dart';
+import '../models/navigation_direction.dart';
 import '../models/navigation_phase.dart';
 import '../services/navigation_route_service.dart';
 import '../widgets/direction_arrow.dart';
@@ -55,7 +56,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
   double? _remainingDistanceMeters;
   double? _remainingTimeSeconds;
   double? _deviceHeadingDegrees;
-  bool _showCompassSwitchNotice = false;
+  bool _showDirectionSwitchNotice = false;
   bool _locationPermissionPermanentlyDenied = false;
   bool _locationServiceDisabled = false;
   bool _headingUnavailable = false;
@@ -185,7 +186,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
         }
         if (event is! num) return;
         setState(() {
-          _deviceHeadingDegrees = _normalizeDegrees(event.toDouble());
+          _deviceHeadingDegrees = normalizeDirectionDegrees(event.toDouble());
           _headingUnavailable = false;
         });
       },
@@ -225,15 +226,15 @@ class _NavigationScreenState extends State<NavigationScreen> {
     setState(() {
       _currentLocation = LatLng(position.latitude, position.longitude);
       if (!wasNearDestination && _isNearDestination && !_hasArrived) {
-        _showCompassSwitchNotice = true;
+        _showDirectionSwitchNotice = true;
       } else if (!_isNearDestination) {
-        _showCompassSwitchNotice = false;
+        _showDirectionSwitchNotice = false;
       }
     });
-    if (_showCompassSwitchNotice) {
+    if (_showDirectionSwitchNotice) {
       _directionIntroTimer?.cancel();
       _directionIntroTimer = Timer(const Duration(seconds: 2), () {
-        if (mounted) setState(() => _showCompassSwitchNotice = false);
+        if (mounted) setState(() => _showDirectionSwitchNotice = false);
       });
     }
     _updateRemainingDistance();
@@ -425,7 +426,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
             ),
             // 下部バーとキャラクターをデザインどおり画面下端まで配置する。
             SafeArea(bottom: false, child: _buildDirectionMode()),
-            if (_showCompassSwitchNotice)
+            if (_showDirectionSwitchNotice)
               SafeArea(
                 child: Align(
                   alignment: Alignment.topCenter,
@@ -546,30 +547,34 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
   Widget _buildDirectionMode() {
     final deviceHeading = _deviceHeadingDegrees;
-    final bearing = _bearingToDestination();
-    final relativeBearing = deviceHeading == null
+    final routeBearing = _routeBearingAtCurrentLocation;
+    final destinationBearing = _bearingToDestination();
+    final relativeRouteBearing = deviceHeading == null || routeBearing == null
         ? null
-        : _normalizeDegrees(bearing - deviceHeading);
+        : relativeDirectionDegrees(
+            bearingDegrees: routeBearing,
+            deviceHeadingDegrees: deviceHeading,
+          );
     final distance = _distanceToDestinationMeters ?? _remainingDistanceMeters;
 
     return LayoutBuilder(
       builder: (context, constraints) {
         const distanceCardTop = 96.0;
-        const compassTop = 246.0;
+        const directionTop = 246.0;
         const bottomContentReserve = 178.0;
         final distanceCardWidth = math.min(
           346.0,
           math.max(0.0, constraints.maxWidth - AppSpacing.xxl * 2),
         );
-        final compassSize = math.max(
+        final indicatorSize = math.max(
           0.0,
           math.min(
-            338.0,
+            420.0,
             math.min(
-              math.max(0.0, constraints.maxWidth - 102),
+              math.max(0.0, constraints.maxWidth - 20),
               math.max(
                 0.0,
-                constraints.maxHeight - compassTop - bottomContentReserve,
+                constraints.maxHeight - directionTop - bottomContentReserve,
               ),
             ),
           ),
@@ -596,13 +601,15 @@ class _NavigationScreenState extends State<NavigationScreen> {
               child: _buildDirectionDistanceCard(distance),
             ),
             Positioned(
-              top: compassTop,
+              top: directionTop,
               left: 0,
               right: 0,
               child: Center(
                 child: DirectionArrow(
+                  routeBearingDegrees: routeBearing,
+                  destinationBearingDegrees: destinationBearing,
                   deviceHeadingDegrees: deviceHeading,
-                  size: compassSize,
+                  size: indicatorSize,
                 ),
               ),
             ),
@@ -630,7 +637,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
               bottom: 86,
               width: math.min(210.0, math.max(0.0, constraints.maxWidth - 190)),
               height: 128,
-              child: _buildDirectionSpeechBubble(relativeBearing),
+              child: _buildDirectionSpeechBubble(
+                relativeRouteBearing: relativeRouteBearing,
+                routeUnavailable: routeBearing == null,
+              ),
             ),
           ],
         );
@@ -672,38 +682,61 @@ class _NavigationScreenState extends State<NavigationScreen> {
     );
   }
 
-  Widget _buildDirectionSpeechBubble(double? relativeBearing) {
-    final message = _directionMessageFor(relativeBearing);
+  Widget _buildDirectionSpeechBubble({
+    required double? relativeRouteBearing,
+    required bool routeUnavailable,
+  }) {
+    String? unavailableMessage;
+    String? actionLabel;
+    VoidCallback? onAction;
+
+    if (_headingUnavailable) {
+      unavailableMessage = '端末の向きを取得できません';
+      actionLabel = '向きを再取得';
+      onAction = () async {
+        await _stopDeviceHeadingTracking();
+        if (!mounted) return;
+        setState(() => _headingUnavailable = false);
+        _startDeviceHeadingTracking();
+      };
+    } else if (_deviceHeadingDegrees == null) {
+      unavailableMessage = '端末の向きを取得中…';
+    } else if (routeUnavailable) {
+      unavailableMessage = _loading ? '徒歩ルートを取得中…' : '徒歩ルートを取得できません';
+      if (!_loading) {
+        actionLabel = 'ルートを再取得';
+        onAction = _loadRoute;
+      }
+    }
+
     return Material(
       color: AppColors.white,
       borderRadius: BorderRadius.circular(3),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-        child: _headingUnavailable
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: unavailableMessage != null
             ? Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    '方位を取得できません',
+                  Text(
+                    unavailableMessage,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: AppColors.black,
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  TextButton(
-                    onPressed: () async {
-                      await _stopDeviceHeadingTracking();
-                      _startDeviceHeadingTracking();
-                    },
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(0, 30),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  if (actionLabel != null)
+                    TextButton(
+                      onPressed: onAction,
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(0, 30),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(actionLabel),
                     ),
-                    child: const Text('方位を再取得'),
-                  ),
                 ],
               )
             : Align(
@@ -712,7 +745,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    message,
+                    _directionMessageFor(relativeRouteBearing!),
                     softWrap: false,
                     textAlign: TextAlign.left,
                     style: TextStyle(
@@ -728,15 +761,17 @@ class _NavigationScreenState extends State<NavigationScreen> {
     );
   }
 
-  String _directionMessageFor(double? relativeBearing) {
-    if (relativeBearing == null) return '方角合ってるよ\nこのまま進もう！';
-
+  String _directionMessageFor(double relativeBearing) {
     final signed = relativeBearing > 180
         ? relativeBearing - 360
         : relativeBearing;
     final absolute = signed.abs();
-    if (absolute <= 20) return '方角合ってるよ\nこのまま進もう！';
-    if (absolute >= 160) return '後ろ方向だよ！\n向きを変えて進もう！';
+    if (absolute <= navigationDirectionToleranceDegrees) {
+      return '方向合ってるよ\nこのまま進もう！';
+    }
+    if (absolute >= 180 - navigationDirectionToleranceDegrees) {
+      return '後ろ方向だよ！\n向きを変えて進もう！';
+    }
 
     final side = signed > 0 ? '右' : '左';
     return '$side方向だよ！\n$sideへ向いて進もう！';
@@ -936,11 +971,20 @@ class _NavigationScreenState extends State<NavigationScreen> {
     return rest == 0 ? '$hours時間' : '$hours時間$rest分';
   }
 
-  double _bearingToDestination() {
+  double? get _routeBearingAtCurrentLocation {
+    final current = _currentLocation;
+    if (current == null) return null;
+    return walkingRouteBearingAtLocation(
+      currentLocation: current,
+      routePoints: _routePoints,
+    );
+  }
+
+  double? _bearingToDestination() {
     final current = _currentLocation;
     final destination = _destination;
-    if (current == null || destination == null) return 0;
-    return _normalizeDegrees(
+    if (current == null || destination == null) return null;
+    return normalizeDirectionDegrees(
       Geolocator.bearingBetween(
         current.latitude,
         current.longitude,
@@ -948,11 +992,6 @@ class _NavigationScreenState extends State<NavigationScreen> {
         destination.longitude,
       ),
     );
-  }
-
-  double _normalizeDegrees(double degrees) {
-    final normalized = degrees % 360;
-    return normalized < 0 ? normalized + 360 : normalized;
   }
 
   double _distanceMeters(LatLng a, LatLng b) {
