@@ -1,20 +1,25 @@
 import 'package:flutter/foundation.dart';
 
-enum NavigationPhase { route, compass, arrived }
+enum NavigationPhase { route, direction, arrived }
 
-const _defaultNavigationCompassDistanceMeters = 500.0;
+const _defaultNavigationDirectionDistanceMeters = 500.0;
 const navigationArrivalDistanceMeters = 20.0;
-const _debugNavigationCompassDistance = String.fromEnvironment(
+const _debugNavigationDirectionDistance = String.fromEnvironment(
+  'DEBUG_NAVIGATION_DIRECTION_DISTANCE_METERS',
+);
+const _legacyDebugNavigationCompassDistance = String.fromEnvironment(
   'DEBUG_NAVIGATION_COMPASS_DISTANCE_METERS',
 );
 
-/// 探索モードへ切り替える目的地からの距離。
+/// 方向案内モードへ切り替える目的地からの距離。
 ///
 /// デバッグビルドでのみ、例えば
-/// `--dart-define=DEBUG_NAVIGATION_COMPASS_DISTANCE_METERS=5000`
+/// `--dart-define=DEBUG_NAVIGATION_DIRECTION_DISTANCE_METERS=5000`
 /// のように起動時の値を上書きできる。
-double get navigationCompassDistanceMeters {
-  final debugDistance = double.tryParse(_debugNavigationCompassDistance);
+double get navigationDirectionDistanceMeters {
+  final debugDistance =
+      double.tryParse(_debugNavigationDirectionDistance) ??
+      double.tryParse(_legacyDebugNavigationCompassDistance);
 
   if (kDebugMode &&
       debugDistance != null &&
@@ -22,7 +27,7 @@ double get navigationCompassDistanceMeters {
       debugDistance > navigationArrivalDistanceMeters) {
     return debugDistance;
   }
-  return _defaultNavigationCompassDistanceMeters;
+  return _defaultNavigationDirectionDistanceMeters;
 }
 
 NavigationPhase navigationPhaseForDistance(double? distanceMeters) {
@@ -34,8 +39,8 @@ NavigationPhase navigationPhaseForDistance(double? distanceMeters) {
   if (distanceMeters <= navigationArrivalDistanceMeters) {
     return NavigationPhase.arrived;
   }
-  if (distanceMeters <= navigationCompassDistanceMeters) {
-    return NavigationPhase.compass;
+  if (distanceMeters <= navigationDirectionDistanceMeters) {
+    return NavigationPhase.direction;
   }
   return NavigationPhase.route;
 }

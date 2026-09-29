@@ -20,7 +20,7 @@ class TutorialDialog extends StatelessWidget {
     AppTutorialPage(
       title: '探索しながら聖地巡礼',
       description:
-          'マップでルートや距離を確認しながら移動できます。聖地付近では方位磁石モードに切り替わり、自分の足で聖地を探し出すワクワク感を楽しめます！',
+          'マップでルートや距離を確認しながら移動できます。聖地付近では徒歩ルートに沿った方向案内に切り替わり、自分の足で聖地を探し出すワクワク感を楽しめます！',
       imageAsset: 'assets/images/home_tutorial3.svg',
     ),
     AppTutorialPage(

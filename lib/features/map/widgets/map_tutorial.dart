@@ -38,7 +38,7 @@ class TutorialDialog extends StatelessWidget {
     AppTutorialPage(
       title: '探索モード',
       description:
-          '目的地から約500m圏内に入ると、通常ナビは終了し、方位のみの表示に切り替わります。自分の足で聖地を探し出すワクワク感を楽しめます!',
+          '目的地から約500m圏内に入ると、徒歩ルートに沿った方向案内に切り替わります。自分の足で聖地を探し出すワクワク感を楽しめます!',
       imageAsset: 'assets/images/map_tutorial3.svg',
     ),
     AppTutorialPage(
