@@ -80,7 +80,9 @@ double? walkingRouteBearingAtLocation({
     final closestY = startY + projection * segmentY;
     final distanceSquared = closestX * closestX + closestY * closestY;
 
-    if (distanceSquared <= closestDistanceSquared) {
+    final isTie = distanceSquared == closestDistanceSquared;
+    if (distanceSquared < closestDistanceSquared ||
+        (isTie && index == closestSegmentIndex + 1)) {
       closestDistanceSquared = distanceSquared;
       closestSegmentIndex = index;
     }
