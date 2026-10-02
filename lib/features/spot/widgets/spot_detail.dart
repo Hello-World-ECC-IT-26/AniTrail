@@ -4,7 +4,7 @@ import '../../../core/widgets/main_buttom_nav.dart';
 import '../../home/screens/home_screen.dart';
 import '../../shiori/screens/shiori_list.dart';
 
-class SpotDetailScreen extends StatefulWidget {
+class SpotDetailScreen extends StatelessWidget {
   final String placeName;
   final String animeTitle;
   final String sceneDescription;
@@ -27,14 +27,6 @@ class SpotDetailScreen extends StatefulWidget {
     this.onAddToShiori,
     this.onConfirmShiori,
   });
-
-  @override
-  State<SpotDetailScreen> createState() => _SpotDetailScreenState();
-}
-
-class _SpotDetailScreenState extends State<SpotDetailScreen> {
-  // ブックマーク状態
-  bool _isBookmarked = false;
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +70,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                       ),
                       Expanded(
                         child: Text(
-                          widget.placeName,
+                          placeName,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 18,
@@ -93,14 +85,14 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                   ),
                 ),
 
-                // ── 聖地画像（ブックマーク付き） ────────
+                // ── 聖地画像 ────────────────────────
                 _buildImage(),
 
                 const SizedBox(height: 24),
 
                 // ── アニメタイトル ──────────────────
                 Text(
-                  widget.animeTitle,
+                  animeTitle,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 16,
@@ -113,7 +105,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
 
                 // ── シーン説明 ──────────────────────
                 Text(
-                  widget.sceneDescription,
+                  sceneDescription,
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 15, color: Colors.black54),
                 ),
@@ -167,7 +159,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                   color: const Color(0xFF10357A),
                   width: double.infinity,
                   child: TextButton.icon(
-                    onPressed: widget.onAddToShiori ?? () {},
+                    onPressed: onAddToShiori ?? () {},
                     icon: const Icon(Icons.add, color: Colors.white, size: 20),
                     label: const Text(
                       'しおりに追加',
@@ -242,61 +234,28 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
     );
   }
 
-  // ── 聖地画像（右上にブックマークアイコン） ───────────
+  // ── 聖地画像 ───────────────────────────────────────
   Widget _buildImage() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Stack(
-        children: [
-          // 聖地画像
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: SizedBox(
-              width: double.infinity,
-              height: 220,
-              child: Image.asset(
-                widget.imagePath ?? 'assets/images/place_sample.jpg',
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: Colors.grey.shade200,
-                  child: Icon(
-                    Icons.image_outlined,
-                    color: Colors.grey.shade400,
-                    size: 50,
-                  ),
-                ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: SizedBox(
+          width: double.infinity,
+          height: 220,
+          child: Image.asset(
+            imagePath ?? 'assets/images/place_sample.jpg',
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              color: Colors.grey.shade200,
+              child: Icon(
+                Icons.image_outlined,
+                color: Colors.grey.shade400,
+                size: 50,
               ),
             ),
           ),
-
-          // ブックマークアイコン（右上）
-          Positioned(
-            top: 10,
-            right: 10,
-            child: GestureDetector(
-              onTap: () => setState(() => _isBookmarked = !_isBookmarked),
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 4,
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  _isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
-                  color: AppColors.primary,
-                  size: 20,
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -307,7 +266,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
       children: [
         // 神社名
         Text(
-          widget.shrine,
+          shrine,
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 16,
@@ -319,7 +278,7 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
 
         // 住所
         Text(
-          widget.address,
+          address,
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
         ),

@@ -640,37 +640,15 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
           SizedBox(
             width: 160,
             height: double.infinity,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: imageUrl == null
-                      ? const ColoredBox(color: AppColors.borderLight)
-                      : CachedNetworkImage(
-                          imageUrl: imageUrl,
-                          httpHeaders: _authHeaders,
-                          fit: BoxFit.cover,
-                          errorWidget: (_, _, _) =>
-                              const ColoredBox(color: AppColors.borderLight),
-                        ),
-                ),
-                Positioned(
-                  top: AppSpacing.sm,
-                  left: AppSpacing.sm,
-                  child: Container(
-                    width: 38,
-                    height: 38,
-                    decoration: const BoxDecoration(
-                      color: AppColors.surface,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.bookmark_outline,
-                      color: AppColors.primary,
-                    ),
+            child: imageUrl == null
+                ? const ColoredBox(color: AppColors.borderLight)
+                : CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    httpHeaders: _authHeaders,
+                    fit: BoxFit.cover,
+                    errorWidget: (_, _, _) =>
+                        const ColoredBox(color: AppColors.borderLight),
                   ),
-                ),
-              ],
-            ),
           ),
           Expanded(
             child: Padding(
