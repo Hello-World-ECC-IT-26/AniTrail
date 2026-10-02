@@ -8,7 +8,6 @@ import '../../../core/widgets/loading_screen.dart';
 import '../../../core/styles/app_dimens.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/app_card.dart';
-import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/main_buttom_nav.dart';
 import '../../map/models/anime_spot.dart';
 import '../../map/services/spot_api.dart';
@@ -44,9 +43,6 @@ class _SpotListState extends State<SpotList> {
   List<Spot> _spots = [];
   bool _loading = true;
   String? _error;
-
-  // ブックマーク済みの聖地（spot_id）
-  final Set<String> _bookmarked = {};
 
   Map<String, String> get _authHeaders {
     final token = Supabase.instance.client.auth.currentSession?.accessToken;
@@ -110,26 +106,6 @@ class _SpotListState extends State<SpotList> {
         ),
       ),
     );
-  }
-
-  Future<void> _toggleBookmark(String spotId) async {
-    final wasBookmarked = _bookmarked.contains(spotId);
-    setState(() {
-      wasBookmarked ? _bookmarked.remove(spotId) : _bookmarked.add(spotId);
-    });
-    try {
-      if (wasBookmarked) {
-        await _api.removeBookmark(spotId);
-      } else {
-        await _api.addBookmark(spotId);
-      }
-    } catch (_) {
-      // 失敗したら元に戻す
-      if (!mounted) return;
-      setState(() {
-        wasBookmarked ? _bookmarked.add(spotId) : _bookmarked.remove(spotId);
-      });
-    }
   }
 
   void _createShiori() {
@@ -378,29 +354,14 @@ class _SpotListState extends State<SpotList> {
 
   // ── 聖地カード1枚 ───────────────────────────────────
   Widget _buildSpotCard(Spot spot) {
-    final isBookmarked = _bookmarked.contains(spot.spotId);
     final isSelected = _draft.contains(spot.spotId);
 
     return AppCard(
       clip: true,
       child: Row(
         children: [
-          // ── サムネイル + ブックマーク ──────────────
-          Stack(
-            children: [
-              SizedBox(width: 150, height: 130, child: _buildThumbnail(spot)),
-              Positioned(
-                top: AppSpacing.xs,
-                left: AppSpacing.xs,
-                child: AppCircleIconButton(
-                  icon: isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
-                  onTap: () => _toggleBookmark(spot.spotId),
-                  size: 28,
-                  iconSize: 16,
-                ),
-              ),
-            ],
-          ),
+          // ── サムネイル ─────────────────────────────
+          SizedBox(width: 150, height: 130, child: _buildThumbnail(spot)),
 
           // ── テキスト情報 ──────────────────────────
           Expanded(

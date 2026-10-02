@@ -40,47 +40,47 @@ class MapSearchBar extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Material(
-              elevation: 4,
-              borderRadius: AppRadius.brMd,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.md,
-                ),
-                child: Row(
-                  children: [
-                    if (onBack != null)
-                      GestureDetector(
-                        onTap: onBack,
-                        child: const Padding(
-                          padding: EdgeInsets.only(right: 8),
-                          child: Icon(
-                            Icons.arrow_back,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      )
-                    else ...[
-                      Icon(Icons.location_on_outlined, color: AppColors.primary),
-                      const SizedBox(width: AppSpacing.sm),
-                    ],
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: onTap,
-                        child: Text(
-                          query.isEmpty ? 'ここで検索' : query,
-                          style: query.isEmpty
-                              ? AppTextStyles.hint
-                              : AppTextStyles.input,
-                          overflow: TextOverflow.ellipsis,
+            elevation: 4,
+            borderRadius: AppRadius.brMd,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.md,
+              ),
+              child: Row(
+                children: [
+                  if (onBack != null)
+                    GestureDetector(
+                      onTap: onBack,
+                      child: const Padding(
+                        padding: EdgeInsets.only(right: 8),
+                        child: Icon(
+                          Icons.arrow_back,
+                          color: AppColors.textSecondary,
                         ),
                       ),
-                    ),
-                    if (onBack == null)
-                      Icon(Icons.search, color: AppColors.textSecondary),
+                    )
+                  else ...[
+                    Icon(Icons.location_on_outlined, color: AppColors.primary),
+                    const SizedBox(width: AppSpacing.sm),
                   ],
-                ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: onTap,
+                      child: Text(
+                        query.isEmpty ? 'ここで検索' : query,
+                        style: query.isEmpty
+                            ? AppTextStyles.hint
+                            : AppTextStyles.input,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  if (onBack == null)
+                    Icon(Icons.search, color: AppColors.textSecondary),
+                ],
               ),
+            ),
           ),
           if (showShiori) ...[
             const SizedBox(height: AppSpacing.sm),

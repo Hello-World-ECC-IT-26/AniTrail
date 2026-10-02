@@ -7,7 +7,6 @@ import '../../../core/styles/app_text.dart';
 import '../../../core/styles/app_dimens.dart';
 import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/app_buttons.dart';
-import '../../../core/widgets/app_icon_button.dart';
 import '../../../core/widgets/app_bottom_action_bar.dart';
 import '../../../core/widgets/main_buttom_nav.dart';
 import '../../home/screens/home_screen.dart';
@@ -41,8 +40,6 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
   final SpotApi _api = SpotApi();
   final ShioriDraft _draft = ShioriDraft.instance;
 
-  bool _bookmarked = false;
-  bool _bookmarkLoading = true;
   SpotDetailPayload? _detail;
 
   Spot get spot => widget.spot;
@@ -69,24 +66,10 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
       if (mounted) {
         setState(() {
           _detail = result;
-          _bookmarked = result.bookmarked;
-          _bookmarkLoading = false;
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _bookmarkLoading = false);
-    }
-  }
-
-  Future<void> _toggleBookmark() async {
-    final was = _bookmarked;
-    setState(() => _bookmarked = !was);
-    try {
-      was
-          ? await _api.removeBookmark(spot.spotId)
-          : await _api.addBookmark(spot.spotId);
-    } catch (_) {
-      if (mounted) setState(() => _bookmarked = was);
+      // 詳細APIに失敗しても、スポット情報としおり操作は表示する。
     }
   }
 
@@ -148,27 +131,13 @@ class _SpotDetailScreenState extends State<SpotDetailScreen> {
                 ),
               ),
 
-              // ── メイン画像 + ブックマーク ──
+              // ── メイン画像 ──
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Stack(
-                  children: [
-                    SpotPhotoGallery(
-                      streetViewUrl: _streetViewImageUrl,
-                      userPhotoUrls: _detail?.photoUrls ?? const [],
-                      streetViewHeaders: _authHeaders,
-                    ),
-                    Positioned(
-                      top: 40,
-                      right: AppSpacing.sm,
-                      child: AppCircleIconButton(
-                        icon: _bookmarked
-                            ? Icons.bookmark
-                            : Icons.bookmark_outline,
-                        onTap: _bookmarkLoading ? null : _toggleBookmark,
-                      ),
-                    ),
-                  ],
+                child: SpotPhotoGallery(
+                  streetViewUrl: _streetViewImageUrl,
+                  userPhotoUrls: _detail?.photoUrls ?? const [],
+                  streetViewHeaders: _authHeaders,
                 ),
               ),
 

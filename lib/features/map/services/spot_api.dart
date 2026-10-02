@@ -143,29 +143,6 @@ class SpotApi {
         .toList();
   }
 
-  Future<bool> isBookmarked(String spotId) async {
-    final token = _accessToken;
-    final response = await _client.get(
-      Uri.parse('$_baseUrl/bookmarks'),
-      headers: {if (token != null) 'Authorization': 'Bearer $token'},
-    );
-    if (response.statusCode != 200) return false;
-    final data = jsonDecode(response.body)['data'] as List<dynamic>;
-    return data.any((b) => b['spot_id'].toString() == spotId);
-  }
-
-  Future<void> addBookmark(String spotId) async {
-    final token = _accessToken;
-    await _client.post(
-      Uri.parse('$_baseUrl/bookmarks'),
-      headers: {
-        if (token != null) 'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({'spot_id': spotId}),
-    );
-  }
-
   /// 聖地の投稿写真一覧を取得（Street View の前に置かない — 呼び出し側で先頭に SV を追加する）
   Future<List<String>> fetchSpotPostUrls(String spotId) async {
     final uri = Uri.parse(
@@ -205,7 +182,6 @@ class SpotApi {
           .toList(),
       canPostComment: data['can_post_comment'] as bool? ?? false,
       visited: data['visited'] as bool? ?? false,
-      bookmarked: data['bookmarked'] as bool? ?? false,
     );
   }
 
@@ -303,14 +279,6 @@ class SpotApi {
     throw Exception(
       'コメントを削除できませんでした (${res.statusCode})'
       '${detail.isEmpty ? '' : ': $detail'}',
-    );
-  }
-
-  Future<void> removeBookmark(String spotId) async {
-    final token = _accessToken;
-    await _client.delete(
-      Uri.parse('$_baseUrl/bookmarks/$spotId'),
-      headers: {if (token != null) 'Authorization': 'Bearer $token'},
     );
   }
 
@@ -989,7 +957,6 @@ class SpotDetailPayload {
   final List<SpotComment> comments;
   final bool canPostComment;
   final bool visited;
-  final bool bookmarked;
 
   const SpotDetailPayload({
     required this.spot,
@@ -997,6 +964,5 @@ class SpotDetailPayload {
     required this.comments,
     required this.canPostComment,
     required this.visited,
-    required this.bookmarked,
   });
 }
