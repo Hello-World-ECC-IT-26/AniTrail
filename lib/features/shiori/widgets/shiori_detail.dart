@@ -21,9 +21,6 @@ class ShioriDetailScreen extends StatefulWidget {
 }
 
 class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
-  // ブックマーク済みインデックス
-  final Set<int> _bookmarked = {};
-
   // ダミー行き先リスト（visited: 訪問済みフラグ）
   final List<Map<String, dynamic>> _spots = [
     {
@@ -325,7 +322,6 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
   // ── 行き先カード1枚 ───────────────────────────────
   Widget _buildSpotCard(int index) {
     final spot = _spots[index];
-    final isBookmarked = _bookmarked.contains(index);
     final isVisited = spot['visited'] as bool;
 
     return Container(
@@ -342,57 +338,27 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
       ),
       child: Row(
         children: [
-          // サムネイル + ブックマーク
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  bottomLeft: Radius.circular(16),
-                ),
-                child: SizedBox(
-                  width: 110,
-                  height: 110,
-                  child: Image.asset(
-                    'assets/images/place_sample.jpg',
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: Colors.grey.shade200,
-                      child: Icon(
-                        Icons.image_outlined,
-                        color: Colors.grey.shade400,
-                      ),
-                    ),
+          // サムネイル
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(16),
+              bottomLeft: Radius.circular(16),
+            ),
+            child: SizedBox(
+              width: 110,
+              height: 110,
+              child: Image.asset(
+                'assets/images/place_sample.jpg',
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: Colors.grey.shade200,
+                  child: Icon(
+                    Icons.image_outlined,
+                    color: Colors.grey.shade400,
                   ),
                 ),
               ),
-
-              // ブックマークアイコン（左上）
-              Positioned(
-                top: 6,
-                left: 6,
-                child: GestureDetector(
-                  onTap: () => setState(() {
-                    isBookmarked
-                        ? _bookmarked.remove(index)
-                        : _bookmarked.add(index);
-                  }),
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.85),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
-                      color: AppColors.primary,
-                      size: 16,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
 
           // ── テキスト情報 ──────────────────────────

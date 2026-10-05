@@ -359,7 +359,7 @@ class _MapResultsSheetState extends State<MapResultsSheet> {
   }
 }
 
-// ── 聖地詳細の中身（StatefulWidget で bookmark 状態を持つ） ──────────────────
+// ── 聖地詳細の中身 ────────────────────────────────────────────────────────
 class _SpotDetailContent extends StatefulWidget {
   final Spot spot;
   final String animeTitle;
@@ -382,8 +382,6 @@ class _SpotDetailContent extends StatefulWidget {
 
 class _SpotDetailContentState extends State<_SpotDetailContent> {
   final SpotApi _api = SpotApi();
-  bool _bookmarked = false;
-  bool _bookmarkLoading = true;
   List<String> _postUrls = [];
   bool _openingNavigation = false;
 
@@ -397,7 +395,6 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
   @override
   void initState() {
     super.initState();
-    _loadBookmark();
     _loadPostUrls();
   }
 
@@ -405,11 +402,7 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
   void didUpdateWidget(_SpotDetailContent old) {
     super.didUpdateWidget(old);
     if (old.spot.spotId != widget.spot.spotId) {
-      setState(() {
-        _bookmarkLoading = true;
-        _postUrls = [];
-      });
-      _loadBookmark();
+      setState(() => _postUrls = []);
       _loadPostUrls();
     }
   }
@@ -417,39 +410,6 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
   Future<void> _loadPostUrls() async {
     final urls = await _api.fetchSpotPostUrls(spot.spotId);
     if (mounted) setState(() => _postUrls = urls);
-  }
-
-  Future<void> _loadBookmark() async {
-    try {
-      final result = await _api.isBookmarked(spot.spotId);
-      if (mounted) {
-        setState(() {
-          _bookmarked = result;
-          _bookmarkLoading = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) setState(() => _bookmarkLoading = false);
-    }
-  }
-
-  Future<void> _toggleBookmark() async {
-    setState(() => _bookmarkLoading = true);
-    try {
-      if (_bookmarked) {
-        await _api.removeBookmark(spot.spotId);
-      } else {
-        await _api.addBookmark(spot.spotId);
-      }
-      if (mounted) {
-        setState(() {
-          _bookmarked = !_bookmarked;
-          _bookmarkLoading = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) setState(() => _bookmarkLoading = false);
-    }
   }
 
   Future<void> _openDirections() async {
@@ -535,7 +495,7 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
           ],
         ),
 
-        // スポット名 + ブックマーク
+        // スポット情報
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
           child: Row(
@@ -575,13 +535,6 @@ class _SpotDetailContentState extends State<_SpotDetailContent> {
                     ],
                   ],
                 ),
-              ),
-              IconButton(
-                icon: Icon(
-                  _bookmarked ? Icons.bookmark : Icons.bookmark_border,
-                  color: AppColors.primary,
-                ),
-                onPressed: _bookmarkLoading ? null : _toggleBookmark,
               ),
             ],
           ),

@@ -244,39 +244,16 @@ class _ShioriEditScreenState extends State<ShioriEditScreen> {
               child: SizedBox(
                 width: 120,
                 height: 100,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.asset(
-                      'assets/images/place_sample.jpg',
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: Colors.grey.shade200,
-                        child: Icon(
-                          Icons.image_outlined,
-                          color: Colors.grey.shade400,
-                        ),
-                      ),
+                child: Image.asset(
+                  'assets/images/place_sample.jpg',
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: Colors.grey.shade200,
+                    child: Icon(
+                      Icons.image_outlined,
+                      color: Colors.grey.shade400,
                     ),
-                    // ブックマークアイコン
-                    Positioned(
-                      top: 4,
-                      left: 4,
-                      child: Container(
-                        width: 22,
-                        height: 22,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.85),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.bookmark_outline,
-                          color: AppColors.primary,
-                          size: 13,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
