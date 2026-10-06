@@ -5,6 +5,11 @@ import 'package:flutter/material.dart';
 class AppColors {
   // ── Primary ───────────────────────────────────────────
   static const Color primary = Color(0xFF1976D2);
+
+  /// 聖地一覧の追加ボタンと作品バナー。
+  static const Color spotListAction = Color(0xFF1673F5);
+  static const Color spotListOverlay = Color(0x806AA4DE);
+
   static const Color primaryLight = Color(0xFF42A5F5);
 
   // ── Text ──────────────────────────────────────────────
