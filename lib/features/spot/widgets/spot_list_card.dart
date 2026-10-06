@@ -60,7 +60,10 @@ class SpotListCard extends StatelessWidget {
         final title = spot.animeTitle ?? animeTitle;
         double textHeight(String text, TextStyle style) {
           final painter = TextPainter(
-            text: TextSpan(text: text, style: style),
+            text: TextSpan(
+              text: text,
+              style: DefaultTextStyle.of(context).style.merge(style),
+            ),
             textDirection: Directionality.of(context),
             textScaler: scaler,
             maxLines: lines,
@@ -84,6 +87,7 @@ class SpotListCard extends StatelessWidget {
         );
         return AppCard(
           clip: true,
+          onTap: onOpen,
           child: SizedBox(
             height: height,
             child: Row(

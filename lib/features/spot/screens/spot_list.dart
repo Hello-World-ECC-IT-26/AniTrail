@@ -1,8 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:anitrail/features/home/screens/home_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_text.dart';
 import '../../../core/widgets/loading_screen.dart';
 import '../../../core/styles/app_dimens.dart';
 import '../../../core/widgets/app_buttons.dart';
@@ -22,12 +25,16 @@ class SpotList extends StatefulWidget {
   final String? bannerImageUrl;
   final int spotCount;
 
+  /// 任意のAPIクライアント。未指定時は通常の聖地APIを使用する。
+  final SpotApi? api;
+
   const SpotList({
     super.key,
     required this.animeId,
     required this.animeTitle,
     this.bannerImageUrl,
     this.spotCount = 10,
+    this.api,
   });
 
   @override
@@ -35,7 +42,7 @@ class SpotList extends StatefulWidget {
 }
 
 class _SpotListState extends State<SpotList> {
-  final SpotApi _api = SpotApi();
+  late final SpotApi _api = widget.api ?? SpotApi();
 
   final ShioriDraft _draft = ShioriDraft.instance;
 
@@ -123,6 +130,21 @@ class _SpotListState extends State<SpotList> {
 
   @override
   Widget build(BuildContext context) {
+    final actionText = TextPainter(
+      text: TextSpan(
+        text: '旅のしおりを作成',
+        style: Theme.of(
+          context,
+        ).textTheme.labelLarge?.merge(AppTextStyles.button),
+      ),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout(maxWidth: math.max(1, MediaQuery.sizeOf(context).width - 82));
+    final actionHeight = math.max(
+      AppSizes.minTapTarget,
+      actionText.height + 24,
+    );
+    actionText.dispose();
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
@@ -164,11 +186,11 @@ class _SpotListState extends State<SpotList> {
                 )
               else
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(
+                  padding: EdgeInsets.fromLTRB(
                     AppSpacing.lg,
                     0,
                     AppSpacing.lg,
-                    120,
+                    actionHeight + 76,
                   ),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
@@ -186,44 +208,49 @@ class _SpotListState extends State<SpotList> {
           // ── 旅のしおりを作成ボタン（左下固定） ─────
           Positioned(
             left: AppSpacing.lg,
+            right: AppSpacing.lg,
             bottom: AppSpacing.sm,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                AppButton(
-                  label: '旅のしおりを作成',
-                  icon: Icons.location_on_outlined,
-                  height: AppSizes.minTapTarget,
-                  fullWidth: false,
-                  backgroundColor: AppColors.tabiShiori,
-                  onPressed: _createShiori,
-                ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AppButton(
+                    label: '旅のしおりを作成',
+                    icon: Icons.location_on_outlined,
+                    height: actionHeight,
+                    wrapLabel: true,
+                    fullWidth: false,
+                    backgroundColor: AppColors.tabiShiori,
+                    onPressed: _createShiori,
+                  ),
 
-                // バッジ（選択数）
-                if (_draft.spots.value.isNotEmpty)
-                  Positioned(
-                    top: -AppSpacing.xs,
-                    right: -AppSpacing.xs,
-                    child: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: const BoxDecoration(
-                        color: AppColors.badge,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${_draft.spots.value.length}',
-                          style: const TextStyle(
-                            color: AppColors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                  // バッジ（選択数）
+                  if (_draft.spots.value.isNotEmpty)
+                    Positioned(
+                      top: -AppSpacing.xs,
+                      right: -AppSpacing.xs,
+                      child: Container(
+                        width: 20,
+                        height: 20,
+                        decoration: const BoxDecoration(
+                          color: AppColors.badge,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${_draft.spots.value.length}',
+                            style: const TextStyle(
+                              color: AppColors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -235,7 +262,7 @@ class _SpotListState extends State<SpotList> {
         onTap: (index) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const HomeScreen()),
+            MaterialPageRoute(builder: (_) => HomeScreen(initialIndex: index)),
           );
         },
       ),
@@ -244,10 +271,46 @@ class _SpotListState extends State<SpotList> {
 
   // ── アニメバナーヘッダー ────────────────────────────
   Widget _buildSliverAppBar() {
-    final scale = MediaQuery.textScalerOf(context).scale(30) / 30;
+    final scaler = MediaQuery.textScalerOf(context);
+    final textWidth = math.max(1.0, MediaQuery.sizeOf(context).width - 144);
+    const titleStyle = TextStyle(
+      fontSize: 30,
+      height: 1.2,
+      fontWeight: FontWeight.bold,
+      color: AppColors.white,
+    );
+    const countStyle = TextStyle(fontSize: 12, color: AppColors.white);
+    double measure(String text, TextStyle style, double width, int? maxLines) {
+      final painter = TextPainter(
+        text: TextSpan(
+          text: text,
+          style: Theme.of(context).textTheme.bodyMedium?.merge(style),
+        ),
+        textDirection: Directionality.of(context),
+        textScaler: scaler,
+        maxLines: maxLines,
+      )..layout(maxWidth: width);
+      final height = painter.height;
+      painter.dispose();
+      return height;
+    }
+
+    final bannerHeight = math.max(
+      168.0,
+      measure(widget.animeTitle, titleStyle, textWidth, 3) +
+          measure(
+            '聖地 ${widget.spotCount}箇所',
+            countStyle,
+            math.max(1, textWidth - 18),
+            null,
+          ) +
+          AppSpacing.xs +
+          AppSpacing.xl +
+          AppSpacing.xxl,
+    );
     return SliverToBoxAdapter(
       child: SizedBox(
-        height: MediaQuery.paddingOf(context).top + 168 + (scale - 1) * 60,
+        height: MediaQuery.paddingOf(context).top + bannerHeight,
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -283,7 +346,7 @@ class _SpotListState extends State<SpotList> {
                         Text(
                           widget.animeTitle,
                           textAlign: TextAlign.center,
-                          maxLines: 2,
+                          maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 30,
@@ -302,11 +365,13 @@ class _SpotListState extends State<SpotList> {
                               size: 14,
                             ),
                             const SizedBox(width: AppSpacing.xs),
-                            Text(
-                              '聖地 ${widget.spotCount}箇所',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: AppColors.white,
+                            Flexible(
+                              child: Text(
+                                '聖地 ${widget.spotCount}箇所',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.white,
+                                ),
                               ),
                             ),
                           ],

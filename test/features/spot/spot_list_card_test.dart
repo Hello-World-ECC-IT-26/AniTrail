@@ -53,6 +53,34 @@ void main() {
     }
   }
 
+  testWidgets('画像と本文から詳細を開き、追加タップは詳細を開かない', (tester) async {
+    var opened = 0;
+    var added = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SpotListCard(
+            spot: longSpot,
+            animeTitle: '作品',
+            thumbnail: const ColoredBox(
+              key: ValueKey('photo'),
+              color: Colors.green,
+            ),
+            selected: false,
+            onAdd: () => added++,
+            onOpen: () => opened++,
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('photo')));
+    await tester.tap(find.text(longSpot.name));
+    expect(opened, 2);
+    await tester.tap(find.text('追加'));
+    expect(added, 1);
+    expect(opened, 2);
+  });
+
   testWidgets('選択済みの追加ボタンを解除に使える', (tester) async {
     var removed = false;
     await tester.pumpWidget(
