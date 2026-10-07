@@ -1,9 +1,18 @@
 import 'dart:math' as math;
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_dimens.dart';
+import '../services/tour_controller.dart';
+import '../widgets/tour_map_assets.dart';
+import '../widgets/map_tour_panel.dart';
 
 import '../models/anime_spot.dart';
+import '../models/tour_plan.dart';
 import '../widgets/map_results_sheet.dart';
 import '../widgets/map_search_bar.dart';
 import '../widgets/map_search_panel.dart';
@@ -31,6 +40,68 @@ class _MapScreenState extends State<MapScreen>
   bool _shioriVisible = false;
   bool _shioriDetailVisible = false;
   bool _tutorialRequested = false;
+  late final TourController _tour;
+  final TourMapAssets _tourAssets = TourMapAssets();
+  StreamSubscription<AuthState>? _authSubscription;
+  bool _loadingTourAssets = false;
+  bool _tourWasActive = false;
+
+  void _onTourChanged() {
+    if (!mounted) return;
+    setState(() {});
+    final opening = _tour.active && !_tourWasActive;
+    _tourWasActive = _tour.active;
+    if (opening) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        // Let the platform map apply the sheet/endpoint padding before fitting.
+        await WidgetsBinding.instance.endOfFrame;
+        if (mounted) _fitTour(animate: false);
+      });
+    }
+    if (_tour.active &&
+        !_loadingTourAssets &&
+        (_tourAssets.start == null ||
+            _tourAssets.numbered.length < _tour.spots.length)) {
+      _loadTourAssets();
+    }
+  }
+
+  Future<void> _loadTourAssets() async {
+    _loadingTourAssets = true;
+    try {
+      await _tourAssets.load(_tour.spots.length);
+      if (mounted) _tour.setMarkerLoadingError(null);
+    } catch (_) {
+      if (mounted) {
+        _tour.setMarkerLoadingError('地図の巡回マーカーを読み込めませんでした');
+      }
+    } finally {
+      _loadingTourAssets = false;
+    }
+    if (mounted) setState(() {});
+  }
+
+  void _fitTour({bool animate = true}) {
+    if (!_tour.active) return;
+    final origin = _tour.routeOrigin;
+    fitSpotsBounds([
+      if (origin != null)
+        Spot(
+          spotId: 'tour_origin',
+          name: '現在地',
+          latitude: origin.latitude,
+          longitude: origin.longitude,
+        ),
+      ...(_tour.editing ? _tour.card!.spots.where(canTourSpot) : _tour.spots),
+      for (final point in _tour.legs.expand((leg) => leg.points))
+        Spot(
+          spotId: 'route_point',
+          name: '',
+          latitude: point.latitude,
+          longitude: point.longitude,
+        ),
+    ], animate: animate);
+  }
 
   @override
   double get currentLat => currentLatLng.latitude;
@@ -41,6 +112,7 @@ class _MapScreenState extends State<MapScreen>
   /// 追従対象を「見える領域（検索バー下〜シート上端）」の中央に合わせる。
   @override
   void recenterCamera({bool animate = false}) {
+    if (_tour.active) return;
     final target = focusTarget;
     if (target == null || mapController == null) return;
 
@@ -75,6 +147,15 @@ class _MapScreenState extends State<MapScreen>
   @override
   void initState() {
     super.initState();
+    _tour = TourController(
+      userId: Supabase.instance.client.auth.currentUser?.id,
+    );
+    _tour.addListener(_onTourChanged);
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
+      event,
+    ) {
+      _tour.setUser(event.session?.user.id);
+    });
     if (widget.initialShiori != null) {
       _shioriVisible = true;
       _shioriDetailVisible = true;
@@ -94,9 +175,19 @@ class _MapScreenState extends State<MapScreen>
 
   @override
   void dispose() {
+    _authSubscription?.cancel();
+    _tour.removeListener(_onTourChanged);
+    _tour.dispose();
     disposeLocation();
     disposeSearch();
     super.dispose();
+  }
+
+  @override
+  void onPosition(Position position) {
+    if (!mounted) return;
+    super.onPosition(position);
+    _tour.setCurrentLocation(hasFix ? currentLatLng : null);
   }
 
   void _onSpotTap(Spot spot) {
@@ -119,6 +210,39 @@ class _MapScreenState extends State<MapScreen>
 
   Set<Marker> _buildMarkers() {
     final markers = <Marker>{};
+    if (_tour.active) {
+      final origin = _tour.routeOrigin;
+      if (origin != null && _tourAssets.start != null) {
+        markers.add(
+          Marker(
+            markerId: const MarkerId('tour_start'),
+            position: origin,
+            icon: _tourAssets.start!,
+            infoWindow: const InfoWindow(title: 'スタート地点（現在地）'),
+          ),
+        );
+      }
+      for (final spot in _tour.card?.spots ?? <Spot>[]) {
+        if (!canTourSpot(spot)) continue;
+        final index = _tour.spots.indexWhere((s) => s.spotId == spot.spotId);
+        if (index >= 0 && _tourAssets.numbered[index] == null) continue;
+        markers.add(
+          Marker(
+            markerId: MarkerId('tour_${spot.spotId}'),
+            consumeTapEvents: _tour.editing,
+            position: LatLng(spot.latitude!, spot.longitude!),
+            icon: index >= 0
+                ? _tourAssets.numbered[index]!
+                : BitmapDescriptor.defaultMarker,
+            infoWindow: InfoWindow(
+              title: index < 0 ? spot.name : '${index + 1}. ${spot.name}',
+            ),
+            onTap: _tour.editing ? () => _tour.toggle(spot) : null,
+          ),
+        );
+      }
+      return markers;
+    }
     // 単一ピン（検索結果の聖地詳細）
     final single = pinnedSpot;
     if (single?.latitude != null && single?.longitude != null) {
@@ -150,6 +274,7 @@ class _MapScreenState extends State<MapScreen>
   }
 
   void _openMapSearch() {
+    _tour.hide();
     clearSpotPins();
     setState(() {
       _shioriVisible = false;
@@ -160,7 +285,10 @@ class _MapScreenState extends State<MapScreen>
 
   void _toggleShiori() {
     final visible = !_shioriVisible;
-    if (!visible) clearSpotPins();
+    if (!visible) {
+      _tour.clear();
+      clearSpotPins();
+    }
     setState(() {
       _shioriVisible = visible;
       if (!visible) _shioriDetailVisible = false;
@@ -170,112 +298,184 @@ class _MapScreenState extends State<MapScreen>
   @override
   Widget build(BuildContext context) {
     final overlayActive = searchVisible || resultsVisible;
-    final mapGesturesEnabled = _shioriVisible && _shioriDetailVisible;
+    final mapGesturesEnabled =
+        _tour.active || (_shioriVisible && _shioriDetailVisible);
 
-    return MediaQuery(
-      data: MediaQuery.of(context).copyWith(viewInsets: EdgeInsets.zero),
-      child: GestureDetector(
-        onScaleStart: overlayActive || mapGesturesEnabled ? null : onScaleStart,
-        onScaleUpdate: overlayActive || mapGesturesEnabled
-            ? null
-            : onScaleUpdate,
-        child: Stack(
-          children: [
-            GoogleMap(
-              initialCameraPosition: MapLocationMixin.initialPosition,
-              padding: EdgeInsets.zero,
-              myLocationEnabled: locationGranted,
-              myLocationButtonEnabled: false,
-              mapToolbarEnabled: false,
-              zoomControlsEnabled: false,
-              scrollGesturesEnabled: mapGesturesEnabled,
-              rotateGesturesEnabled: false,
-              tiltGesturesEnabled: false,
-              zoomGesturesEnabled: mapGesturesEnabled,
-              markers: _buildMarkers(),
-              onCameraMove: (position) => currentZoom = position.zoom,
-              onMapCreated: (controller) {
-                mapController = controller;
-                if (hasFix) {
-                  mapController?.moveCamera(
-                    CameraUpdate.newCameraPosition(
-                      CameraPosition(target: currentLatLng, zoom: currentZoom),
+    return PopScope(
+      canPop: !_tour.active,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop || _tour.saving) return;
+        if (_tour.editing) {
+          _tour.cancelEditing();
+        } else {
+          _tour.hide();
+        }
+      },
+      child: MediaQuery(
+        data: MediaQuery.of(context).copyWith(viewInsets: EdgeInsets.zero),
+        child: GestureDetector(
+          onScaleStart: overlayActive || mapGesturesEnabled
+              ? null
+              : onScaleStart,
+          onScaleUpdate: overlayActive || mapGesturesEnabled
+              ? null
+              : onScaleUpdate,
+          child: Stack(
+            children: [
+              GoogleMap(
+                initialCameraPosition: MapLocationMixin.initialPosition,
+                padding: _tour.active
+                    ? EdgeInsets.only(
+                        top: MediaQuery.paddingOf(context).top + 130,
+                        bottom: MediaQuery.sizeOf(context).height * _sheetSize,
+                      )
+                    : EdgeInsets.zero,
+                polylines: {
+                  for (var i = 0; i < _tour.legs.length; i++)
+                    Polyline(
+                      polylineId: PolylineId('tour_leg_$i'),
+                      points: _tour.legs[i].points,
+                      width: 5,
+                      color: tourColor(i),
                     ),
-                  );
-                }
-              },
-            ),
-
-            if (!searchVisible)
-              MapSearchBar(
-                query: displayQuery,
-                onTap: _openMapSearch,
-                onShioriTap: _toggleShiori,
-                showShiori: !resultsVisible,
-                onBack: resultsVisible ? _onCloseSearch : null,
-              ),
-
-            if (_shioriVisible && !searchVisible && !resultsVisible)
-              MapShioriSheet(
-                initialCard: widget.initialShiori,
-                currentLocation: hasFix ? currentLatLng : null,
-                onClose: () {
-                  clearSpotPins();
-                  setState(() {
-                    _shioriVisible = false;
-                    _shioriDetailVisible = false;
-                  });
                 },
-                onShowSpots: showSpotPins,
-                onClearSpots: clearSpotPins,
-                onDetailVisibilityChanged: (visible) {
-                  setState(() => _shioriDetailVisible = visible);
+                myLocationEnabled: locationGranted,
+                myLocationButtonEnabled: false,
+                mapToolbarEnabled: false,
+                zoomControlsEnabled: false,
+                scrollGesturesEnabled: mapGesturesEnabled,
+                rotateGesturesEnabled: false,
+                tiltGesturesEnabled: false,
+                zoomGesturesEnabled: mapGesturesEnabled,
+                markers: _buildMarkers(),
+                onCameraMove: (position) => currentZoom = position.zoom,
+                onMapCreated: (controller) {
+                  mapController = controller;
+                  if (hasFix) {
+                    mapController?.moveCamera(
+                      CameraUpdate.newCameraPosition(
+                        CameraPosition(
+                          target: currentLatLng,
+                          zoom: currentZoom,
+                        ),
+                      ),
+                    );
+                  }
                 },
               ),
 
-            if (searchVisible)
-              MapSearchPanel(
-                controller: searchController,
-                focusNode: searchFocus,
-                history: history,
-                onBack: _onCloseSearch,
-                onSubmit: submitSearch,
-                onClear: clearSearchInput,
-                onSelectHistory: selectHistory,
-                onDeleteHistory: (item) {
-                  setState(() => history.remove(item));
-                  saveHistory();
-                },
-              ),
+              if (!searchVisible && !_tour.active)
+                MapSearchBar(
+                  query: displayQuery,
+                  onTap: _openMapSearch,
+                  onShioriTap: _toggleShiori,
+                  showShiori: !resultsVisible,
+                  onBack: resultsVisible ? _onCloseSearch : null,
+                ),
 
-            if (resultsVisible)
-              MapResultsSheet(
-                currentLocation: hasFix ? currentLatLng : null,
-                results: results,
-                loading: loading,
-                spotsLoading: spotsLoading,
-                error: searchError,
-                selectedAnime: selectedAnime,
-                filterIndex: filterIndex,
-                sortIndex: sortIndex,
-                onSelectAnime: selectAnime,
-                onBack: () => setState(() => selectedAnime = null),
-                onFilterChange: (i) => setState(() => filterIndex = i),
-                onSortChange: (i) => setState(() => sortIndex = i),
-                onSpotTap: _onSpotTap,
-                onDetailClose: clearPin,
-                onArrivalRecorded: () async {
-                  final anime = selectedAnime;
-                  if (anime == null) return;
-                  anime.spots = [];
-                  await selectAnime(anime);
-                },
-                onSheetSizeChanged: (size) {
-                  _sheetSize = size;
-                  recenterCamera(); // ドラッグ追従は即時（moveCamera）
-                },
-              ),
-          ],
+              if (_shioriVisible && !searchVisible && !resultsVisible)
+                MapShioriSheet(
+                  key: const ValueKey('map_shiori_sheet'),
+                  initialCard: widget.initialShiori,
+                  tour: _tour,
+                  onSheetSizeChanged: (size) {
+                    if ((_sheetSize - size).abs() > 0.01) {
+                      setState(() => _sheetSize = size);
+                    }
+                  },
+                  currentLocation: hasFix ? currentLatLng : null,
+                  onClose: () {
+                    clearSpotPins();
+                    setState(() {
+                      _shioriVisible = false;
+                      _shioriDetailVisible = false;
+                    });
+                  },
+                  onShowSpots: showSpotPins,
+                  onClearSpots: clearSpotPins,
+                  onDetailVisibilityChanged: (visible) {
+                    setState(() => _shioriDetailVisible = visible);
+                  },
+                ),
+
+              if (_tour.active) TourEndpoints(tour: _tour),
+              if (_tour.active)
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final mapHeight = constraints.maxHeight;
+                    final sheetHeight = mapHeight * _sheetSize;
+                    final hasButtonSpace =
+                        mapHeight - sheetHeight >
+                        MediaQuery.paddingOf(context).top +
+                            130 +
+                            AppSizes.minTapTarget +
+                            AppSpacing.lg;
+                    return Stack(
+                      children: [
+                        if (hasButtonSpace)
+                          Positioned(
+                            right: AppSpacing.lg,
+                            bottom: sheetHeight + AppSpacing.lg,
+                            child: FloatingActionButton.small(
+                              heroTag: 'tour_fit',
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: AppColors.white,
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: AppRadius.brLg,
+                              ),
+                              tooltip: '巡回ルート全体を表示',
+                              onPressed: _fitTour,
+                              child: const Icon(Icons.zoom_out_map, size: 22),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              if (searchVisible)
+                MapSearchPanel(
+                  controller: searchController,
+                  focusNode: searchFocus,
+                  history: history,
+                  onBack: _onCloseSearch,
+                  onSubmit: submitSearch,
+                  onClear: clearSearchInput,
+                  onSelectHistory: selectHistory,
+                  onDeleteHistory: (item) {
+                    setState(() => history.remove(item));
+                    saveHistory();
+                  },
+                ),
+
+              if (resultsVisible)
+                MapResultsSheet(
+                  currentLocation: hasFix ? currentLatLng : null,
+                  results: results,
+                  loading: loading,
+                  spotsLoading: spotsLoading,
+                  error: searchError,
+                  selectedAnime: selectedAnime,
+                  filterIndex: filterIndex,
+                  sortIndex: sortIndex,
+                  onSelectAnime: selectAnime,
+                  onBack: () => setState(() => selectedAnime = null),
+                  onFilterChange: (i) => setState(() => filterIndex = i),
+                  onSortChange: (i) => setState(() => sortIndex = i),
+                  onSpotTap: _onSpotTap,
+                  onDetailClose: clearPin,
+                  onArrivalRecorded: () async {
+                    final anime = selectedAnime;
+                    if (anime == null) return;
+                    anime.spots = [];
+                    await selectAnime(anime);
+                  },
+                  onSheetSizeChanged: (size) {
+                    _sheetSize = size;
+                    recenterCamera(); // ドラッグ追従は即時（moveCamera）
+                  },
+                ),
+            ],
+          ),
         ),
       ),
     );

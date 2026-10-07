@@ -21,6 +21,8 @@ import '../../coupon/widgets/coupon_detail.dart';
 import '../../coupon/widgets/coupon_grant_dialog.dart';
 import '../../home/screens/home_screen.dart';
 import '../../map/models/anime_spot.dart';
+import '../../map/models/tour_plan.dart';
+import 'navigation_screen_mobile.dart';
 import '../../map/services/spot_api.dart';
 import '../../spot/screens/spot_comments_screen.dart';
 import '../../stamp/screens/stamp_screen.dart';
@@ -38,6 +40,8 @@ class ArrivalScreen extends StatefulWidget {
     this.imageUrl,
     this.spotApi,
     this.imagePicker,
+    this.tour,
+    this.nextNavigationBuilder,
   });
 
   final Spot spot;
@@ -47,6 +51,8 @@ class ArrivalScreen extends StatefulWidget {
   final String? imageUrl;
   final SpotApi? spotApi;
   final ImagePicker? imagePicker;
+  final TourProgress? tour;
+  final Widget Function(TourProgress next)? nextNavigationBuilder;
 
   @override
   State<ArrivalScreen> createState() => _ArrivalScreenState();
@@ -62,6 +68,36 @@ class _ArrivalScreenState extends State<ArrivalScreen> {
   XFile? _photo;
   Object? _submitError;
   bool _couponDialogShown = false;
+  bool _continuing = false;
+
+  void _continueTour() {
+    final tour = widget.tour;
+    if (_step != ArrivalFlowStep.earned ||
+        tour == null ||
+        !tour.hasNext ||
+        _continuing) {
+      return;
+    }
+    _continuing = true;
+    final next = tour.nextAfterArrival();
+    Navigator.of(context).pushReplacement<bool, bool>(
+      MaterialPageRoute(
+        builder: (_) =>
+            widget.nextNavigationBuilder?.call(next) ??
+            NavigationScreen(
+              spot: next.current,
+              cardId: widget.cardId,
+              stampCount: next.visitedSpotIds.length,
+              stampTotal: widget.stampTotal,
+              imageUrl:
+                  next.current.image ??
+                  next.current.streetViewProxyUrl ??
+                  next.current.streetViewImageUrl,
+              tour: next,
+            ),
+      ),
+    );
+  }
 
   Map<String, String> get _authHeaders {
     final token = Supabase.instance.client.auth.currentSession?.accessToken;
@@ -437,6 +473,16 @@ class _ArrivalScreenState extends State<ArrivalScreen> {
                           ),
                         ),
                       const SizedBox(height: AppSpacing.xxl),
+                      if (widget.tour?.hasNext == true) ...[
+                        SizedBox(
+                          width: 280,
+                          child: AppButton(
+                            label: '次の聖地へ',
+                            onPressed: _continueTour,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                      ],
                       SizedBox(
                         width: 280,
                         child: AppButton(
@@ -473,9 +519,9 @@ class _ArrivalScreenState extends State<ArrivalScreen> {
                       const SizedBox(height: AppSpacing.md),
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(true),
-                        child: const Text(
-                          '閉じる',
-                          style: TextStyle(color: AppColors.white),
+                        child: Text(
+                          widget.tour == null ? '閉じる' : 'しおりに戻る',
+                          style: const TextStyle(color: AppColors.white),
                         ),
                       ),
                     ],

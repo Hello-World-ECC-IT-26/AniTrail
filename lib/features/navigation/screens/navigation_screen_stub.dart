@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../core/styles/app_text.dart';
 import '../../map/models/anime_spot.dart';
+import '../../map/models/tour_plan.dart';
 
 class NavigationScreen extends StatelessWidget {
   final Spot spot;
@@ -11,6 +12,7 @@ class NavigationScreen extends StatelessWidget {
   final int stampTotal;
   final String? imageUrl;
   final LatLng? origin;
+  final TourProgress? tour;
 
   const NavigationScreen({
     super.key,
@@ -20,6 +22,7 @@ class NavigationScreen extends StatelessWidget {
     this.stampTotal = 0,
     this.imageUrl,
     this.origin,
+    this.tour,
   });
 
   @override

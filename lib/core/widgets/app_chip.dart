@@ -8,12 +8,14 @@ class AppChip extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final bool compact;
 
   const AppChip({
     super.key,
     required this.label,
     required this.selected,
     required this.onTap,
+    this.compact = false,
   });
 
   @override
@@ -21,19 +23,24 @@ class AppChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.sm,
-        ),
+        padding: compact
+            ? const EdgeInsets.symmetric(horizontal: 10, vertical: 4)
+            : const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.sm,
+              ),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.grey,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
+          color: selected
+              ? (compact ? AppColors.tourPrimary : AppColors.primary)
+              : AppColors.grey,
+          borderRadius: BorderRadius.circular(compact ? 4 : AppRadius.pill),
         ),
         child: Text(
           label,
           style: TextStyle(
             color: selected ? AppColors.white : AppColors.textSecondary,
-            fontSize: 13,
+            fontSize: compact ? 12 : 13,
+            letterSpacing: compact ? 0.25 : null,
             fontWeight: FontWeight.w500,
           ),
         ),

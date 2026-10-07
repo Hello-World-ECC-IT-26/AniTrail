@@ -35,6 +35,7 @@ class AppButton extends StatelessWidget {
   final AppButtonVariant variant;
   final AppButtonSize size;
   final IconData? icon;
+  final Widget? leading;
   final bool isLoading;
   final double? height;
   final Color? backgroundColor;
@@ -45,6 +46,7 @@ class AppButton extends StatelessWidget {
 
   /// 横幅いっぱいに広げるか。false なら内容に合わせた幅。
   final bool fullWidth;
+  final EdgeInsetsGeometry? contentPadding;
 
   const AppButton({
     super.key,
@@ -53,12 +55,14 @@ class AppButton extends StatelessWidget {
     this.variant = AppButtonVariant.primary,
     this.size = AppButtonSize.regular,
     this.icon,
+    this.leading,
     this.isLoading = false,
     this.fullWidth = true,
     this.height,
     this.backgroundColor,
     this.dense = false,
     this.wrapLabel = false,
+    this.contentPadding,
   });
 
   bool get _compact => size == AppButtonSize.compact;
@@ -69,7 +73,8 @@ class AppButton extends StatelessWidget {
 
   Size? get _minimumSize => _compact ? Size.zero : null;
 
-  EdgeInsets get _padding {
+  EdgeInsetsGeometry get _padding {
+    if (contentPadding != null) return contentPadding!;
     if (dense) {
       return const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
@@ -169,12 +174,12 @@ class AppButton extends StatelessWidget {
   }
 
   Widget _label() {
-    if (icon == null) return Text(label, style: _textStyle);
+    if (icon == null && leading == null) return Text(label, style: _textStyle);
     return Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(icon, size: 18),
+        leading ?? Icon(icon, size: 18),
         const SizedBox(width: AppSpacing.sm),
         if (wrapLabel)
           Flexible(child: Text(label, style: _textStyle))

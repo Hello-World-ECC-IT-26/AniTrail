@@ -16,8 +16,13 @@ import '../../spot/widgets/spot_photo_gallery.dart';
 import '../models/anime_spot.dart';
 import '../services/spot_api.dart';
 import 'spot_list_item.dart';
+import '../services/tour_controller.dart';
+import '../models/tour_plan.dart';
+import 'map_tour_panel.dart';
+import 'tour_map_assets.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
-const _kSpotFilters = ['すべて', '訪問済み', '未訪問'];
+const _kSpotFilters = ['すべて', '巡る順', '訪問済み', '未訪問'];
 
 typedef StampCollectionsLoader =
     Future<List<StampCollection>> Function({bool force});
@@ -38,6 +43,8 @@ class MapShioriSheet extends StatefulWidget {
   final LatLng? currentLocation;
   final StampCard? initialCard;
   final StampCollectionsLoader? loadCollections;
+  final TourController? tour;
+  final ValueChanged<double>? onSheetSizeChanged;
 
   const MapShioriSheet({
     super.key,
@@ -48,6 +55,8 @@ class MapShioriSheet extends StatefulWidget {
     this.currentLocation,
     this.initialCard,
     this.loadCollections,
+    this.tour,
+    this.onSheetSizeChanged,
   });
 
   @override
@@ -77,6 +86,11 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
   @override
   void initState() {
     super.initState();
+    widget.tour?.addListener(_onTourChanged);
+    _sheetController.addListener(_onSheetSizeChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _onSheetSizeChanged();
+    });
     _selected = widget.initialCard;
     _spotsLoading = false;
     final initialCard = widget.initialCard;
@@ -85,6 +99,7 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
         if (!mounted) return;
         widget.onDetailVisibilityChanged(true);
         widget.onShowSpots(initialCard.spots);
+        widget.tour?.selectCard(initialCard);
       });
     }
     _load();
@@ -117,6 +132,7 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
         if (refreshedSelected != null) {
           widget.onDetailVisibilityChanged(true);
           widget.onShowSpots(refreshedSelected.card.spots);
+          widget.tour?.selectCard(refreshedSelected.card);
         }
       }
     } catch (e) {
@@ -157,12 +173,14 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
         _visitedSpotIds = visited;
       });
       widget.onShowSpots(full.spots);
+      await widget.tour?.selectCard(full);
     } catch (_) {
       if (mounted) setState(() => _spotsLoading = false);
     }
   }
 
   void _backToList() {
+    widget.tour?.clear();
     setState(() {
       _selected = null;
       _detailSpot = null;
@@ -180,6 +198,7 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
     });
     final selected = _selected;
     if (selected != null) widget.onShowSpots(selected.spots);
+    if (_spotFilterIndex == 1) widget.tour?.showSaved();
   }
 
   void _dragSheetByDelta(double delta) {
@@ -207,8 +226,20 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
     _dragSheetByDelta(details.primaryDelta ?? 0);
   }
 
+  void _onSheetSizeChanged() {
+    if (_sheetController.isAttached) {
+      widget.onSheetSizeChanged?.call(_sheetController.size);
+    }
+  }
+
+  void _onTourChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    widget.tour?.removeListener(_onTourChanged);
+    _sheetController.removeListener(_onSheetSizeChanged);
     _sheetController.dispose();
     super.dispose();
   }
@@ -240,13 +271,34 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         _buildHandle(),
-                        if (_selected != null && _detailSpot == null)
+                        if (_selected != null &&
+                            _detailSpot == null &&
+                            widget.tour?.active != true)
                           _buildHeader(),
                       ],
                     ),
                   ),
                   Expanded(
-                    child: _selected == null
+                    child: widget.tour?.active == true
+                        ? MapTourPanel(
+                            tour: widget.tour!,
+                            scrollController: scrollController,
+                            imageHeaders: _authHeaders,
+                            onClose: () {
+                              if (widget.tour!.editing) {
+                                widget.tour!.cancelEditing();
+                              } else {
+                                widget.tour!.hide();
+                                setState(() => _spotFilterIndex = 0);
+                              }
+                            },
+                            onSpotDetail: _openSpotDetail,
+                            onStart: () => _openNavigation(
+                              widget.tour!.savedSpots.first,
+                              continueTour: true,
+                            ),
+                          )
+                        : _selected == null
                         ? _buildShioriList(scrollController)
                         : _detailSpot != null
                         ? _buildSpotDetail(scrollController, _detailSpot!)
@@ -353,6 +405,57 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
         _buildLoadingAnimation('聖地を読み込んでいます・・・'),
       );
     }
+    if (_spotFilterIndex == 1 && widget.tour != null) {
+      final tour = widget.tour!;
+      return ListView(
+        controller: controller,
+        padding: EdgeInsets.zero,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _buildSpotListControls(),
+          ),
+          const Divider(),
+          if (tour.loading)
+            const Center(child: CircularProgressIndicator())
+          else
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 80, 24, 24),
+              child: Column(
+                children: [
+                  if (tour.error != null) ...[
+                    Text(tour.error!, style: AppTextStyles.error),
+                    TextButton(
+                      onPressed: () => tour.selectCard(card, force: true),
+                      child: const Text('再試行'),
+                    ),
+                  ],
+                  AppButton(
+                    label: tour.savedSpots.isEmpty ? '巡る順番を設定する' : '巡る順番を表示する',
+                    leading: SvgPicture.asset(TourMapAssets.walking),
+                    backgroundColor: AppColors.tourPrimary,
+                    fullWidth: false,
+                    onPressed: tour.canStart && tour.error == null
+                        ? tour.savedSpots.isEmpty
+                              ? tour.beginEditing
+                              : tour.showSaved
+                        : null,
+                  ),
+                  if (widget.currentLocation == null)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 16),
+                      child: Text(
+                        '現在地が取得できていません。位置情報の設定を確認してください。',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.caption,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      );
+    }
     final allSpots = card.spots;
     if (allSpots.isEmpty) {
       return _buildScrollableState(controller, _centerMessage('聖地が登録されていません'));
@@ -360,8 +463,8 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
     final spots = allSpots.where((spot) {
       final stamped = _visitedSpotIds.contains(spot.spotId);
       return switch (_spotFilterIndex) {
-        1 => stamped,
-        2 => !stamped,
+        2 => stamped,
+        3 => !stamped,
         _ => true,
       };
     }).toList();
@@ -448,42 +551,51 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
   }
 
   Widget _buildSpotListControls() {
-    return Row(
+    return Wrap(
+      spacing: 4,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         ...List.generate(_kSpotFilters.length, (i) {
           return Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.sm),
+            padding: EdgeInsets.zero,
             child: AppChip(
               label: _kSpotFilters[i],
+              compact: true,
               selected: _spotFilterIndex == i,
-              onTap: () => setState(() => _spotFilterIndex = i),
+              onTap: () {
+                widget.tour?.hide();
+                setState(() => _spotFilterIndex = i);
+                if (i == 1) widget.tour?.showSaved();
+              },
             ),
           );
         }),
-        const Spacer(),
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () =>
-              setState(() => _spotSortIndex = (_spotSortIndex + 1) % 2),
-          child: Row(
-            children: [
-              Text(
-                _spotSortIndex == 0 ? '距離が近い順' : '名前順',
-                style: AppTextStyles.label,
-              ),
-              const Icon(
-                Icons.keyboard_arrow_down,
-                color: AppColors.textSecondary,
-                size: 18,
-              ),
-            ],
+        if (_spotFilterIndex != 1)
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () =>
+                setState(() => _spotSortIndex = (_spotSortIndex + 1) % 2),
+            child: Row(
+              children: [
+                Text(
+                  _spotSortIndex == 0 ? '距離が近い順' : '名前順',
+                  style: AppTextStyles.label,
+                ),
+                const Icon(
+                  Icons.keyboard_arrow_down,
+                  color: AppColors.textSecondary,
+                  size: 18,
+                ),
+              ],
+            ),
           ),
-        ),
       ],
     );
   }
 
   Future<void> _openSpotDetail(Spot spot) async {
+    widget.tour?.hide();
     final detail = _withComputedDistance(spot);
     setState(() {
       _detailSpot = detail;
@@ -656,12 +768,18 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
     return rest == 0 ? '$hours時間' : '$hours時間$rest分';
   }
 
-  Future<void> _openNavigation(Spot spot) async {
+  Future<void> _openNavigation(Spot spot, {bool continueTour = false}) async {
     final lat = spot.latitude;
     final lng = spot.longitude;
     if (lat == null || lng == null) return;
     final selected = _selected;
     if (selected == null) return;
+    final tour = continueTour && widget.tour!.savedSpots.isNotEmpty
+        ? TourProgress(
+            spots: widget.tour!.savedSpots,
+            visitedSpotIds: _visitedSpotIds,
+          )
+        : null;
     final stampTotal = selected.spotCount > 0
         ? selected.spotCount
         : selected.spots.length;
@@ -677,16 +795,22 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
           stampTotal: stampTotal,
           imageUrl: imageUrl,
           origin: widget.currentLocation,
+          tour: tour,
         ),
       ),
     );
-    if (acquired == true && mounted) {
+    if ((acquired == true || tour != null) && mounted) {
       await _load(force: true);
       final refreshed = _cards
           .where((card) => card.cardId == selected.cardId)
           .firstOrNull;
       if (!mounted || refreshed == null) return;
       await _openShiori(refreshed);
+      if (tour != null && mounted) {
+        setState(() => _spotFilterIndex = 1);
+        widget.tour?.showSaved();
+        return;
+      }
       final refreshedSpot = refreshed.spots
           .where((item) => item.spotId == spot.spotId)
           .firstOrNull;

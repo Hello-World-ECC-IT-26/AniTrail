@@ -107,7 +107,7 @@ mixin MapLocationMixin<T extends StatefulWidget> on State<T> {
   }
 
   /// 渡した聖地が全て画面内に収まるようカメラを合わせる。
-  void fitSpotsBounds(List<Spot> spots) {
+  void fitSpotsBounds(List<Spot> spots, {bool animate = true}) {
     final pts = spots
         .where((s) => s.latitude != null && s.longitude != null)
         .map((s) => LatLng(s.latitude!, s.longitude!))
@@ -115,7 +115,12 @@ mixin MapLocationMixin<T extends StatefulWidget> on State<T> {
     final controller = mapController;
     if (pts.isEmpty || controller == null) return;
     if (pts.length == 1) {
-      controller.animateCamera(CameraUpdate.newLatLngZoom(pts.first, 15));
+      final update = CameraUpdate.newLatLngZoom(pts.first, 15);
+      if (animate) {
+        controller.animateCamera(update);
+      } else {
+        controller.moveCamera(update);
+      }
       return;
     }
     var minLat = pts.first.latitude, maxLat = pts.first.latitude;
@@ -130,7 +135,12 @@ mixin MapLocationMixin<T extends StatefulWidget> on State<T> {
       southwest: LatLng(minLat, minLng),
       northeast: LatLng(maxLat, maxLng),
     );
-    controller.animateCamera(CameraUpdate.newLatLngBounds(bounds, 60));
+    final update = CameraUpdate.newLatLngBounds(bounds, 60);
+    if (animate) {
+      controller.animateCamera(update);
+    } else {
+      controller.moveCamera(update);
+    }
   }
 
   /// 追従対象（ピン優先、なければ現在地）。null なら追従対象なし。
