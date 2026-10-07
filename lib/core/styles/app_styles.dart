@@ -3,6 +3,16 @@ import 'package:flutter/material.dart';
 /// アプリ全体で使う色トークン。
 /// 画面ごとに色を直書きせず、必ずここを参照する。
 class AppColors {
+  // Figma: shiori tour editor.
+  static const tourPrimary = Color(0xFF1570EF);
+  static const tourSurface = Color(0xFFFCFCFC);
+  static const tourText = Color(0xFF102A56);
+  static const tourRouteColors = [
+    Color(0xFF453BFF),
+    Color(0xFFFF2D81),
+    Color(0xFF21B400),
+    Color(0xFFFB8200),
+  ];
   // ── Primary ───────────────────────────────────────────
   static const Color primary = Color(0xFF1976D2);
 

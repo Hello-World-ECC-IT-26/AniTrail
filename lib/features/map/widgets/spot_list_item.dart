@@ -12,20 +12,34 @@ class SpotListItem extends StatelessWidget {
   final Spot spot;
   final String animeTitle;
   final VoidCallback? onTap;
+  final String? routeDescription;
+  final Size thumbnailSize;
+  final EdgeInsetsGeometry padding;
+  final Widget? trailing;
+  final Map<String, String>? imageHeaders;
+  final bool showDistance;
 
   const SpotListItem({
     super.key,
     required this.spot,
     required this.animeTitle,
     this.onTap,
+    this.routeDescription,
+    this.thumbnailSize = const Size(90, 72),
+    this.padding = const EdgeInsets.symmetric(
+      horizontal: AppSpacing.lg,
+      vertical: AppSpacing.md,
+    ),
+    this.trailing,
+    this.imageHeaders,
+    this.showDistance = true,
   });
 
   String? _streetViewImageUrl() =>
       spot.streetViewProxyUrl ?? spot.streetViewImageUrl;
 
   Map<String, String> get _authHeaders {
-    final token =
-        Supabase.instance.client.auth.currentSession?.accessToken;
+    final token = Supabase.instance.client.auth.currentSession?.accessToken;
     return token != null ? {'Authorization': 'Bearer $token'} : {};
   }
 
@@ -34,15 +48,14 @@ class SpotListItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+        padding: padding,
         child: Row(
           children: [
             ClipRRect(
               borderRadius: AppRadius.brSm,
               child: SizedBox(
-                width: 90,
-                height: 72,
+                width: thumbnailSize.width,
+                height: thumbnailSize.height,
                 child: _buildThumbnail(),
               ),
             ),
@@ -55,7 +68,7 @@ class SpotListItem extends StatelessWidget {
                     children: [
                       Flexible(
                         child: Text(
-                          spot.distanceText.isEmpty
+                          !showDistance || spot.distanceText.isEmpty
                               ? spot.name
                               : '${spot.name} (${spot.distanceText})',
                           style: AppTextStyles.input.copyWith(
@@ -76,12 +89,27 @@ class SpotListItem extends StatelessWidget {
                   ),
                   if (spot.addressText.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.xs),
-                    Text(spot.addressText, style: AppTextStyles.label),
+                    Text(
+                      spot.addressText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: routeDescription == null
+                          ? AppTextStyles.label
+                          : AppTextStyles.caption.copyWith(fontSize: 9),
+                    ),
+                  ],
+                  if (routeDescription != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      routeDescription!,
+                      style: AppTextStyles.caption.copyWith(fontSize: 11),
+                    ),
                   ],
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+            trailing ??
+                const Icon(Icons.chevron_right, color: AppColors.textSecondary),
           ],
         ),
       ),
@@ -93,6 +121,7 @@ class SpotListItem extends StatelessWidget {
     if (spot.image != null) {
       return CachedNetworkImage(
         imageUrl: spot.image!,
+        httpHeaders: imageHeaders ?? _authHeaders,
         fit: BoxFit.cover,
         placeholder: (_, _) => _placeholder(),
         errorWidget: (_, _, _) => _streetViewOrPlaceholder(),
@@ -107,7 +136,7 @@ class SpotListItem extends StatelessWidget {
     if (url != null) {
       return CachedNetworkImage(
         imageUrl: url,
-        httpHeaders: _authHeaders,
+        httpHeaders: imageHeaders ?? _authHeaders,
         fit: BoxFit.cover,
         placeholder: (_, _) => _placeholder(),
         errorWidget: (_, _, _) => _placeholder(),
