@@ -4,8 +4,16 @@ import '../styles/app_styles.dart';
 class MainBottomNav extends StatelessWidget {
   final int? currentIndex;
   final ValueChanged<int> onTap;
+  final Color? itemColor;
+  final double elevation;
 
-  const MainBottomNav({super.key, this.currentIndex, required this.onTap});
+  const MainBottomNav({
+    super.key,
+    this.currentIndex,
+    required this.onTap,
+    this.itemColor,
+    this.elevation = 8,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,10 +24,11 @@ class MainBottomNav extends StatelessWidget {
       currentIndex: index,
       onTap: onTap,
       type: BottomNavigationBarType.fixed,
-      selectedItemColor: hasSelection ? AppColors.primary : Colors.grey,
-      unselectedItemColor: Colors.grey,
+      selectedItemColor:
+          itemColor ?? (hasSelection ? AppColors.primary : Colors.grey),
+      unselectedItemColor: itemColor ?? Colors.grey,
       backgroundColor: Colors.white,
-      elevation: 8,
+      elevation: elevation,
 
       items: [
         BottomNavigationBarItem(
@@ -47,7 +56,7 @@ class MainBottomNav extends StatelessWidget {
       path,
       width: 24,
       height: 24,
-      color: isActive ? AppColors.primary : Colors.grey,
+      color: itemColor ?? (isActive ? AppColors.primary : Colors.grey),
     );
   }
 }

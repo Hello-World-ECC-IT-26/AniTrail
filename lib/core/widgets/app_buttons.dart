@@ -40,6 +40,9 @@ class AppButton extends StatelessWidget {
   final Color? backgroundColor;
   final bool dense;
 
+  /// アイコン付きラベルを狭い幅で折り返す。
+  final bool wrapLabel;
+
   /// 横幅いっぱいに広げるか。false なら内容に合わせた幅。
   final bool fullWidth;
 
@@ -55,6 +58,7 @@ class AppButton extends StatelessWidget {
     this.height,
     this.backgroundColor,
     this.dense = false,
+    this.wrapLabel = false,
   });
 
   bool get _compact => size == AppButtonSize.compact;
@@ -172,7 +176,10 @@ class AppButton extends StatelessWidget {
       children: [
         Icon(icon, size: 18),
         const SizedBox(width: AppSpacing.sm),
-        Text(label, style: _textStyle),
+        if (wrapLabel)
+          Flexible(child: Text(label, style: _textStyle))
+        else
+          Text(label, style: _textStyle),
       ],
     );
   }
