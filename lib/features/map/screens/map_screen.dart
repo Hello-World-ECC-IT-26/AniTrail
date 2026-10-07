@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../core/styles/app_styles.dart';
+import '../../../core/styles/app_dimens.dart';
 import '../services/tour_controller.dart';
 import '../widgets/tour_map_assets.dart';
 import '../widgets/map_tour_panel.dart';
@@ -398,14 +400,37 @@ class _MapScreenState extends State<MapScreen>
 
               if (_tour.active) TourEndpoints(tour: _tour),
               if (_tour.active)
-                Positioned(
-                  right: 16,
-                  top: MediaQuery.paddingOf(context).top + 146,
-                  child: IconButton.filledTonal(
-                    tooltip: '巡回ルート全体を表示',
-                    onPressed: _fitTour,
-                    icon: const Icon(Icons.fit_screen),
-                  ),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final mapHeight = constraints.maxHeight;
+                    final sheetHeight = mapHeight * _sheetSize;
+                    final hasButtonSpace =
+                        mapHeight - sheetHeight >
+                        MediaQuery.paddingOf(context).top +
+                            130 +
+                            AppSizes.minTapTarget +
+                            AppSpacing.lg;
+                    return Stack(
+                      children: [
+                        if (hasButtonSpace)
+                          Positioned(
+                            right: AppSpacing.lg,
+                            bottom: sheetHeight + AppSpacing.lg,
+                            child: FloatingActionButton.small(
+                              heroTag: 'tour_fit',
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: AppColors.white,
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: AppRadius.brLg,
+                              ),
+                              tooltip: '巡回ルート全体を表示',
+                              onPressed: _fitTour,
+                              child: const Icon(Icons.zoom_out_map, size: 22),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
                 ),
               if (searchVisible)
                 MapSearchPanel(

@@ -88,6 +88,9 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
     super.initState();
     widget.tour?.addListener(_onTourChanged);
     _sheetController.addListener(_onSheetSizeChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _onSheetSizeChanged();
+    });
     _selected = widget.initialCard;
     _spotsLoading = false;
     final initialCard = widget.initialCard;
