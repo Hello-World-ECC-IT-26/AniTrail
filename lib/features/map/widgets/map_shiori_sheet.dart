@@ -17,6 +17,7 @@ import '../models/anime_spot.dart';
 import '../services/spot_api.dart';
 import 'spot_list_item.dart';
 import '../services/tour_controller.dart';
+import '../models/tour_plan.dart';
 import 'map_tour_panel.dart';
 import 'tour_map_assets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -289,8 +290,10 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
                               }
                             },
                             onSpotDetail: _openSpotDetail,
-                            onStart: () =>
-                                _openNavigation(widget.tour!.savedSpots.first),
+                            onStart: () => _openNavigation(
+                              widget.tour!.savedSpots.first,
+                              continueTour: true,
+                            ),
                           )
                         : _selected == null
                         ? _buildShioriList(scrollController)
@@ -760,12 +763,18 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
     return rest == 0 ? '$hours時間' : '$hours時間$rest分';
   }
 
-  Future<void> _openNavigation(Spot spot) async {
+  Future<void> _openNavigation(Spot spot, {bool continueTour = false}) async {
     final lat = spot.latitude;
     final lng = spot.longitude;
     if (lat == null || lng == null) return;
     final selected = _selected;
     if (selected == null) return;
+    final tour = continueTour && widget.tour!.savedSpots.isNotEmpty
+        ? TourProgress(
+            spots: widget.tour!.savedSpots,
+            visitedSpotIds: _visitedSpotIds,
+          )
+        : null;
     final stampTotal = selected.spotCount > 0
         ? selected.spotCount
         : selected.spots.length;
@@ -781,16 +790,22 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
           stampTotal: stampTotal,
           imageUrl: imageUrl,
           origin: widget.currentLocation,
+          tour: tour,
         ),
       ),
     );
-    if (acquired == true && mounted) {
+    if ((acquired == true || tour != null) && mounted) {
       await _load(force: true);
       final refreshed = _cards
           .where((card) => card.cardId == selected.cardId)
           .firstOrNull;
       if (!mounted || refreshed == null) return;
       await _openShiori(refreshed);
+      if (tour != null && mounted) {
+        setState(() => _spotFilterIndex = 1);
+        widget.tour?.showSaved();
+        return;
+      }
       final refreshedSpot = refreshed.spots
           .where((item) => item.spotId == spot.spotId)
           .firstOrNull;

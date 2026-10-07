@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:anitrail/features/coupon/models/coupon.dart';
 import 'package:anitrail/features/map/models/anime_spot.dart';
+import 'package:anitrail/features/map/models/tour_plan.dart';
 import 'package:anitrail/features/map/services/spot_api.dart';
 import 'package:anitrail/features/navigation/screens/arrival_screen_mobile.dart';
 import 'package:flutter/material.dart';
@@ -32,13 +33,21 @@ class _FakeSpotApi extends SpotApi {
   }
 }
 
-Widget _app(SpotApi api) => MaterialApp(
+Widget _app(
+  SpotApi api, {
+  TourProgress? tour,
+  Widget Function(TourProgress)? nextBuilder,
+}) => MaterialApp(
   home: ArrivalScreen(
-    spot: const Spot(
-      spotId: '10000000-0000-4000-8000-000000000001',
-      name: 'テスト聖地',
-      animeTitle: 'テストアニメ',
-    ),
+    tour: tour,
+    nextNavigationBuilder: nextBuilder,
+    spot:
+        tour?.current ??
+        const Spot(
+          spotId: '10000000-0000-4000-8000-000000000001',
+          name: 'テスト聖地',
+          animeTitle: 'テストアニメ',
+        ),
     cardId: '20000000-0000-4000-8000-000000000001',
     stampCount: 0,
     stampTotal: 3,
@@ -90,6 +99,53 @@ void main() {
     expect(api.stampIds, hasLength(2));
     expect(api.stampIds.first, api.stampIds.last);
     expect(find.text('スタンプ獲得！'), findsOneWidget);
+  });
+
+  testWidgets('巡回では保存成功後だけ次の聖地へ進み、連打でも一度だけ遷移する', (tester) async {
+    const first = Spot(spotId: 'first', name: '最初の聖地');
+    const second = Spot(spotId: 'second', name: '次の聖地');
+    final api = _FakeSpotApi(failFirst: true);
+    TourProgress? continued;
+    var transitions = 0;
+    await tester.pumpWidget(
+      _app(
+        api,
+        tour: TourProgress(spots: [first, second]),
+        nextBuilder: (next) {
+          continued = next;
+          transitions++;
+          return Scaffold(body: Text(next.current.name));
+        },
+      ),
+    );
+    expect(find.text('次の聖地へ'), findsNothing);
+    await tester.ensureVisible(find.text('写真なしで獲得'));
+    await tester.tap(find.text('写真なしで獲得'));
+    await tester.pumpAndSettle();
+    expect(find.text('次の聖地へ'), findsNothing);
+    await tester.tap(find.text('再試行'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('次の聖地へ'));
+    await tester.tap(find.text('次の聖地へ'));
+    await tester.tap(find.text('次の聖地へ'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(find.text('次の聖地'), findsOneWidget);
+    expect(continued?.index, 1);
+    expect(continued?.visitedSpotIds, {'first'});
+    expect(transitions, 1);
+  });
+
+  testWidgets('最後の聖地は次の案内を表示せず、しおりに戻れる', (tester) async {
+    const last = Spot(spotId: 'last', name: '最後の聖地');
+    await tester.pumpWidget(
+      _app(_FakeSpotApi(), tour: TourProgress(spots: [last])),
+    );
+    await tester.ensureVisible(find.text('写真なしで獲得'));
+    await tester.tap(find.text('写真なしで獲得'));
+    await tester.pumpAndSettle();
+    expect(find.text('次の聖地へ'), findsNothing);
+    expect(find.text('しおりに戻る'), findsOneWidget);
+    expect(find.text('閉じる'), findsNothing);
   });
 
   testWidgets('スタンプ獲得画面の背景が端末幅いっぱいに表示される', (tester) async {

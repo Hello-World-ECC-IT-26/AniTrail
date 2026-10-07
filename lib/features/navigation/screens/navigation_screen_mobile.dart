@@ -12,6 +12,7 @@ import '../../../core/styles/app_styles.dart';
 import '../../../core/styles/app_text.dart';
 import '../../../core/widgets/loading_screen.dart';
 import '../../map/models/anime_spot.dart';
+import '../../map/models/tour_plan.dart';
 import '../models/navigation_direction.dart';
 import '../models/navigation_phase.dart';
 import '../services/navigation_route_service.dart';
@@ -26,6 +27,7 @@ class NavigationScreen extends StatefulWidget {
   final int stampTotal;
   final String? imageUrl;
   final LatLng? origin;
+  final TourProgress? tour;
 
   const NavigationScreen({
     super.key,
@@ -35,6 +37,7 @@ class NavigationScreen extends StatefulWidget {
     this.stampTotal = 0,
     this.imageUrl,
     this.origin,
+    this.tour,
   });
 
   @override
@@ -308,6 +311,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
             stampCount: widget.stampCount,
             stampTotal: widget.stampTotal,
             imageUrl: widget.imageUrl,
+            tour: widget.tour,
           ),
         ),
       );
