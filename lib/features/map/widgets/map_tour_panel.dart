@@ -174,6 +174,11 @@ class MapTourPanel extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           child: Text(tour.error!, style: AppTextStyles.error),
         ),
+      if (tour.markerError != null)
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: Text(tour.markerError!, style: AppTextStyles.error),
+        ),
       if (tour.routing) const LinearProgressIndicator(),
       if (tour.routeError != null)
         Row(

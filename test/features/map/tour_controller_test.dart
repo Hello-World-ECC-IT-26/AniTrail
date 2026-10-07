@@ -134,6 +134,25 @@ void main() {
     expect(c.routeError, isNull);
     expect(c.spots, [b]);
   });
+  test('マーカー読み込み失敗を通知し、経路再取得でも維持する', () async {
+    final c = await controller();
+    addTearDown(c.dispose);
+    c.setCurrentLocation(const LatLng(34, 139));
+    c.beginEditing();
+    c.toggle(a);
+    var notifications = 0;
+    c.addListener(() => notifications++);
+    c.setMarkerLoadingError('marker failure');
+    expect(notifications, 1);
+    expect(c.markerError, 'marker failure');
+    await c.refreshRoutes();
+    expect(c.markerError, 'marker failure');
+    expect(c.routeError, isNull);
+    final beforeRecovery = notifications;
+    c.setMarkerLoadingError(null);
+    expect(c.markerError, isNull);
+    expect(notifications, beforeRecovery + 1);
+  });
   test('経路失敗を代替せず再試行し、現在地から順番に区間を取得する', () async {
     var fail = true;
     final origins = <LatLng>[];

@@ -75,6 +75,15 @@ void main() {
     addTearDown(scroll.dispose);
     await tester.pumpWidget(app(c, scroll));
     expect(find.text('巡りたい聖地を訪問する順にタップしてね'), findsOneWidget);
+    c.setMarkerLoadingError('地図の巡回マーカーを読み込めませんでした');
+    await tester.pump();
+    expect(find.text('地図の巡回マーカーを読み込めませんでした'), findsOneWidget);
+    await c.refreshRoutes();
+    await tester.pump();
+    expect(find.text('地図の巡回マーカーを読み込めませんでした'), findsOneWidget);
+    c.setMarkerLoadingError(null);
+    await tester.pump();
+    expect(find.text('地図の巡回マーカーを読み込めませんでした'), findsNothing);
     c.toggle(a);
     c.toggle(b);
     await tester.pumpAndSettle();

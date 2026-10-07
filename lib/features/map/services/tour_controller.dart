@@ -38,6 +38,15 @@ class TourController extends ChangeNotifier {
   bool routing = false;
   String? error;
   String? routeError;
+  String? _markerError;
+  String? get markerError => _markerError;
+
+  void setMarkerLoadingError(String? message) {
+    if (_disposed || _markerError == message) return;
+    _markerError = message;
+    notifyListeners();
+  }
+
   int _revision = 0;
   int _routeRevision = 0;
   bool _disposed = false;

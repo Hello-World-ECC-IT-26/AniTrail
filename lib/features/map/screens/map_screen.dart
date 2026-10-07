@@ -68,9 +68,10 @@ class _MapScreenState extends State<MapScreen>
     _loadingTourAssets = true;
     try {
       await _tourAssets.load(_tour.spots.length);
+      if (mounted) _tour.setMarkerLoadingError(null);
     } catch (_) {
       if (mounted) {
-        _tour.routeError = '地図の巡回マーカーを読み込めませんでした';
+        _tour.setMarkerLoadingError('地図の巡回マーカーを読み込めませんでした');
       }
     } finally {
       _loadingTourAssets = false;
