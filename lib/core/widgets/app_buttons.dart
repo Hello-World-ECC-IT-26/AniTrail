@@ -46,6 +46,7 @@ class AppButton extends StatelessWidget {
 
   /// 横幅いっぱいに広げるか。false なら内容に合わせた幅。
   final bool fullWidth;
+  final EdgeInsetsGeometry? contentPadding;
 
   const AppButton({
     super.key,
@@ -61,6 +62,7 @@ class AppButton extends StatelessWidget {
     this.backgroundColor,
     this.dense = false,
     this.wrapLabel = false,
+    this.contentPadding,
   });
 
   bool get _compact => size == AppButtonSize.compact;
@@ -71,7 +73,8 @@ class AppButton extends StatelessWidget {
 
   Size? get _minimumSize => _compact ? Size.zero : null;
 
-  EdgeInsets get _padding {
+  EdgeInsetsGeometry get _padding {
+    if (contentPadding != null) return contentPadding!;
     if (dense) {
       return const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,

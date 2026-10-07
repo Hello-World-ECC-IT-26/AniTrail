@@ -5,6 +5,9 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../core/styles/app_styles.dart';
 
 class TourMapAssets {
+  static const drag = 'assets/images/tour/3644-9260.svg';
+  static const next = 'assets/images/tour/3644-8868.svg';
+  static const back = 'assets/images/tour/3644-8889.svg';
   static const walking = 'assets/images/tour/3548-8573.svg';
   static const smallFlag = 'assets/images/tour/3560-8811.svg';
   static const smallPin = 'assets/images/tour/3560-8419.svg';

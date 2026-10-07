@@ -47,7 +47,9 @@ class TourEndpoints extends StatelessWidget {
                     tour.spots.isEmpty ? '目的地の聖地を選択' : tour.spots.last.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.caption,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
               ],
@@ -101,14 +103,16 @@ class MapTourPanel extends StatelessWidget {
                 const SizedBox(height: 16),
                 AppButton(
                   label: '設定',
-                  height: 36,
+                  height: 36 * MediaQuery.textScalerOf(context).scale(1),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                   backgroundColor: AppColors.tourPrimary,
                   onPressed: () => Navigator.pop(context, true),
                 ),
                 const SizedBox(height: 12),
                 AppButton(
                   label: 'もう少し考える',
-                  height: 36,
+                  height: 36 * MediaQuery.textScalerOf(context).scale(1),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                   variant: AppButtonVariant.secondary,
                   onPressed: () => Navigator.pop(context, false),
                 ),
@@ -129,7 +133,7 @@ class MapTourPanel extends StatelessWidget {
           IconButton(
             tooltip: tour.editing ? '変更を取り消す' : '聖地一覧に戻る',
             onPressed: tour.saving ? null : onClose,
-            icon: const Icon(Icons.chevron_left, color: AppColors.tourText),
+            icon: SvgPicture.asset(TourMapAssets.back),
           ),
           Expanded(
             child: Text(
@@ -144,6 +148,10 @@ class MapTourPanel extends StatelessWidget {
               label: tour.editing ? '設定' : '編集',
               size: AppButtonSize.compact,
               fullWidth: false,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 4,
+              ),
               backgroundColor: AppColors.tourPrimary,
               isLoading: tour.saving,
               onPressed: tour.editing
@@ -223,6 +231,10 @@ class MapTourPanel extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
               child: AppButton(
                 label: 'ナビ開始',
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 onPressed:
                     tour.canStart &&
                         !tour.routing &&
@@ -260,11 +272,17 @@ class MapTourPanel extends StatelessWidget {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: tourColor(i), width: 2),
+                    border: Border.all(
+                      color: i == 0 ? AppColors.tourPrimary : tourColor(i),
+                      width: 2,
+                    ),
                   ),
                   child: Text(
                     '${i + 1}',
-                    style: TextStyle(fontSize: 11, color: tourColor(i)),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: i == 0 ? AppColors.tourPrimary : tourColor(i),
+                    ),
                   ),
                 ),
                 if (draggable)
@@ -275,11 +293,8 @@ class MapTourPanel extends StatelessWidget {
                       color: Colors.transparent,
                       height: 48,
                       width: 26,
-                      child: const Icon(
-                        Icons.drag_indicator,
-                        size: 20,
-                        color: AppColors.textMuted,
-                      ),
+                      alignment: Alignment.center,
+                      child: SvgPicture.asset(TourMapAssets.drag),
                     ),
                   ),
               ],
@@ -294,7 +309,11 @@ class MapTourPanel extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
                 onTap: draggable ? null : () => onSpotDetail(spot),
                 child: Container(
-                  decoration: const BoxDecoration(boxShadow: AppShadows.card),
+                  decoration: const BoxDecoration(
+                    color: AppColors.tourSurface,
+                    borderRadius: BorderRadius.all(Radius.circular(4)),
+                    boxShadow: AppShadows.card,
+                  ),
                   child: SpotListItem(
                     spot: spot,
                     animeTitle: spot.animeTitle ?? '',
@@ -312,7 +331,10 @@ class MapTourPanel extends StatelessWidget {
                                 : () => tour.toggle(spot),
                             icon: const Icon(Icons.close, size: 16),
                           )
-                        : null,
+                        : Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: SvgPicture.asset(TourMapAssets.next),
+                          ),
                   ),
                 ),
               ),

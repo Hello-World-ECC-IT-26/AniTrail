@@ -43,7 +43,11 @@ class TourController extends ChangeNotifier {
   bool _disposed = false;
   List<Spot> get spots => editing ? draftSpots : savedSpots;
   bool get canStart =>
-      _userId != null && currentLocation != null && !loading && !saving;
+      _userId != null &&
+      currentLocation != null &&
+      !loading &&
+      !saving &&
+      (card?.spots.any(canTourSpot) ?? false);
 
   void setUser(String? userId) {
     if (_userId == userId) return;

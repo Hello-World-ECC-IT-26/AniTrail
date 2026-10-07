@@ -42,10 +42,20 @@ class _MapScreenState extends State<MapScreen>
   final TourMapAssets _tourAssets = TourMapAssets();
   StreamSubscription<AuthState>? _authSubscription;
   bool _loadingTourAssets = false;
+  bool _tourWasActive = false;
 
   void _onTourChanged() {
     if (!mounted) return;
     setState(() {});
+    final opening = _tour.active && !_tourWasActive;
+    _tourWasActive = _tour.active;
+    if (opening) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        // Let the platform map apply the sheet/endpoint padding before fitting.
+        await WidgetsBinding.instance.endOfFrame;
+        if (mounted) _fitTour(animate: false);
+      });
+    }
     if (_tour.active &&
         !_loadingTourAssets &&
         (_tourAssets.start == null ||
@@ -68,7 +78,7 @@ class _MapScreenState extends State<MapScreen>
     if (mounted) setState(() {});
   }
 
-  void _fitTour() {
+  void _fitTour({bool animate = true}) {
     if (!_tour.active) return;
     final origin = _tour.routeOrigin;
     fitSpotsBounds([
@@ -79,8 +89,15 @@ class _MapScreenState extends State<MapScreen>
           latitude: origin.latitude,
           longitude: origin.longitude,
         ),
-      ..._tour.spots,
-    ]);
+      ...(_tour.editing ? _tour.card!.spots.where(canTourSpot) : _tour.spots),
+      for (final point in _tour.legs.expand((leg) => leg.points))
+        Spot(
+          spotId: 'route_point',
+          name: '',
+          latitude: point.latitude,
+          longitude: point.longitude,
+        ),
+    ], animate: animate);
   }
 
   @override
@@ -92,6 +109,7 @@ class _MapScreenState extends State<MapScreen>
   /// 追従対象を「見える領域（検索バー下〜シート上端）」の中央に合わせる。
   @override
   void recenterCamera({bool animate = false}) {
+    if (_tour.active) return;
     final target = focusTarget;
     if (target == null || mapController == null) return;
 
@@ -208,6 +226,7 @@ class _MapScreenState extends State<MapScreen>
         markers.add(
           Marker(
             markerId: MarkerId('tour_${spot.spotId}'),
+            consumeTapEvents: _tour.editing,
             position: LatLng(spot.latitude!, spot.longitude!),
             icon: index >= 0
                 ? _tourAssets.numbered[index]!
@@ -353,6 +372,7 @@ class _MapScreenState extends State<MapScreen>
 
               if (_shioriVisible && !searchVisible && !resultsVisible)
                 MapShioriSheet(
+                  key: const ValueKey('map_shiori_sheet'),
                   initialCard: widget.initialShiori,
                   tour: _tour,
                   onSheetSizeChanged: (size) {

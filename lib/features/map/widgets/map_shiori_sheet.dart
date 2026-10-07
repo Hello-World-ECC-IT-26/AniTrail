@@ -406,6 +406,7 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
       final tour = widget.tour!;
       return ListView(
         controller: controller,
+        padding: EdgeInsets.zero,
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -554,9 +555,10 @@ class _MapShioriSheetState extends State<MapShioriSheet> {
       children: [
         ...List.generate(_kSpotFilters.length, (i) {
           return Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.sm),
+            padding: EdgeInsets.zero,
             child: AppChip(
               label: _kSpotFilters[i],
+              compact: true,
               selected: _spotFilterIndex == i,
               onTap: () {
                 widget.tour?.hide();

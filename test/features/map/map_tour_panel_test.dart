@@ -4,6 +4,7 @@ import 'package:anitrail/features/map/widgets/map_tour_panel.dart';
 import 'package:anitrail/features/map/widgets/tour_map_assets.dart';
 import 'package:anitrail/features/navigation/models/navigation_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'tour_controller_test.dart' show MemoryStore;
@@ -40,7 +41,11 @@ Future<TourController> setup() async {
   return c;
 }
 
-Widget app(TourController c, ScrollController scroll) => MaterialApp(
+Widget app(
+  TourController c,
+  ScrollController scroll, {
+  VoidCallback? onStart,
+}) => MaterialApp(
   home: Scaffold(
     body: AnimatedBuilder(
       animation: c,
@@ -53,7 +58,7 @@ Widget app(TourController c, ScrollController scroll) => MaterialApp(
               scrollController: scroll,
               onClose: c.cancelEditing,
               onSpotDetail: (_) {},
-              onStart: () {},
+              onStart: onStart ?? () {},
             ),
           ),
         ],
@@ -77,6 +82,19 @@ void main() {
     await tester.tap(find.text('設定'));
     await tester.pumpAndSettle();
     expect(find.text('巡る順番を設定しますか？'), findsOneWidget);
+    for (final label in ['設定', 'もう少し考える']) {
+      final text = find.descendant(
+        of: find.byType(Dialog),
+        matching: find.text(label),
+      );
+      final paragraph = tester.renderObject<RenderParagraph>(text);
+      expect(
+        paragraph.size.height,
+        greaterThanOrEqualTo(
+          paragraph.getMaxIntrinsicHeight(paragraph.size.width),
+        ),
+      );
+    }
     await tester.tap(find.text('もう少し考える'));
     await tester.pumpAndSettle();
     expect(c.editing, isTrue);
@@ -93,7 +111,8 @@ void main() {
     addTearDown(scroll.dispose);
     c.toggle(a);
     c.toggle(b);
-    await tester.pumpWidget(app(c, scroll));
+    var starts = 0;
+    await tester.pumpWidget(app(c, scroll, onStart: () => starts++));
     await tester.pumpAndSettle();
     final drag = find.byType(ReorderableDragStartListener).first;
     final gesture = await tester.startGesture(tester.getCenter(drag));
@@ -111,6 +130,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(c.savedSpots, [b, a]);
     expect(find.text('ナビ開始'), findsOneWidget);
+    await tester.tap(find.text('ナビ開始'));
+    await tester.pump();
+    expect(starts, 1);
   });
 
   testWidgets('狭い画面と文字拡大でも表示が収まり、SVGマーカーを読み込める', (tester) async {
