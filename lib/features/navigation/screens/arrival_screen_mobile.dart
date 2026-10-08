@@ -462,7 +462,11 @@ class _ArrivalScreenState extends State<ArrivalScreen> {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xl),
-                      StampBadge(label: widget.spot.name, size: stampSize),
+                      StampBadge(
+                        spotId: widget.spot.spotId,
+                        label: widget.spot.name,
+                        size: stampSize,
+                      ),
                       const SizedBox(height: AppSpacing.md),
                       if ((widget.spot.animeTitle ?? '').isNotEmpty)
                         Text(

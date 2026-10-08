@@ -128,7 +128,7 @@ class StampDetailScreen extends StatelessWidget {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(6),
                                   child: Image.asset(
-                                    'assets/images/stamp_sample.png',
+                                    'assets/images/stamp01.png',
                                     fit: BoxFit.cover,
                                     errorBuilder: (_, __, ___) => Icon(
                                       Icons.pets,
