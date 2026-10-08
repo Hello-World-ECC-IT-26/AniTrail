@@ -150,7 +150,7 @@ class StampCollectionDetailDialog extends StatelessWidget {
       builder: (context, constraints) {
         final size = math.min(constraints.maxWidth, constraints.maxHeight);
         return Center(
-          child: StampBadge(label: spot.name, size: size),
+          child: StampBadge(spotId: spot.spotId, label: spot.name, size: size),
         );
       },
     );

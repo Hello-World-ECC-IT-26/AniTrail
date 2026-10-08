@@ -2,8 +2,10 @@ import 'package:anitrail/features/map/models/anime_spot.dart';
 import 'package:anitrail/features/stamp/screens/stamp_collection_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
   testWidgets('小さい画面でも全ての情報がスクロールなしで表示される', (tester) async {
     tester.view.physicalSize = const Size(320, 568);
     tester.view.devicePixelRatio = 1;
@@ -24,12 +26,12 @@ void main() {
         ),
       ),
     );
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
     expect(find.byType(SingleChildScrollView), findsNothing);
     expect(find.text('アニメ「テストアニメのタイトル」'), findsOneWidget);
-    expect(find.text('訪問回数: 2回　|　最終訪問: -'), findsOneWidget);
+    expect(find.text('訪問回数: 2回|最終訪問: -'), findsOneWidget);
     expect(find.text('コメントする'), findsOneWidget);
   });
 }

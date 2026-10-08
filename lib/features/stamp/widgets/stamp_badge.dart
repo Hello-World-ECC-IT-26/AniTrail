@@ -3,47 +3,104 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../core/styles/app_styles.dart';
+import '../services/stamp_image_store.dart';
 
-class StampBadge extends StatelessWidget {
+class StampBadge extends StatefulWidget {
+  final String spotId;
   final String label;
   final double? size;
 
-  const StampBadge({super.key, required this.label, this.size});
+  const StampBadge({
+    super.key,
+    required this.spotId,
+    required this.label,
+    this.size,
+  });
+
+  @override
+  State<StampBadge> createState() => _StampBadgeState();
+}
+
+class _StampBadgeState extends State<StampBadge> {
+  late Future<int> _imageNumber;
+
+  @override
+  void initState() {
+    super.initState();
+    _imageNumber = StampImageStore.instance.imageNumberFor(widget.spotId);
+  }
+
+  @override
+  void didUpdateWidget(covariant StampBadge oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.spotId != widget.spotId) {
+      _imageNumber = StampImageStore.instance.imageNumberFor(widget.spotId);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return SizedBox.square(
-      dimension: size,
+      dimension: widget.size,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final badgeSize =
-              size ?? math.min(constraints.maxWidth, constraints.maxHeight);
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.asset(
-                'assets/images/stamp_sample.png',
-                fit: BoxFit.contain,
-                filterQuality: FilterQuality.medium,
-              ),
-              Positioned(
-                left: badgeSize * 0.17,
-                right: badgeSize * 0.17,
-                bottom: badgeSize * 0.13,
-                height: badgeSize * 0.115,
-                child: CustomPaint(
-                  painter: _ArchedLabelPainter(
-                    text: label,
-                    style: TextStyle(
-                      color: const Color(0xFF12265A),
-                      fontSize: badgeSize * 0.075,
-                      fontWeight: FontWeight.w900,
-                      height: 1,
+              widget.size ??
+              math.min(constraints.maxWidth, constraints.maxHeight);
+          return FutureBuilder<int>(
+            future: _imageNumber,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return const Center(
+                  child: Tooltip(
+                    message: 'スタンプ画像を読み込めませんでした',
+                    child: Icon(
+                      Icons.error_outline,
+                      semanticLabel: 'スタンプ画像を読み込めませんでした',
                     ),
                   ),
+                );
+              }
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const SizedBox.shrink();
+              }
+              final imageNumber = snapshot.requireData;
+              // The portrait assets include generous margins around the art.
+              // Scale the image and ribbon label together within the badge cell.
+              return ClipRect(
+                child: Transform.scale(
+                  scale: imageNumber == 1 ? 1 : 1.55,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.asset(
+                        StampImageStore.assetPath(imageNumber),
+                        fit: BoxFit.contain,
+                        filterQuality: FilterQuality.medium,
+                      ),
+                      Positioned(
+                        left: badgeSize * (imageNumber == 1 ? 0.17 : 0.26),
+                        right: badgeSize * (imageNumber == 1 ? 0.17 : 0.26),
+                        bottom: badgeSize * (imageNumber == 1 ? 0.13 : 0.285),
+                        height: badgeSize * (imageNumber == 1 ? 0.115 : 0.075),
+                        child: CustomPaint(
+                          painter: _ArchedLabelPainter(
+                            text: widget.label,
+                            style: TextStyle(
+                              color: const Color(0xFF12265A),
+                              fontSize:
+                                  badgeSize * (imageNumber == 1 ? 0.075 : 0.05),
+                              fontWeight: FontWeight.w900,
+                              height: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              );
+            },
           );
         },
       ),

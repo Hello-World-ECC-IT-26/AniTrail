@@ -285,7 +285,7 @@ class _StampScreenState extends State<StampScreen> {
           AspectRatio(
             aspectRatio: 1,
             child: obtained
-                ? StampBadge(label: spot.name)
+                ? StampBadge(spotId: spot.spotId, label: spot.name)
                 : const LockedStampBadge(),
           ),
           const SizedBox(height: AppSpacing.xs),

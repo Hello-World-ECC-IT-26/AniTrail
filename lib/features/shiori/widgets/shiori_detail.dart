@@ -306,7 +306,7 @@ class _ShioriDetailScreenState extends State<ShioriDetailScreen> {
                     ? Padding(
                         padding: EdgeInsets.zero,
                         child: Image.asset(
-                          'assets/images/stamp_sample.png',
+                          'assets/images/stamp01.png',
                           fit: BoxFit.cover,
                         ),
                       )
