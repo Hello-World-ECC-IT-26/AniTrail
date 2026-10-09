@@ -2,8 +2,8 @@ import 'package:anitrail/features/navigation/models/navigation_phase.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('探索モードの既定距離は500m', () {
-    expect(navigationDirectionDistanceMeters, 500);
+  test('探索モードの既定距離は100m', () {
+    expect(navigationDirectionDistanceMeters, 100);
   });
 
   test('設定された距離以内で方向案内、20m以内で到着へ切り替わる', () {

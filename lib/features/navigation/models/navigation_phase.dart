@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 
 enum NavigationPhase { route, direction, arrived }
 
-const _defaultNavigationDirectionDistanceMeters = 500.0;
+const _defaultNavigationDirectionDistanceMeters = 100.0;
 const navigationArrivalDistanceMeters = 20.0;
 const _debugNavigationDirectionDistance = String.fromEnvironment(
   'DEBUG_NAVIGATION_DIRECTION_DISTANCE_METERS',
