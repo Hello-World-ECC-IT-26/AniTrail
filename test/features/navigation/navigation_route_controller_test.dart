@@ -123,7 +123,8 @@ void main() {
       position(away);
       requests.last.completeError(Exception('offline'));
       await settle();
-      expect(controller.error, contains('offline'));
+      expect(controller.error, isNotNull);
+      expect(controller.error, isNot(contains('offline')));
       expect(controller.guidanceUnavailable, isTrue);
       position(away);
       expect(origins, hasLength(2));
@@ -200,7 +201,8 @@ void main() {
     );
     local.currentLocation = start;
     await local.requestRoute();
-    expect(local.error, contains('TimeoutException'));
+    expect(local.error, isNotNull);
+    expect(local.error, isNot(contains('TimeoutException')));
     expect(local.loading, isFalse);
     local.dispose();
   });

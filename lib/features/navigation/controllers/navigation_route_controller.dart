@@ -94,9 +94,10 @@ class NavigationRouteController extends ChangeNotifier {
       route = result;
       offRoute = false;
       _departures = 0;
-    } catch (e) {
+    } catch (e, stack) {
       if (_disposed || _arrived) return;
-      error = '徒歩ルート作成に失敗しました: $e';
+      debugPrint('Walking route fetch failed: $e\n$stack');
+      error = '徒歩ルートを作成できませんでした。通信状況を確認してください';
     } finally {
       loading = false;
       if (!_disposed && !_arrived) notifyListeners();
