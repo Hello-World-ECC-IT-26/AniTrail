@@ -35,7 +35,8 @@ class NavigationRouteController extends ChangeNotifier {
   DateTime? _lastStarted;
 
   bool get updating => loading && route != null;
-  bool get guidanceUnavailable => offRoute || route == null;
+  bool get guidanceUnavailable =>
+      loading || error != null || offRoute || route == null;
 
   void updatePosition(
     LatLng location, {
@@ -46,6 +47,11 @@ class NavigationRouteController extends ChangeNotifier {
     currentLocation = location;
     _arrived = arrived;
     if (arrived) return;
+    // Initial acquisition does not require two departure samples.
+    if (route == null) {
+      requestRoute(automatic: true);
+      return;
+    }
     if (!accuracy.isFinite || accuracy < 0 || accuracy > 30) {
       _departures = 0;
       return;
@@ -72,8 +78,9 @@ class NavigationRouteController extends ChangeNotifier {
     final now = _now();
     if (automatic &&
         _lastStarted != null &&
-        now.difference(_lastStarted!) < const Duration(seconds: 15))
+        now.difference(_lastStarted!) < const Duration(seconds: 15)) {
       return;
+    }
     _lastStarted = now;
     loading = true;
     error = null;

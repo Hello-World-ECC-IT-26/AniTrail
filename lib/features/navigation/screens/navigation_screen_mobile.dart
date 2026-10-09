@@ -13,6 +13,7 @@ import '../../../core/styles/app_text.dart';
 import '../../../core/widgets/loading_screen.dart';
 import '../../map/models/anime_spot.dart';
 import '../../map/models/tour_plan.dart';
+import '../controllers/navigation_route_controller.dart';
 import '../models/navigation_direction.dart';
 import '../models/navigation_phase.dart';
 import '../services/navigation_route_service.dart';
@@ -29,6 +30,9 @@ class NavigationScreen extends StatefulWidget {
   final LatLng? origin;
   final TourProgress? tour;
 
+  /// Optional injected controller; this screen owns and disposes it.
+  final NavigationRouteController? routeController;
+
   const NavigationScreen({
     super.key,
     required this.spot,
@@ -38,6 +42,7 @@ class NavigationScreen extends StatefulWidget {
     this.imageUrl,
     this.origin,
     this.tour,
+    this.routeController,
   });
 
   @override
@@ -50,6 +55,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
   final _routeService = NavigationRouteService();
   final _arrivalEntryGuard = ArrivalEntryGuard();
+  NavigationRouteController? _routeController;
   GoogleMapController? _mapController;
   StreamSubscription<Position>? _positionSubscription;
   StreamSubscription<dynamic>? _headingSubscription;
@@ -72,6 +78,17 @@ class _NavigationScreenState extends State<NavigationScreen> {
   void initState() {
     super.initState();
     _currentLocation = widget.origin;
+    final destination = _destination;
+    if (destination != null) {
+      _routeController =
+          widget.routeController ??
+          NavigationRouteController(
+            destination: destination,
+            fetchRoute: _routeService.fetchWalkingRoute,
+          );
+      _routeController!.currentLocation = _currentLocation;
+      _routeController!.addListener(_onRouteChanged);
+    }
     _loadRoute();
     _startLocationTracking();
   }
@@ -94,37 +111,36 @@ class _NavigationScreenState extends State<NavigationScreen> {
       return;
     }
 
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-
-    try {
-      final route = await _routeService.fetchWalkingRoute(
-        origin: origin,
-        destination: destination,
-      );
-      if (!mounted) return;
-      setState(() {
-        _routePoints = route.points;
-        _remainingDistanceMeters = route.distanceMeters;
-        _remainingTimeSeconds = route.durationSeconds;
-        _loading = false;
-      });
-      _updateRemainingDistance();
-      await _fitRoute();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = '徒歩ルート作成に失敗しました: $e';
-      });
+    final controller = _routeController;
+    if (controller == null) return;
+    if (!mounted) return;
+    if (_hasArrived) {
+      controller.updatePosition(origin, accuracy: 0, arrived: true);
+      return;
     }
+    controller.currentLocation = origin;
+    await controller.requestRoute();
   }
+
+  void _onRouteChanged() {
+    if (!mounted || _hasArrived) return;
+    final controller = _routeController!;
+    final route = controller.route;
+    final changed = route != null && !identical(_routePoints, route.points);
+    setState(() {
+      _loading = controller.loading;
+      if (changed) _routePoints = route.points;
+    });
+    _updateRemainingDistance();
+    if (changed && !_isDirectionMode) unawaited(_fitRoute());
+  }
+
+  String? get _displayError => _routeController?.error ?? _error;
 
   Future<void> _startLocationTracking() async {
     await _positionSubscription?.cancel();
     _positionSubscription = null;
+    if (!mounted) return;
     if (!await Geolocator.isLocationServiceEnabled()) {
       if (mounted) {
         setState(() {
@@ -155,12 +171,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
     try {
       final position = await Geolocator.getCurrentPosition();
       _setCurrentLocation(position);
-      if (widget.origin == null && _routePoints.isEmpty) {
-        await _loadRoute();
-      }
     } catch (error) {
       if (mounted) setState(() => _error = '現在地を取得できませんでした: $error');
     }
+    if (!mounted || _hasArrived) return;
     _positionSubscription =
         Geolocator.getPositionStream(
           locationSettings: const LocationSettings(
@@ -228,6 +242,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
     final wasNearDestination = _isNearDestination;
     setState(() {
       _currentLocation = LatLng(position.latitude, position.longitude);
+      if (_error == '現在地が取得できていません') _error = null;
       if (!wasNearDestination && _isNearDestination && !_hasArrived) {
         _showDirectionSwitchNotice = true;
       } else if (!_isNearDestination) {
@@ -241,6 +256,11 @@ class _NavigationScreenState extends State<NavigationScreen> {
       });
     }
     _updateRemainingDistance();
+    _routeController?.updatePosition(
+      _currentLocation!,
+      accuracy: position.accuracy,
+      arrived: _hasArrived,
+    );
   }
 
   void _updateRemainingDistance() {
@@ -386,6 +406,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
   @override
   void dispose() {
+    _routeController?.dispose();
     _directionIntroTimer?.cancel();
     _positionSubscription?.cancel();
     _headingSubscription?.cancel();
@@ -488,7 +509,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
               ),
             ),
           ],
-          if (_error != null && !isDirectionMode)
+          if (_displayError != null && !isDirectionMode)
             Positioned(
               left: 16,
               right: 16,
@@ -503,7 +524,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_error!, style: AppTextStyles.body),
+                      Text(_displayError!, style: AppTextStyles.body),
                       const SizedBox(height: AppSpacing.sm),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -519,15 +540,24 @@ class _NavigationScreenState extends State<NavigationScreen> {
                               child: const Text('位置情報設定'),
                             ),
                           TextButton(
-                            onPressed: () async {
-                              setState(() {
-                                _error = null;
-                                _locationPermissionPermanentlyDenied = false;
-                                _locationServiceDisabled = false;
-                              });
-                              await _startLocationTracking();
-                              if (_currentLocation != null) await _loadRoute();
-                            },
+                            onPressed: _loading
+                                ? null
+                                : () async {
+                                    if (_routeController?.error != null) {
+                                      await _loadRoute();
+                                      return;
+                                    }
+                                    setState(() {
+                                      _error = null;
+                                      _locationPermissionPermanentlyDenied =
+                                          false;
+                                      _locationServiceDisabled = false;
+                                    });
+                                    await _startLocationTracking();
+                                    if (_currentLocation != null) {
+                                      await _loadRoute();
+                                    }
+                                  },
                             child: const Text('再試行'),
                           ),
                         ],
@@ -537,7 +567,24 @@ class _NavigationScreenState extends State<NavigationScreen> {
                 ),
               ),
             ),
-          if (_loading && !isDirectionMode)
+          if (_routeController?.updating ?? false)
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 72),
+                  child: Material(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    child: const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Text('徒歩ルートを更新中…'),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          if (_loading)
             const Positioned(
               left: 0,
               right: 0,
@@ -694,7 +741,17 @@ class _NavigationScreenState extends State<NavigationScreen> {
     String? actionLabel;
     VoidCallback? onAction;
 
-    if (_headingUnavailable) {
+    if (_routeController?.updating ?? false) {
+      unavailableMessage = '徒歩ルートを更新中…';
+    } else if (_routeController?.error != null) {
+      unavailableMessage = '徒歩ルートを取得できません';
+      actionLabel = '再試行';
+      onAction = _loadRoute;
+    } else if (_routeController?.offRoute ?? false) {
+      unavailableMessage = '徒歩ルートから外れています';
+      actionLabel = '再試行';
+      onAction = _loadRoute;
+    } else if (_headingUnavailable) {
       unavailableMessage = '端末の向きを取得できません';
       actionLabel = '向きを再取得';
       onAction = () async {
@@ -977,7 +1034,9 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
   double? get _routeBearingAtCurrentLocation {
     final current = _currentLocation;
-    if (current == null) return null;
+    if (current == null || (_routeController?.guidanceUnavailable ?? true)) {
+      return null;
+    }
     return walkingRouteBearingAtLocation(
       currentLocation: current,
       routePoints: _routePoints,

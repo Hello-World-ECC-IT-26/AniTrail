@@ -179,6 +179,18 @@ void main() {
     expect(notifications, 1);
   });
 
+  test(
+    'initial location starts acquisition even before a precise GPS fix',
+    () async {
+      controller.currentLocation = null;
+      position(start, accuracy: 50);
+      expect(origins, [start]);
+      requests.last.complete(route);
+      await settle();
+      expect(controller.route, same(route));
+    },
+  );
+
   test('timeout clears loading and allows retry', () async {
     final local = NavigationRouteController(
       destination: end,
